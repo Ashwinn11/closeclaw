@@ -93,8 +93,7 @@ if [ -f \"\${CONFIG_DIR}/openclaw.json\" ]; then
       const p = '\${CONFIG_DIR}/openclaw.json';
       const c = JSON.parse(fs.readFileSync(p, 'utf8'));
       c.gateway = c.gateway || {};
-      c.gateway.bind = 'tailnet';
-      c.gateway.port = 18789;
+      delete c.gateway.bind; // DO NOT set bind — default loopback for internal tools pairing
       c.gateway.auth = c.gateway.auth || {};
       c.gateway.auth.mode = 'token';
       fs.writeFileSync(p, JSON.stringify(c, null, 2));
