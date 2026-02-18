@@ -1,31 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { BrandIcons } from '../components/ui/BrandIcons';
 import { ChannelSetupModal } from '../components/ui/ChannelSetupModal';
+import { listChannels, disconnectChannel, type ChannelConnection } from '../lib/api';
 import {
   LogOut, Wifi, WifiOff, Clock, BarChart3,
-  Plus, MoreHorizontal, Activity, Zap,
+  Plus, MoreHorizontal, Activity, Zap, Loader2,
 } from 'lucide-react';
 import './DashboardPage.css';
 
 type Tab = 'connections' | 'cron' | 'usage';
 type ChannelType = 'Telegram' | 'Discord' | 'Slack';
 
-interface Channel {
-  name: string;
+interface ChannelDef {
+  name: ChannelType;
+  key: string; // lowercase key used in DB
   icon: React.FC;
   color: string;
-  status: 'active' | 'inactive' | 'upcoming';
-  username?: string;
 }
 
-const channels: Channel[] = [
-  { name: 'Telegram', icon: BrandIcons.Telegram, color: '#2AABEE', status: 'inactive' },
-  { name: 'Discord', icon: BrandIcons.Discord, color: '#5865F2', status: 'inactive' },
-  { name: 'Slack', icon: BrandIcons.Slack, color: '#E01E5A', status: 'inactive' },
+const channelDefs: ChannelDef[] = [
+  { name: 'Telegram', key: 'telegram', icon: BrandIcons.Telegram, color: '#2AABEE' },
+  { name: 'Discord', key: 'discord', icon: BrandIcons.Discord, color: '#5865F2' },
+  { name: 'Slack', key: 'slack', icon: BrandIcons.Slack, color: '#E01E5A' },
 ];
 
 const upcomingChannels = [
@@ -53,6 +53,48 @@ export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('connections');
   const [setupChannel, setSetupChannel] = useState<ChannelType | null>(null);
+  const [connections, setConnections] = useState<ChannelConnection[]>([]);
+  const [loadingChannels, setLoadingChannels] = useState(true);
+  const [disconnecting, setDisconnecting] = useState<string | null>(null);
+
+  const fetchChannels = useCallback(async () => {
+    try {
+      const data = await listChannels();
+      setConnections(data);
+    } catch {
+      // API might not be running — show empty state
+      setConnections([]);
+    } finally {
+      setLoadingChannels(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchChannels();
+  }, [fetchChannels]);
+
+  const getChannelStatus = (key: string): { status: 'active' | 'pending' | 'inactive'; connectionId?: string } => {
+    const conn = connections.find(c => c.channel === key && (c.status === 'active' || c.status === 'pending'));
+    if (conn) return { status: conn.status as 'active' | 'pending', connectionId: conn.id };
+    return { status: 'inactive' };
+  };
+
+  const handleDisconnect = async (connectionId: string) => {
+    setDisconnecting(connectionId);
+    try {
+      await disconnectChannel(connectionId);
+      await fetchChannels(); // Refresh
+    } catch {
+      // Ignore errors for now
+    } finally {
+      setDisconnecting(null);
+    }
+  };
+
+  const handleModalClose = () => {
+    setSetupChannel(null);
+    fetchChannels(); // Refresh connections after modal closes
+  };
 
   const handleLogout = () => {
     logout();
@@ -92,7 +134,11 @@ export const DashboardPage: React.FC = () => {
         <div className="sidebar-footer">
           <div className="user-info">
             <div className="user-avatar">
-              {user?.name?.charAt(0) || 'U'}
+              {user?.avatar ? (
+                <img src={user.avatar} alt="" style={{ width: '100%', height: '100%', borderRadius: '10px', objectFit: 'cover' }} />
+              ) : (
+                user?.name?.charAt(0) || 'U'
+              )}
             </div>
             <div className="user-details">
               <span className="user-name">{user?.name || 'User'}</span>
@@ -127,38 +173,59 @@ export const DashboardPage: React.FC = () => {
           {activeTab === 'connections' && (
             <div className="connections-tab">
               <div className="section-label">Active Channels</div>
-              <div className="channels-grid">
-                {channels.map((ch) => {
-                  const Icon = ch.icon;
-                  return (
-                    <Card key={ch.name} className="channel-card" hoverable>
-                      <div className="channel-card-header">
-                        <div className="channel-card-icon" style={{ '--ch-color': ch.color } as React.CSSProperties}>
-                          <Icon />
+              {loadingChannels ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+                  <Loader2 size={24} className="spin" style={{ color: 'var(--text-secondary)' }} />
+                </div>
+              ) : (
+                <div className="channels-grid">
+                  {channelDefs.map((ch) => {
+                    const Icon = ch.icon;
+                    const { status, connectionId } = getChannelStatus(ch.key);
+                    const isDisconnecting = disconnecting === connectionId;
+                    return (
+                      <Card key={ch.name} className="channel-card" hoverable>
+                        <div className="channel-card-header">
+                          <div className="channel-card-icon" style={{ '--ch-color': ch.color } as React.CSSProperties}>
+                            <Icon />
+                          </div>
+                          <button className="channel-menu"><MoreHorizontal size={16} /></button>
                         </div>
-                        <button className="channel-menu"><MoreHorizontal size={16} /></button>
-                      </div>
-                      <h3>{ch.name}</h3>
-                      <div className="channel-status">
-                        {ch.status === 'active' ? (
-                          <><Wifi size={14} /> <span className="connected">Connected</span></>
+                        <h3>{ch.name}</h3>
+                        <div className="channel-status">
+                          {status === 'active' ? (
+                            <><Wifi size={14} /> <span className="connected">Connected</span></>
+                          ) : status === 'pending' ? (
+                            <><Loader2 size={14} className="spin" /> <span className="pending">Provisioning...</span></>
+                          ) : (
+                            <><WifiOff size={14} /> <span className="disconnected">Not Connected</span></>
+                          )}
+                        </div>
+                        {status === 'active' || status === 'pending' ? (
+                          <Button
+                            className="channel-action-btn"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => connectionId && handleDisconnect(connectionId)}
+                            disabled={isDisconnecting}
+                          >
+                            {isDisconnecting ? <><Loader2 size={14} className="spin" /> Disconnecting...</> : 'Disconnect'}
+                          </Button>
                         ) : (
-                          <><WifiOff size={14} /> <span className="disconnected">Not Connected</span></>
+                          <Button
+                            className="channel-action-btn"
+                            variant="primary"
+                            size="sm"
+                            onClick={() => setSetupChannel(ch.name)}
+                          >
+                            Connect
+                          </Button>
                         )}
-                      </div>
-                      {ch.username && <span className="channel-username">{ch.username}</span>}
-                      <Button
-                        className="channel-action-btn"
-                        variant={ch.status === 'active' ? 'ghost' : 'primary'}
-                        size="sm"
-                        onClick={() => ch.status !== 'active' && setSetupChannel(ch.name as ChannelType)}
-                      >
-                        {ch.status === 'active' ? 'Disconnect' : 'Connect'}
-                      </Button>
-                    </Card>
-                  );
-                })}
-              </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
 
               <div className="section-label upcoming-label">Coming Soon</div>
               <div className="upcoming-grid">
@@ -237,7 +304,7 @@ export const DashboardPage: React.FC = () => {
       {setupChannel && (
         <ChannelSetupModal
           channel={setupChannel}
-          onClose={() => setSetupChannel(null)}
+          onClose={handleModalClose}
         />
       )}
     </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card } from './Card';
 import { Button } from './Button';
 import { BrandIcons } from './BrandIcons';
+import { setupChannel } from '../../lib/api';
 import { Check, Loader2, AlertCircle, Bot, ArrowRight } from 'lucide-react';
 import './ChannelSetupModal.css';
 
@@ -157,10 +158,23 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
     }
   };
 
-  const handleDeploy = (plan: string) => {
-    console.log(`Deploying ${channel} bot "${botInfo?.name}" on ${plan} plan`);
-    alert(`🚀 Deploying ${botInfo?.name} (${botInfo?.username}) on the ${plan} plan!\n\nYour sovereign agent server is being provisioned...`);
-    onClose();
+  const [deploying, setDeploying] = useState(false);
+
+  const handleDeploy = async (plan: string) => {
+    setDeploying(true);
+    setError(null);
+    try {
+      await setupChannel({
+        channel: channel.toLowerCase() as 'telegram' | 'discord' | 'slack',
+        token: token.trim(),
+        appToken: needsSecondToken ? secondToken.trim() : undefined,
+        plan,
+      });
+      onClose();
+    } catch (err) {
+      setError((err as Error).message || 'Deployment failed. Please try again.');
+      setDeploying(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -322,12 +336,18 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
         {/* Step 3: Billing / Plan Selection */}
         {step === 'billing' && (
           <div className="setup-step billing-step">
+            {error && (
+              <div className="error-msg" style={{ marginBottom: '1rem' }}>
+                <AlertCircle size={14} />
+                <span>{error}</span>
+              </div>
+            )}
             <div className="plan-grid">
               {planData.map((plan) => (
                 <div
                   key={plan.name}
-                  className={`plan-card ${plan.isPopular ? 'popular' : ''}`}
-                  onClick={() => handleDeploy(plan.name)}
+                  className={`plan-card ${plan.isPopular ? 'popular' : ''} ${deploying ? 'disabled' : ''}`}
+                  onClick={() => !deploying && handleDeploy(plan.name)}
                 >
                   {plan.isPopular && <div className="popular-badge">Most Popular</div>}
                   <h4>{plan.name}</h4>
@@ -337,14 +357,14 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
                       <li key={i}><Check size={14} className="check-icon" /> {f}</li>
                     ))}
                   </ul>
-                  <Button variant={plan.isPopular ? 'primary' : 'secondary'} fullWidth>
-                    Deploy
+                  <Button variant={plan.isPopular ? 'primary' : 'secondary'} fullWidth disabled={deploying}>
+                    {deploying ? <><Loader2 size={14} className="spin" /> Deploying...</> : 'Deploy'}
                   </Button>
                 </div>
               ))}
             </div>
 
-            <button className="back-link" onClick={() => setStep('verified')}>
+            <button className="back-link" onClick={() => setStep('verified')} disabled={deploying}>
               ← Back to bot details
             </button>
           </div>

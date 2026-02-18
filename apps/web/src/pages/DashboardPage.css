@@ -308,6 +308,10 @@
     color: #27C93F;
 }
 
+.channel-status .pending {
+    color: #FFBD2E;
+}
+
 .channel-status .disconnected {
     color: var(--text-secondary);
 }
