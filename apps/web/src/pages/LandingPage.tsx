@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import './LandingPage.css';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -6,23 +6,13 @@ import { NebulaBackground } from '../components/ui/NebulaBackground';
 import { IconCluster } from '../components/ui/IconCluster';
 import { Header } from '../components/ui/Header';
 import { BrandIcons } from '../components/ui/BrandIcons';
+import { ChannelSetupModal } from '../components/ui/ChannelSetupModal';
 import { Check, Terminal } from 'lucide-react';
 
+type ChannelType = 'Telegram' | 'Discord' | 'Slack';
+
 export const LandingPage: React.FC = () => {
-  const [showBilling, setShowBilling] = useState(false);
-  const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
-
-  const handleChannelClick = (channel: string) => {
-    setSelectedChannel(channel);
-    setShowBilling(true);
-  };
-
-  const handlePlanSelect = (plan: string) => {
-    console.log(`Selected plan: ${plan} for channel: ${selectedChannel}`);
-    alert(`Mock Checkout: Successfully subscribed to ${plan} plan for ${selectedChannel}!`);
-    setShowBilling(false);
-    setSelectedChannel(null);
-  };
+  const [setupChannel, setSetupChannel] = useState<ChannelType | null>(null);
 
   return (
     <div className="landing-page">
@@ -46,7 +36,7 @@ export const LandingPage: React.FC = () => {
             <div className="channel-buttons">
               <Button 
                   className="channel-btn telegram"
-                  onClick={() => handleChannelClick('Telegram')}
+                  onClick={() => setSetupChannel('Telegram')}
               >
                 <div className="btn-icon"><BrandIcons.Telegram /></div>
                 <span>Telegram</span>
@@ -54,7 +44,7 @@ export const LandingPage: React.FC = () => {
               
               <Button 
                   className="channel-btn discord"
-                  onClick={() => handleChannelClick('Discord')}
+                  onClick={() => setSetupChannel('Discord')}
               >
                 <div className="btn-icon"><BrandIcons.Discord /></div>
                 <span>Discord</span>
@@ -62,7 +52,7 @@ export const LandingPage: React.FC = () => {
               
               <Button 
                   className="channel-btn slack"
-                  onClick={() => handleChannelClick('Slack')}
+                  onClick={() => setSetupChannel('Slack')}
               >
                 <div className="btn-icon"><BrandIcons.Slack /></div>
                 <span>Slack</span>
@@ -85,7 +75,7 @@ export const LandingPage: React.FC = () => {
               <h4 className="method-label">Traditional Setup</h4>
               <ul className="effort-list">
                 <li><span>Provisioning Cloud Servers</span> <span className="time">20 min</span></li>
-                <li><span>Securing Gateways & Ports</span> <span className="time">15 min</span></li>
+                <li><span>Securing Gateways &amp; Ports</span> <span className="time">15 min</span></li>
                 <li><span>Managing IP Addresses</span> <span className="time">10 min</span></li>
                 <li><span>Downtime Monitoring</span> <span className="time">10 min</span></li>
                 <li><span>Continuous Maintenance</span> <span className="time">∞</span></li>
@@ -221,68 +211,15 @@ export const LandingPage: React.FC = () => {
            </div>
         </footer>
 
-      {/* Mock Billing Modal (Unchanged logic) */}
-      {showBilling && (
-        <div className="modal-overlay">
-          <Card className="modal billing-modal">
-            <div className="modal-header">
-              <div className="traffic-lights">
-                <div className="light red"></div>
-                <div className="light yellow"></div>
-                <div className="light green"></div>
-              </div>
-              <h3>Select a Plan</h3>
-            </div>
-            
-            <div className="plan-grid">
-               <PlanCard 
-                  name="Base" 
-                  price="$50" 
-                  features={['Isolated GCP Instance', '$20 API Credits', 'Basic Mesh Network']}
-                  onSelect={() => handlePlanSelect('Basic')}
-               />
-               <PlanCard 
-                  name="Guardian" 
-                  price="$75" 
-                  features={['High-Memory VM', '$35 API Credits', 'Ghost Mesh (No Public IP)', 'Priority Recovery']}
-                  isPopular
-                  onSelect={() => handlePlanSelect('Pro')}
-               />
-               <PlanCard 
-                  name="Fortress" 
-                  price="$100" 
-                  features={['Custom Infrastructure', '$55 API Credits', 'Air-Gapped Gateway', 'White-labeled Host']}
-                  onSelect={() => handlePlanSelect('Enterprise')}
-               />
-            </div>
-            
-            <div className="modal-actions">
-              <Button variant="ghost" onClick={() => setShowBilling(false)}>Cancel</Button>
-            </div>
-          </Card>
-        </div>
+      {/* Channel Setup Modal (Token → Verify → Billing) */}
+      {setupChannel && (
+        <ChannelSetupModal
+          channel={setupChannel}
+          onClose={() => setSetupChannel(null)}
+        />
       )}
     </div>
   );
 };
 
-// Helper for Plan Cards (Unchanged)
-const PlanCard: React.FC<{
-  name: string;
-  price: string;
-  features: string[];
-  isPopular?: boolean;
-  onSelect: () => void;
-}> = ({ name, price, features, isPopular, onSelect }) => (
-  <div className={`plan-card ${isPopular ? 'popular' : ''}`} onClick={onSelect}>
-    {isPopular && <div className="popular-badge">Most Popular</div>}
-    <h4>{name}</h4>
-    <div className="price">{price}<span className="period">/mo</span></div>
-    <ul className="features">
-      {features.map((f, i) => (
-        <li key={i}><Check size={14} className="check-icon" /> {f}</li>
-      ))}
-    </ul>
-    <Button variant={isPopular ? 'primary' : 'secondary'} fullWidth>Select</Button>
-  </div>
-);
+
