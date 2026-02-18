@@ -1,15 +1,23 @@
 import { Hono } from 'hono';
+import { authMiddleware } from '../middleware/auth.js';
 
 export const authRoutes = new Hono();
 
-// POST /api/auth/callback — Supabase OAuth callback handler
-authRoutes.post('/callback', async (c) => {
-    // TODO: validate Supabase JWT, create/update user session
-    return c.json({ ok: true, message: 'Auth callback stub' });
+// GET /api/auth/me — Get current user from JWT
+authRoutes.get('/me', authMiddleware, async (c) => {
+    const userId = c.get('userId' as never) as string;
+    const userEmail = c.get('userEmail' as never) as string;
+
+    return c.json({
+        ok: true,
+        data: {
+            id: userId,
+            email: userEmail,
+        },
+    });
 });
 
-// GET /api/auth/me — Get current user from JWT
-authRoutes.get('/me', async (c) => {
-    // TODO: extract user from JWT
-    return c.json({ ok: true, data: { id: 'stub', email: 'user@example.com' } });
+// POST /api/auth/logout — Server-side sign out
+authRoutes.post('/logout', authMiddleware, async (c) => {
+    return c.json({ ok: true, message: 'Logged out' });
 });

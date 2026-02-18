@@ -140,7 +140,7 @@ export const LandingPage: React.FC = () => {
                  <div className="hex opacity-30"><BrandIcons.Gemini /></div>
               </div>
               <h3>Intelligent Brains</h3>
-              <p>Automatically routes tasks between GPT-5.2-codex, Claude 3.5, and Gemini Pro for the best results.</p>
+              <p>Automatically routes tasks between GPT-5.2-codex, Claude 4.6 sonnet, and Gemini 3 flash for the best results.</p>
             </Card>
 
             <Card className="bento-card card-security" hoverable>
