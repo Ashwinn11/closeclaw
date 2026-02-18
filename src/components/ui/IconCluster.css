@@ -1,0 +1,202 @@
+.icon-cluster {
+    position: relative;
+    width: 440px;
+    height: 440px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-node {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 15, 20, 0.4);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.main-node {
+    width: 100px;
+    height: 100px;
+    z-index: 20;
+    background: radial-gradient(circle, rgba(255, 90, 95, 0.15) 0%, rgba(10, 10, 15, 0.8) 100%);
+    border-color: rgba(255, 90, 95, 0.3);
+    box-shadow: 0 0 40px rgba(255, 90, 95, 0.2);
+}
+
+.logo-placeholder {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 1.8rem;
+    background: linear-gradient(135deg, #FF5A5F, #FF8A8E);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Orbit Path Container */
+.orbit-wrap {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    pointer-events: none;
+}
+
+.inner-orbit {
+    width: 240px;
+    height: 240px;
+    animation: revolve 25s linear infinite;
+}
+
+.outer-orbit {
+    width: 400px;
+    height: 400px;
+    animation: revolve 40s linear infinite reverse;
+}
+
+.satellite {
+    width: 56px;
+    height: 56px;
+    z-index: 10;
+}
+
+.sat-icon-wrapper {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sat-icon-wrapper svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* Counter-rotation to keep icons upright */
+.inner-orbit .satellite .sat-icon-wrapper {
+    animation: revolve-reverse 25s linear infinite;
+}
+
+.outer-orbit .satellite .sat-icon-wrapper {
+    animation: revolve-reverse 40s linear infinite reverse;
+}
+
+/* Satellite Positioning on Circumference (50% is center) */
+/* Inner Orbit: 4 Satellites */
+.satellite-1 {
+    left: 50%;
+    top: 0;
+    transform: translate(-50%, -50%);
+}
+
+.satellite-2 {
+    left: 100%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.satellite-3 {
+    left: 50%;
+    top: 100%;
+    transform: translate(-50%, -50%);
+}
+
+.satellite-4 {
+    left: 0;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Outer Orbit: 6 Satellites */
+.satellite-5 {
+    left: 50%;
+    top: 0;
+    transform: translate(-50%, -50%);
+}
+
+.satellite-6 {
+    left: 85%;
+    top: 25%;
+    transform: translate(-50%, -50%);
+}
+
+.satellite-7 {
+    left: 85%;
+    top: 75%;
+    transform: translate(-50%, -50%);
+}
+
+.satellite-8 {
+    left: 50%;
+    top: 100%;
+    transform: translate(-50%, -50%);
+}
+
+.satellite-9 {
+    left: 15%;
+    top: 75%;
+    transform: translate(-50%, -50%);
+}
+
+.satellite-10 {
+    left: 15%;
+    top: 25%;
+    transform: translate(-50%, -50%);
+}
+
+@keyframes revolve {
+    from {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+@keyframes revolve-reverse {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(-360deg);
+    }
+}
+
+.pulse-ring {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 90, 95, 0.4);
+    animation: ripple 4s linear infinite;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(1);
+        opacity: 0.6;
+    }
+
+    100% {
+        transform: scale(2.5);
+        opacity: 0;
+    }
+}
+
+.nexus-lines {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.1;
+}

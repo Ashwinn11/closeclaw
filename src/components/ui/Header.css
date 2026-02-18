@@ -1,0 +1,157 @@
+.header-container {
+    position: fixed;
+    top: 2rem;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    z-index: 1000;
+    padding: 0 1rem;
+    pointer-events: none;
+    /* Let clicks pass through outside the header */
+}
+
+.glass-header {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    width: calc(100% - 4rem);
+    max-width: none;
+    height: 72px;
+    padding: 0 2.5rem;
+
+    background: rgba(10, 10, 15, 0.6);
+    /* Slightly darker/more opaque base */
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 100px;
+    /* Pill shape */
+
+    box-shadow:
+        0 4px 30px rgba(0, 0, 0, 0.1),
+        0 1px 3px rgba(0, 0, 0, 0.3),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1);
+
+    transition: all var(--transition-normal);
+}
+
+.glass-header:hover {
+    background: rgba(20, 20, 30, 0.7);
+    border-color: rgba(255, 255, 255, 0.12);
+    transform: translateY(1px);
+}
+
+/* Left: Logo */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+}
+
+.logo-icon {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #FF5A5F, #FF8A8E);
+    border-radius: 8px;
+    /* Squircle */
+    box-shadow: 0 0 10px rgba(255, 90, 95, 0.4);
+}
+
+.logo-text {
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: -0.02em;
+    background: linear-gradient(to right, #fff, #ccc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Center: Nav */
+.header-nav {
+    display: flex;
+    gap: 2rem;
+}
+
+.nav-link {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: color var(--transition-fast);
+    position: relative;
+}
+
+.nav-link:hover {
+    color: var(--text-primary);
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background-color: var(--accent-primary);
+    transition: all var(--transition-fast);
+    transform: translateX(-50%);
+    border-radius: 2px;
+}
+
+.nav-link:hover::after {
+    width: 100%;
+}
+
+/* Right: Actions */
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.get-started-btn {
+    border-radius: 100px !important;
+    /* Pill button inside pill header */
+    font-weight: 600;
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+    background-color: white !important;
+    color: black !important;
+}
+
+.get-started-btn:hover {
+    background-color: #f0f0f0 !important;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3) !important;
+}
+
+.mobile-menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+@media (max-width: 768px) {
+    .header-nav {
+        display: none;
+    }
+
+    .get-started-btn {
+        display: none;
+        /* Optional: hide CTA on super small screens or keep */
+    }
+
+    .mobile-menu-toggle {
+        display: block;
+    }
+
+    .glass-header {
+        padding: 0 1rem;
+    }
+}
