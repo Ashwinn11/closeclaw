@@ -9,7 +9,7 @@ Reference openclaw.ai for the full feature set. Official repo is in local direct
 Reference sites: simpleclaw.com and ampere.sh (pioneers of OpenClaw wrappers — use for design and UX inspiration only).
 
 **Domain**: closeclaw.in (local dev for now)
-**GCP project**: `glowing-harmony-*`
+**GCP project**: `glowing-harmony-362803`
 **Networking**: Tailscale mesh — backend connects to Gateway VMs via Tailscale internal IPs (no public IP exposure, no SSH tunnels in production)
 
 The application:
@@ -77,7 +77,7 @@ Frontend and backend must remain strictly separated.
 
 Run a persistent OpenClaw Gateway on a GCP Compute Engine VM using Docker, with durable state, baked-in binaries, and safe restart behavior. Target ~$5-12/mo per instance.
 
-GCP project: `glowing-harmony-*`. All VMs join the Tailscale mesh via `TAILSCALE_AUTHKEY` so the CloseClaw backend can reach them by Tailscale hostname/IP without public IP exposure.
+GCP project: `glowing-harmony-362803`. All VMs join the Tailscale mesh via `TAILSCALE_AUTHKEY` so the CloseClaw backend can reach them by Tailscale hostname/IP without public IP exposure.
 
 ### No local Docker
 

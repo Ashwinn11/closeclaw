@@ -1,4 +1,4 @@
-import React from 'react';
+// Brand SVG icons for channel and provider logos
 
 // Official High-Resolution SVGs Verified from project public/icons folder
 export const BrandIcons = {
