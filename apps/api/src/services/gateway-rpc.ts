@@ -1,65 +1,92 @@
 /**
- * Gateway WS RPC Client
+ * Gateway WS RPC Client (Backend)
  *
  * Connects to an OpenClaw Gateway instance via WebSocket and sends RPC calls.
- * Authentication uses token auth with role: "operator", scopes: ["operator.admin"].
+ * Uses the correct Gateway protocol (v3) with challenge-response auth.
  *
- * Token resolution on the Gateway side:
- *   gateway.auth.token (from openclaw.json) → OPENCLAW_GATEWAY_TOKEN (env var)
+ * Protocol:
+ *   - Gateway sends { type: "event", event: "connect.challenge", payload: { nonce } }
+ *   - Client sends  { type: "req", id, method: "connect", params: { ... } }
+ *   - Gateway replies { type: "res", id, ok: true, payload: { type: "hello-ok", ... } }
+ *   - Client sends  { type: "req", id, method: "config.patch", params: { ... } }
+ *   - Gateway replies { type: "res", id, ok: true/false, payload/error }
  */
 
 import WebSocket from 'ws';
-import type { GatewayRpcRequest, GatewayRpcMethod } from '@closeclaw/shared';
+import type { GatewayRpcMethod } from '@closeclaw/shared';
 
 type GatewayConnection = {
     ws: WebSocket;
     pending: Map<string, { resolve: (v: unknown) => void; reject: (e: Error) => void }>;
     seq: number;
+    authenticated: boolean;
 };
 
 export function createGatewayRpcClient(tailscaleIp: string, port: number, token: string) {
     let conn: GatewayConnection | null = null;
 
     async function connect(): Promise<GatewayConnection> {
-        if (conn?.ws.readyState === WebSocket.OPEN) return conn;
+        if (conn?.ws.readyState === WebSocket.OPEN && conn.authenticated) return conn;
 
         return new Promise((resolve, reject) => {
-            const ws = new WebSocket(`ws://${tailscaleIp}:${port}`);
-            const pending = new Map<string, { resolve: (v: unknown) => void; reject: (e: Error) => void }>();
-            const connection: GatewayConnection = { ws, pending, seq: 0 };
-
-            ws.on('open', () => {
-                // Send connect handshake
-                ws.send(JSON.stringify({
-                    type: 'connect',
-                    params: {
-                        role: 'operator',
-                        scopes: ['operator.admin'],
-                        auth: { token },
-                        client: { name: 'closeclaw-api', version: '0.0.1' },
-                    },
-                }));
+            const ws = new WebSocket(`ws://${tailscaleIp}:${port}`, {
+                headers: {
+                    'Origin': `http://${tailscaleIp}:${port}`,
+                },
             });
+            const pending = new Map<string, { resolve: (v: unknown) => void; reject: (e: Error) => void }>();
+            const connection: GatewayConnection = { ws, pending, seq: 0, authenticated: false };
 
             ws.on('message', (data) => {
                 try {
                     const msg = JSON.parse(data.toString());
 
-                    // Handle connect response
-                    if (msg.type === 'connected') {
-                        conn = connection;
-                        resolve(connection);
+                    // Handle challenge → send connect request
+                    if (msg.type === 'event' && msg.event === 'connect.challenge') {
+                        ws.send(JSON.stringify({
+                            type: 'req',
+                            id: 'rpc-connect',
+                            method: 'connect',
+                            params: {
+                                minProtocol: 3,
+                                maxProtocol: 3,
+                                client: {
+                                    id: 'openclaw-control-ui',
+                                    displayName: 'CloseClaw API',
+                                    version: '0.0.1',
+                                    platform: 'linux',
+                                    mode: 'ui',
+                                },
+                                auth: { token },
+                                role: 'operator',
+                                scopes: ['operator.admin'],
+                                caps: [],
+                            },
+                        }));
+                        return;
+                    }
+
+                    // Handle connect response (hello-ok)
+                    if (msg.type === 'res' && msg.id === 'rpc-connect') {
+                        if (msg.ok) {
+                            connection.authenticated = true;
+                            conn = connection;
+                            resolve(connection);
+                        } else {
+                            reject(new Error(`Gateway auth failed: ${msg.error?.message ?? 'unknown'}`));
+                            ws.close();
+                        }
                         return;
                     }
 
                     // Handle RPC responses
-                    if (msg.id && pending.has(msg.id)) {
+                    if (msg.type === 'res' && msg.id && pending.has(msg.id)) {
                         const handler = pending.get(msg.id)!;
                         pending.delete(msg.id);
-                        if (msg.error) {
-                            handler.reject(new Error(msg.error.message ?? 'RPC error'));
+                        if (msg.ok === false) {
+                            handler.reject(new Error(msg.error?.message ?? 'RPC error'));
                         } else {
-                            handler.resolve(msg.result);
+                            handler.resolve(msg.payload);
                         }
                     }
                 } catch {
@@ -80,13 +107,13 @@ export function createGatewayRpcClient(tailscaleIp: string, port: number, token:
                 pending.clear();
             });
 
-            // Timeout after 10s
+            // Timeout
             setTimeout(() => {
-                if (ws.readyState !== WebSocket.OPEN) {
+                if (!connection.authenticated) {
                     ws.terminate();
                     reject(new Error('Gateway connection timeout'));
                 }
-            }, 10_000);
+            }, 15_000);
         });
     }
 
@@ -97,10 +124,9 @@ export function createGatewayRpcClient(tailscaleIp: string, port: number, token:
         return new Promise((resolve, reject) => {
             connection.pending.set(id, { resolve, reject });
 
-            const request: GatewayRpcRequest = { id, method, params };
-            connection.ws.send(JSON.stringify(request));
+            // Gateway protocol: type must be "req"
+            connection.ws.send(JSON.stringify({ type: 'req', id, method, params }));
 
-            // Timeout per-call
             setTimeout(() => {
                 if (connection.pending.has(id)) {
                     connection.pending.delete(id);

@@ -6,6 +6,7 @@ import { authRoutes } from './routes/auth.js';
 import { instanceRoutes } from './routes/instance.js';
 import { channelRoutes } from './routes/channels.js';
 import { billingRoutes } from './routes/billing.js';
+import { attachWsProxy } from './ws/proxy.js';
 
 const app = new Hono();
 
@@ -32,8 +33,12 @@ app.get('/api/health', (c) => c.json({ ok: true, ts: Date.now() }));
 
 const port = Number(process.env.PORT ?? 3001);
 
-serve({ fetch: app.fetch, port }, (info) => {
+const server = serve({ fetch: app.fetch, port }, (info) => {
     console.log(`🦀 CloseClaw API listening on http://localhost:${info.port}`);
 });
+
+// Attach WebSocket proxy to the HTTP server
+// Frontend connects to ws://localhost:3001/ws?token=<jwt>
+attachWsProxy(server as unknown as import('node:http').Server);
 
 export default app;

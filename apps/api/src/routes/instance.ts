@@ -7,7 +7,10 @@ export const instanceRoutes = new Hono();
 // All instance routes require authentication
 instanceRoutes.use('*', authMiddleware);
 
-// GET /api/instances/mine — Get user's claimed instance
+/**
+ * GET /api/instances/mine
+ * Get the user's claimed/active instance with its status.
+ */
 instanceRoutes.get('/mine', async (c) => {
     const userId = c.get('userId' as never) as string;
 
@@ -24,40 +27,70 @@ instanceRoutes.get('/mine', async (c) => {
         return c.json({ ok: false, error: error.message }, 500);
     }
 
-    return c.json({ ok: true, data });
+    if (!data) {
+        return c.json({ ok: true, data: null });
+    }
+
+    // Sanitize — don't expose gateway_token to the frontend
+    const { gateway_token: _token, ...safeInstance } = data;
+
+    return c.json({ ok: true, data: safeInstance });
 });
 
-// POST /api/instances/claim — Claim an available pool instance
+/**
+ * POST /api/instances/claim
+ * Claim an available pool instance for the user.
+ *
+ * Atomically:
+ * 1. Check user doesn't already have an instance
+ * 2. Find an available instance with a Tailscale IP
+ * 3. Mark it as claimed with user_id + timestamp
+ *
+ * The GCP tag update happens asynchronously (or via a background job).
+ */
 instanceRoutes.post('/claim', async (c) => {
     const userId = c.get('userId' as never) as string;
 
-    // Check if user already has a claimed instance
+    // 1. Check if user already has an instance
     const { data: existing } = await supabase
         .from('instances')
-        .select('id')
+        .select('id, gcp_instance_name, status, internal_ip')
         .eq('user_id', userId)
         .in('status', ['claimed', 'active'])
         .limit(1)
         .maybeSingle();
 
     if (existing) {
-        return c.json({ ok: false, error: 'You already have an active instance' }, 409);
+        const { gateway_token: _t, ...safe } = existing as Record<string, unknown>;
+        return c.json({
+            ok: true,
+            data: safe,
+            message: 'You already have an instance',
+        });
     }
 
-    // Find an available instance from the pool
+    // 2. Find an available instance (must have Tailscale IP)
     const { data: available, error: findError } = await supabase
         .from('instances')
         .select('*')
         .eq('status', 'available')
         .is('user_id', null)
+        .not('internal_ip', 'is', null)  // Must be reachable
         .limit(1)
         .maybeSingle();
 
-    if (findError || !available) {
-        return c.json({ ok: false, error: 'No instances available. Please try again later.' }, 503);
+    if (findError) {
+        return c.json({ ok: false, error: 'Database error' }, 500);
     }
 
-    // Claim it
+    if (!available) {
+        return c.json({
+            ok: false,
+            error: 'No instances available in the pool. Please try again later.',
+        }, 503);
+    }
+
+    // 3. Atomically claim (optimistic lock on status=available)
     const { data: claimed, error: claimError } = await supabase
         .from('instances')
         .update({
@@ -66,23 +99,73 @@ instanceRoutes.post('/claim', async (c) => {
             claimed_at: new Date().toISOString(),
         })
         .eq('id', available.id)
-        .eq('status', 'available')  // Optimistic lock
+        .eq('status', 'available')
         .select()
         .single();
 
     if (claimError || !claimed) {
-        return c.json({ ok: false, error: 'Failed to claim instance — may have been taken. Try again.' }, 409);
+        return c.json({
+            ok: false,
+            error: 'Instance was claimed by another user. Try again.',
+        }, 409);
     }
 
-    return c.json({ ok: true, data: claimed });
+    // Sanitize
+    const { gateway_token: _token, ...safeInstance } = claimed;
+
+    return c.json({ ok: true, data: safeInstance });
 });
 
-// GET /api/instances/:id/health — Proxy health check to Gateway
+/**
+ * POST /api/instances/release
+ * Release the user's instance back to the pool.
+ */
+instanceRoutes.post('/release', async (c) => {
+    const userId = c.get('userId' as never) as string;
+
+    // Find user's instance
+    const { data: instance } = await supabase
+        .from('instances')
+        .select('id, gcp_instance_name')
+        .eq('user_id', userId)
+        .in('status', ['claimed', 'active'])
+        .maybeSingle();
+
+    if (!instance) {
+        return c.json({ ok: false, error: 'No instance to release' }, 404);
+    }
+
+    // Delete all channel connections for this user
+    await supabase
+        .from('channel_connections')
+        .delete()
+        .eq('user_id', userId);
+
+    // Release the instance back to pool
+    const { error } = await supabase
+        .from('instances')
+        .update({
+            user_id: null,
+            status: 'available',
+            claimed_at: null,
+        })
+        .eq('id', instance.id);
+
+    if (error) {
+        return c.json({ ok: false, error: 'Failed to release instance' }, 500);
+    }
+
+    return c.json({ ok: true, data: { message: 'Instance released back to pool' } });
+});
+
+/**
+ * GET /api/instances/:id/health
+ * Proxy health check to the user's Gateway via WS RPC.
+ */
 instanceRoutes.get('/:id/health', async (c) => {
     const userId = c.get('userId' as never) as string;
     const id = c.req.param('id');
 
-    // Verify ownership
     const { data: instance } = await supabase
         .from('instances')
         .select('*')
@@ -94,14 +177,15 @@ instanceRoutes.get('/:id/health', async (c) => {
         return c.json({ ok: false, error: 'Instance not found' }, 404);
     }
 
-    // TODO: connect to Gateway via WS RPC, call `health`
-    // For now, return mock health based on instance status
+    // TODO: when Gateway is reachable, call health RPC
+    // For now, return status from DB
     return c.json({
         ok: true,
         data: {
             instanceId: id,
             status: instance.status,
-            gateway: instance.status === 'active' ? 'healthy' : 'unknown',
+            gatewayIp: instance.internal_ip,
+            gatewayPort: instance.gateway_port,
         },
     });
 });
