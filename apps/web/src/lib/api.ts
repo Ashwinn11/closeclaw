@@ -43,6 +43,7 @@ export async function setupChannel(params: {
     token: string;
     appToken?: string;
     plan: string;
+    ownerUserId: string;
 }): Promise<{ connection: ChannelConnection; message: string }> {
     return request('/api/channels/setup', {
         method: 'POST',

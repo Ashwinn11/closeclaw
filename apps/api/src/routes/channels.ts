@@ -25,16 +25,20 @@ channelRoutes.use('*', authMiddleware);
 channelRoutes.post('/setup', async (c) => {
     const userId = c.get('userId' as never) as string;
     const body = await c.req.json();
-    const { channel, token, appToken, plan } = body as {
+    const { channel, token, appToken, plan, ownerUserId } = body as {
         channel: 'telegram' | 'discord' | 'slack';
         token: string;
         appToken?: string;
         plan: string;
+        ownerUserId: string;
     };
 
     // Validate
     if (!channel || !token || !plan) {
         return c.json({ ok: false, error: 'Missing required fields: channel, token, plan' }, 400);
+    }
+    if (!ownerUserId?.trim()) {
+        return c.json({ ok: false, error: 'Missing ownerUserId — required to restrict bot access to owner only' }, 400);
     }
 
     if (channel === 'slack' && !appToken) {
@@ -153,20 +157,22 @@ channelRoutes.post('/setup', async (c) => {
     type ChannelConfig = Record<string, unknown>;
     let channelPatch: Record<string, ChannelConfig>;
 
+    const ownerAllowFrom = [ownerUserId.trim()];
+
     switch (channel) {
         case 'telegram':
             channelPatch = {
-                telegram: { enabled: true, botToken: token, dmPolicy: 'open', allowFrom: ['*'] },
+                telegram: { enabled: true, botToken: token, dmPolicy: 'allowlist', allowFrom: ownerAllowFrom },
             };
             break;
         case 'discord':
             channelPatch = {
-                discord: { enabled: true, token, dmPolicy: 'open', allowFrom: ['*'], dm: { enabled: true } },
+                discord: { enabled: true, token, dmPolicy: 'allowlist', allowFrom: ownerAllowFrom, dm: { enabled: true } },
             };
             break;
         case 'slack':
             channelPatch = {
-                slack: { enabled: true, botToken: token, appToken: appToken!, dmPolicy: 'open', allowFrom: ['*'], dm: { enabled: true } },
+                slack: { enabled: true, botToken: token, appToken: appToken!, dmPolicy: 'allowlist', allowFrom: ownerAllowFrom, dm: { enabled: true } },
             };
             break;
         default:

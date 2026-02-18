@@ -7,7 +7,7 @@ import { Check, Loader2, AlertCircle, Bot, ArrowRight } from 'lucide-react';
 import './ChannelSetupModal.css';
 
 type ChannelType = 'Telegram' | 'Discord' | 'Slack';
-type SetupStep = 'token' | 'verified' | 'billing';
+type SetupStep = 'token' | 'verified' | 'owner-id' | 'billing';
 
 interface BotInfo {
   name: string;
@@ -108,6 +108,9 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [botInfo, setBotInfo] = useState<BotInfo | null>(null);
+  const [ownerUserId, setOwnerUserId] = useState('');
+  const [polling, setPolling] = useState(false);
+  const [manualOwnerId, setManualOwnerId] = useState('');
 
   const config = channelConfig[channel];
   const ChannelIcon = config.icon;
@@ -158,17 +161,45 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
     }
   };
 
+  // Poll Telegram getUpdates to auto-detect sender's user ID
+  const pollForOwnerId = async () => {
+    setPolling(true);
+    setError(null);
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${token.trim()}/getUpdates?limit=1&timeout=30`);
+      const data = await res.json();
+      const fromId = data?.result?.[0]?.message?.from?.id;
+      if (fromId) {
+        setOwnerUserId(String(fromId));
+        setStep('billing');
+      } else {
+        setError('No message received yet. Send any message to your bot and try again.');
+      }
+    } catch {
+      setError('Failed to poll for updates. Check your connection.');
+    } finally {
+      setPolling(false);
+    }
+  };
+
   const [deploying, setDeploying] = useState(false);
 
   const handleDeploy = async (plan: string) => {
     setDeploying(true);
     setError(null);
+    const resolvedOwnerId = ownerUserId || manualOwnerId;
+    if (!resolvedOwnerId.trim()) {
+      setError('Owner user ID is required.');
+      setDeploying(false);
+      return;
+    }
     try {
       await setupChannel({
         channel: channel.toLowerCase() as 'telegram' | 'discord' | 'slack',
         token: token.trim(),
         appToken: needsSecondToken ? secondToken.trim() : undefined,
         plan,
+        ownerUserId: resolvedOwnerId.trim(),
       });
       onClose();
     } catch (err) {
@@ -202,6 +233,7 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
             <span className="titlebar-step">
               {step === 'token' && 'Enter Bot Token'}
               {step === 'verified' && 'Bot Verified'}
+              {step === 'owner-id' && 'Identify Yourself'}
               {step === 'billing' && 'Select Plan'}
             </span>
           </div>
@@ -211,7 +243,9 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
         <div className="setup-progress">
           <div className={`progress-dot ${step === 'token' ? 'active' : 'done'}`} />
           <div className="progress-line" />
-          <div className={`progress-dot ${step === 'verified' ? 'active' : step === 'billing' ? 'done' : ''}`} />
+          <div className={`progress-dot ${step === 'verified' ? 'active' : ['owner-id','billing'].includes(step) ? 'done' : ''}`} />
+          <div className="progress-line" />
+          <div className={`progress-dot ${step === 'owner-id' ? 'active' : step === 'billing' ? 'done' : ''}`} />
           <div className="progress-line" />
           <div className={`progress-dot ${step === 'billing' ? 'active' : ''}`} />
         </div>
@@ -325,15 +359,68 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
 
             <Button
               className="deploy-btn"
-              onClick={() => setStep('billing')}
+              onClick={() => setStep('owner-id')}
             >
-              Choose Plan & Deploy
+              Continue
               <ArrowRight size={16} />
             </Button>
           </div>
         )}
 
-        {/* Step 3: Billing / Plan Selection */}
+        {/* Step 3: Identify Owner */}
+        {step === 'owner-id' && (
+          <div className="setup-step verified-step">
+            {channel === 'Telegram' ? (
+              <>
+                <div className="bot-card">
+                  <div className="bot-details">
+                    <h4>Send a message to your bot</h4>
+                    <span className="bot-username">Open Telegram, find your bot, and send any message to it.</span>
+                    <span className="bot-id">We'll automatically detect your user ID.</span>
+                  </div>
+                </div>
+                {error && <div className="token-error"><AlertCircle size={14} /><span>{error}</span></div>}
+                <Button className="deploy-btn" onClick={pollForOwnerId} disabled={polling}>
+                  {polling ? <><Loader2 size={16} className="spin" /> Waiting for message...</> : <><ArrowRight size={16} /> I sent a message</>}
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="bot-card">
+                  <div className="bot-details">
+                    <h4>Enter your {channel} user ID</h4>
+                    {channel === 'Discord' && <span className="bot-username">Enable Developer Mode in Settings → Advanced, then right-click your name → Copy User ID.</span>}
+                    {channel === 'Slack' && <span className="bot-username">Click your name in Slack → Profile → More → Copy member ID (starts with U).</span>}
+                  </div>
+                </div>
+                <div className="token-input-area">
+                  <label htmlFor="owner-id-input">Your {channel} User ID</label>
+                  <div className="token-input-wrapper">
+                    <input
+                      id="owner-id-input"
+                      type="text"
+                      placeholder={channel === 'Discord' ? '123456789012345678' : 'U0AF1SHKFD0'}
+                      value={manualOwnerId}
+                      onChange={(e) => { setManualOwnerId(e.target.value); setError(null); }}
+                      autoFocus
+                    />
+                  </div>
+                </div>
+                {error && <div className="token-error"><AlertCircle size={14} /><span>{error}</span></div>}
+                <Button className="deploy-btn" onClick={() => {
+                  if (!manualOwnerId.trim()) { setError('Please enter your user ID'); return; }
+                  setOwnerUserId(manualOwnerId.trim());
+                  setStep('billing');
+                }}>
+                  Continue <ArrowRight size={16} />
+                </Button>
+              </>
+            )}
+            <button className="back-link" onClick={() => setStep('verified')}>← Back</button>
+          </div>
+        )}
+
+        {/* Step 4: Billing / Plan Selection */}
         {step === 'billing' && (
           <div className="setup-step billing-step">
             {error && (
