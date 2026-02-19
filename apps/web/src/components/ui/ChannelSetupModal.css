@@ -44,7 +44,7 @@
 }
 
 .modal-content {
-    background: var(--bg-root);
+    background: #0C0E14;
     padding: 2.5rem;
     position: relative;
     z-index: 1;

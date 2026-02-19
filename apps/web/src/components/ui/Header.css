@@ -64,7 +64,7 @@
 
 .logo-text {
     font-weight: 700;
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     letter-spacing: -0.02em;
     background: linear-gradient(to right, #fff, #ccc);
     -webkit-background-clip: text;
@@ -79,7 +79,7 @@
 }
 
 .nav-link {
-    font-size: 1.05rem;
+    font-size: 0.95rem;
     color: var(--text-secondary);
     font-weight: 500;
     transition: color var(--transition-fast);
@@ -136,11 +136,10 @@
 }
 
 .status-icon {
-    font-size: 1.1rem;
+    font-size: 0.9rem;
 }
 
 .status-text {
-    font-size: 0.95rem;
     white-space: nowrap;
 }
 

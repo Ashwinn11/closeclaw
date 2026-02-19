@@ -62,7 +62,7 @@
 }
 
 .hero-title {
-    font-size: 4.5rem;
+    font-size: 3.5rem;
     line-height: 1.1;
     margin-bottom: 1.5rem;
     font-weight: 800;
@@ -70,7 +70,7 @@
 }
 
 .hero-subtitle {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     color: var(--text-secondary);
     margin-bottom: 2.5rem;
     line-height: 1.6;
@@ -106,7 +106,7 @@
 }
 
 .channel-btn span {
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     font-weight: 500;
     color: rgba(255, 255, 255, 0.7);
 }
@@ -242,7 +242,7 @@
 }
 
 .comparison-title {
-    font-size: 3.5rem;
+    font-size: 3rem;
     font-weight: 700;
     margin-bottom: 4rem;
     letter-spacing: -0.02em;
@@ -287,7 +287,7 @@
     padding: 0.75rem 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     color: var(--text-secondary);
-    font-size: 1.1rem;
+    font-size: 0.95rem;
 }
 
 .effort-list li .time {
@@ -300,7 +300,7 @@
     padding: 1.5rem 0;
     border-top: 2px solid rgba(255, 255, 255, 0.1);
     font-weight: 700;
-    font-size: 1.4rem;
+    font-size: 1.25rem;
     margin-bottom: 1rem;
 }
 
@@ -331,7 +331,6 @@
     color: var(--text-secondary);
     line-height: 1.6;
     margin-bottom: 2rem;
-    font-size: 1.15rem;
 }
 
 .instant-features {
@@ -344,7 +343,7 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     color: #fff;
 }
 
@@ -385,14 +384,14 @@
 }
 
 .bento-card h3 {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     margin-bottom: 0.5rem;
     position: relative;
     z-index: 2;
 }
 
 .bento-card p {
-    font-size: 1rem;
+    font-size: 0.9rem;
     color: var(--text-secondary);
     line-height: 1.5;
     position: relative;
@@ -670,7 +669,7 @@
 }
 
 .section-header h2 {
-    font-size: 3.5rem;
+    font-size: 3rem;
     margin-bottom: 1rem;
     background: linear-gradient(to right, #fff, #aaa);
     -webkit-background-clip: text;
@@ -680,7 +679,7 @@
 
 .section-header p {
     color: var(--text-secondary);
-    font-size: 1.25rem;
+    font-size: 1.1rem;
 }
 
 /* Beautiful Glass Footer (Ampere Style) */
@@ -737,7 +736,7 @@
     align-items: center;
     gap: 0.75rem;
     font-weight: 800;
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     letter-spacing: -0.03em;
     color: #fff;
 }
@@ -772,14 +771,14 @@
 
 .footer-links-col h4 {
     color: #fff;
-    font-size: 1.15rem;
+    font-size: 1rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
 }
 
 .footer-links-col a {
     color: rgba(255, 255, 255, 0.4);
-    font-size: 1rem;
+    font-size: 0.95rem;
     transition: all 0.3s ease;
     text-decoration: none;
     font-weight: 400;
@@ -792,7 +791,7 @@
 
 .copyright {
     margin-top: auto;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: rgba(255, 255, 255, 0.3);
 }
 

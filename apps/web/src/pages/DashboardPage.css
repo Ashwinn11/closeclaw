@@ -248,6 +248,7 @@
 }
 
 @keyframes statusPulse {
+
     0%,
     100% {
         opacity: 1;
@@ -685,10 +686,12 @@
         border-color: rgba(74, 144, 226, 0.4);
         transform: scale(1.02);
     }
+
     50% {
         background: rgba(74, 144, 226, 0.15);
         border-color: rgba(74, 144, 226, 0.3);
     }
+
     100% {
         background: rgba(74, 144, 226, 0.08);
         border-color: rgba(74, 144, 226, 0.2);

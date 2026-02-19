@@ -76,7 +76,9 @@ export const CronSetupModal: React.FC<CronSetupModalProps> = ({ onClose, onSucce
           </div>
           <div className="titlebar-center">
             <div className="titlebar-icon"><Clock size={16} /></div>
-            <span className="titlebar-title">New Scheduled Task</span>
+            <span className="titlebar-title">Cron Job</span>
+            <span className="titlebar-separator">—</span>
+            <span className="titlebar-step">New Scheduled Task</span>
           </div>
         </div>
 
