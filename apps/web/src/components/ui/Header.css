@@ -124,7 +124,7 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 20px;
     color: var(--text-secondary);
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     font-weight: 500;
     cursor: pointer;
     transition: all var(--transition-fast);
@@ -136,7 +136,7 @@
 }
 
 .status-icon {
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
 }
 
 .status-text {
@@ -238,7 +238,7 @@
 
 .status-error {
     margin: 0.5rem 0 0 0;
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     color: #ff6b6b;
 }
 

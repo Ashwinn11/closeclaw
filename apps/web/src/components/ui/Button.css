@@ -59,7 +59,7 @@
 /* Sizes */
 .btn-sm {
     padding: 0.4rem 0.8rem;
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     height: 32px;
 }
 

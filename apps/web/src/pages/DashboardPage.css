@@ -56,7 +56,7 @@
     gap: 10px;
     padding: 10px 14px;
     border-radius: 100px;
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     font-weight: 500;
     color: var(--text-secondary);
     background: none;
@@ -108,7 +108,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     font-weight: 700;
     flex-shrink: 0;
 }
@@ -120,7 +120,7 @@
 }
 
 .user-name {
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
@@ -128,7 +128,7 @@
 }
 
 .user-email {
-    font-size: var(--text-2xs);
+    font-size: var(--text-base);
     color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
@@ -183,7 +183,7 @@
 
 .header-subtitle {
     color: var(--text-secondary);
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
 }
 
 .server-status {
@@ -194,7 +194,7 @@
     background: rgba(39, 201, 63, 0.08);
     border: 1px solid rgba(39, 201, 63, 0.15);
     border-radius: 10px;
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     font-weight: 500;
     color: #27C93F;
     flex-shrink: 0;
@@ -262,7 +262,7 @@
 /* ─── Section Labels ──────────────────────────────────────────────────────── */
 
 .section-label {
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: var(--text-secondary);
@@ -322,7 +322,7 @@
 }
 
 .channel-desc {
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     color: var(--text-secondary);
     line-height: 1.4;
     margin-bottom: 1rem;
@@ -342,7 +342,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: var(--text-2xs);
+    font-size: var(--text-base);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -408,7 +408,7 @@
 .cron-tab-btn {
     padding: 8px 24px;
     border-radius: 100px;
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     font-weight: 500;
     color: var(--text-secondary);
     background: transparent;
@@ -435,7 +435,7 @@
     display: flex;
     align-items: center;
     gap: 1rem;
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     color: var(--text-secondary);
     margin-bottom: 3rem;
     width: 100%;
@@ -456,7 +456,7 @@
     align-items: center;
     gap: 4px;
     color: var(--accent-primary);
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     font-weight: 500;
     white-space: nowrap;
 }
@@ -607,7 +607,7 @@
 .cron-status-badge {
     padding: 2px 8px;
     border-radius: 6px;
-    font-size: var(--text-2xs);
+    font-size: var(--text-base);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -732,7 +732,7 @@
 }
 
 .usage-label {
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -769,7 +769,7 @@
 }
 
 .model-provider {
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-secondary);
@@ -793,7 +793,7 @@
 }
 
 .model-stat .stat-label {
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     color: var(--text-secondary);
     text-transform: uppercase;
 }
