@@ -59,10 +59,45 @@ export async function disconnectChannel(connectionId: string): Promise<{ message
     return request(`/api/channels/${connectionId}/disconnect`, { method: 'POST' });
 }
 
+export async function verifyChannel(channel: string, token: string): Promise<{ name: string; username: string; id: string }> {
+    return request('/api/channels/verify', {
+        method: 'POST',
+        body: JSON.stringify({ channel, token }),
+    });
+}
+
 // ─── Instances ─────────────────────────────────────────────────────────────
 
 export async function getMyInstance() {
     return request('/api/instances/mine');
+}
+
+export async function getCronJobs(): Promise<any[]> {
+    return request('/api/instances/mine/cron');
+}
+
+export async function createCronJob(params: any): Promise<any> {
+    return request('/api/instances/mine/cron', {
+        method: 'POST',
+        body: JSON.stringify(params),
+    });
+}
+
+export async function removeCronJob(id: string): Promise<any> {
+    return request('/api/instances/mine/cron/remove', {
+        method: 'POST',
+        body: JSON.stringify({ id }),
+    });
+}
+
+export async function getUsageStats(): Promise<{
+    messagesThisMonth: number;
+    tokensUsed: number;
+    costThisMonth: number;
+    apiCreditsLeft: number;
+    uptime: string;
+}> {
+    return request('/api/instances/mine/usage');
 }
 
 // ─── Auth ──────────────────────────────────────────────────────────────────

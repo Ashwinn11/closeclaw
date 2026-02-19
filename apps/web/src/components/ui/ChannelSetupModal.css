@@ -570,3 +570,28 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ─── Linking State ────────────────────────────────────────────────────────── */
+.linking-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+    gap: 1.5rem;
+}
+
+.linking-state h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.linking-state p {
+    color: var(--text-secondary);
+    max-width: 400px;
+    line-height: 1.6;
+    margin: 0;
+}

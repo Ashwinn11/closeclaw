@@ -10,11 +10,13 @@
         "lint": "eslint ."
     },
     "dependencies": {
-        "hono": "^4.7.10",
+        "@closeclaw/shared": "*",
         "@hono/node-server": "^1.14.1",
         "@supabase/supabase-js": "^2.49.8",
-        "ws": "^8.18.2",
-        "@closeclaw/shared": "*"
+        "@types/node-fetch": "^2.6.13",
+        "hono": "^4.7.10",
+        "node-fetch": "^3.3.2",
+        "ws": "^8.18.2"
     },
     "devDependencies": {
         "@types/node": "^24.10.1",

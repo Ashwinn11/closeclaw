@@ -7,7 +7,11 @@ import { supabase } from '../services/supabase.js';
  */
 export async function authMiddleware(c: Context, next: Next) {
     const authHeader = c.req.header('Authorization');
+    const path = c.req.path;
+    console.log(`[auth] Request to ${path}, Authorization: ${authHeader ? 'present' : 'MISSING'}`);
+
     if (!authHeader?.startsWith('Bearer ')) {
+        console.log(`[auth] Rejected ${path}: Missing or invalid Authorization header`);
         return c.json({ ok: false, error: 'Missing authorization' }, 401);
     }
 

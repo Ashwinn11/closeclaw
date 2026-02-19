@@ -33,6 +33,10 @@ export type GatewayRpcMethod =
     | 'config.get'
     | 'config.patch'
     | 'channels.status'
+    | 'cron.list'
+    | 'cron.add'
+    | 'cron.remove'
+    | 'sessions.usage'
     | 'health';
 
 export type GatewayRpcRequest = {

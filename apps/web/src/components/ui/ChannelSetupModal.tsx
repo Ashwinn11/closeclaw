@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from './Card';
 import { Button } from './Button';
 import { BrandIcons } from './BrandIcons';
-import { setupChannel } from '../../lib/api';
+import { setupChannel, verifyChannel, getMyInstance } from '../../lib/api';
 import { Check, Loader2, AlertCircle, Bot, ArrowRight } from 'lucide-react';
 import './ChannelSetupModal.css';
 
@@ -112,6 +112,21 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
   const [ownerInfo, setOwnerInfo] = useState<{ name?: string, username?: string } | null>(null);
   const [polling, setPolling] = useState(false);
   const [manualOwnerId, setManualOwnerId] = useState('');
+  const [hasInstance, setHasInstance] = useState(false);
+
+  useEffect(() => {
+    const checkInstance = async () => {
+      try {
+        const inst = await getMyInstance() as any;
+        if (inst && (inst.status === 'active' || inst.status === 'claimed' || inst.status === 'running')) {
+          setHasInstance(true);
+        }
+      } catch {
+        setHasInstance(false);
+      }
+    };
+    checkInstance();
+  }, []);
 
   const config = channelConfig[channel];
   const ChannelIcon = config.icon;
@@ -131,57 +146,12 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
     setError(null);
 
     try {
-      // For Telegram, we can actually verify via their public API
-      if (channel === 'Telegram') {
-        const res = await fetch(`https://api.telegram.org/bot${token.trim()}/getMe`);
-        const data = await res.json();
-        if (data.ok) {
-          setBotInfo({
-            name: data.result.first_name,
-            username: `@${data.result.username}`,
-            id: String(data.result.id),
-          });
-          setStep('verified');
-        } else {
-          setError('Invalid token — bot not found. Double-check with @BotFather.');
-        }
-      } else if (channel === 'Discord') {
-        const res = await fetch('https://discord.com/api/v10/users/@me', {
-          headers: { Authorization: `Bot ${token.trim()}` }
-        });
-        const data = await res.json();
-        if (res.ok) {
-          setBotInfo({
-            name: data.username,
-            username: `@${data.username}`,
-            id: data.id,
-          });
-          setStep('verified');
-        } else {
-          setError('Invalid Discord token or bot not found.');
-        }
-      } else if (channel === 'Slack') {
-        const res = await fetch('https://slack.com/api/auth.test', {
-          method: 'POST',
-          headers: { 
-            Authorization: `Bearer ${token.trim()}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        const data = await res.json();
-        if (data.ok) {
-          setBotInfo({
-            name: data.bot_id,
-            username: data.user,
-            id: data.user_id,
-          });
-          setStep('verified');
-        } else {
-          setError(`Slack verification failed: ${data.error}`);
-        }
-      }
-    } catch {
-      setError('Failed to verify token. Check your connection and try again.');
+      const data = await verifyChannel(channel.toLowerCase(), token.trim());
+      console.log('[setup] Verification result:', data);
+      setBotInfo(data);
+      setStep('verified');
+    } catch (err) {
+      setError((err as Error).message || 'Failed to verify token. Check your connection and try again.');
     } finally {
       setVerifying(false);
     }
@@ -263,7 +233,7 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
               {step === 'token' && 'Enter Bot Token'}
               {step === 'verified' && 'Bot Verified'}
               {step === 'owner-id' && 'Identify Yourself'}
-              {step === 'billing' && 'Select Plan'}
+              {step === 'billing' && (hasInstance ? 'Linking Bot...' : 'Select Plan')}
             </span>
           </div>
         </div>
@@ -275,8 +245,12 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
           <div className={`progress-dot ${step === 'verified' ? 'active' : ['owner-id','billing'].includes(step) ? 'done' : ''}`} />
           <div className="progress-line" />
           <div className={`progress-dot ${step === 'owner-id' ? 'active' : step === 'billing' ? 'done' : ''}`} />
-          <div className="progress-line" />
-          <div className={`progress-dot ${step === 'billing' ? 'active' : ''}`} />
+          {!hasInstance && (
+            <>
+              <div className="progress-line" />
+              <div className={`progress-dot ${step === 'billing' ? 'active' : ''}`} />
+            </>
+          )}
         </div>
 
         {/* Step 1: Token Entry — Split Layout */}
@@ -427,8 +401,8 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
                     </Button>
                   </div>
                 ) : (
-                  <Button className="deploy-btn" onClick={() => setStep('billing')}>
-                    Confirm and Continue <ArrowRight size={16} />
+                  <Button className="deploy-btn" onClick={() => { setStep('billing'); handleDeploy('Existing'); }}>
+                    {hasInstance ? 'Confirm and Link Bot' : 'Confirm and Continue'} <ArrowRight size={16} />
                   </Button>
                 )}
               </>
@@ -458,9 +432,14 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
                 <Button className="deploy-btn" onClick={() => {
                   if (!manualOwnerId.trim()) { setError('Please enter your user ID'); return; }
                   setOwnerUserId(manualOwnerId.trim());
-                  setStep('billing');
+                  if (hasInstance) {
+                    setStep('billing');
+                    handleDeploy('Existing');
+                  } else {
+                    setStep('billing');
+                  }
                 }}>
-                  Continue <ArrowRight size={16} />
+                  {hasInstance ? 'Link Bot to Instance' : 'Continue'} <ArrowRight size={16} />
                 </Button>
               </>
             )}
@@ -471,37 +450,47 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
         {/* Step 4: Billing / Plan Selection */}
         {step === 'billing' && (
           <div className="setup-step billing-step">
-            {error && (
-              <div className="error-msg" style={{ marginBottom: '1rem' }}>
-                <AlertCircle size={14} />
-                <span>{error}</span>
+            {hasInstance ? (
+              <div className="linking-state">
+                <Loader2 size={48} className="spin" />
+                <h3>Linking Bot to your Instance</h3>
+                <p>We're configuring your existing Gateway to handle the new {channel} connection.</p>
               </div>
-            )}
-            <div className="plan-grid">
-              {planData.map((plan) => (
-                <div
-                  key={plan.name}
-                  className={`plan-card ${plan.isPopular ? 'popular' : ''} ${deploying ? 'disabled' : ''}`}
-                  onClick={() => !deploying && handleDeploy(plan.name)}
-                >
-                  {plan.isPopular && <div className="popular-badge">Most Popular</div>}
-                  <h4>{plan.name}</h4>
-                  <div className="price">{plan.price}<span className="period">/mo</span></div>
-                  <ul className="features">
-                    {plan.features.map((f, i) => (
-                      <li key={i}><Check size={14} className="check-icon" /> {f}</li>
-                    ))}
-                  </ul>
-                  <Button variant={plan.isPopular ? 'primary' : 'secondary'} fullWidth disabled={deploying}>
-                    {deploying ? <><Loader2 size={14} className="spin" /> Deploying...</> : 'Deploy'}
-                  </Button>
+            ) : (
+              <>
+                {error && (
+                  <div className="error-msg" style={{ marginBottom: '1rem' }}>
+                    <AlertCircle size={14} />
+                    <span>{error}</span>
+                  </div>
+                )}
+                <div className="plan-grid">
+                  {planData.map((plan) => (
+                    <div
+                      key={plan.name}
+                      className={`plan-card ${plan.isPopular ? 'popular' : ''} ${deploying ? 'disabled' : ''}`}
+                      onClick={() => !deploying && handleDeploy(plan.name)}
+                    >
+                      {plan.isPopular && <div className="popular-badge">Most Popular</div>}
+                      <h4>{plan.name}</h4>
+                      <div className="price">{plan.price}<span className="period">/mo</span></div>
+                      <ul className="features">
+                        {plan.features.map((f, i) => (
+                          <li key={i}><Check size={14} className="check-icon" /> {f}</li>
+                        ))}
+                      </ul>
+                      <Button variant={plan.isPopular ? 'primary' : 'secondary'} fullWidth disabled={deploying}>
+                        {deploying ? <><Loader2 size={14} className="spin" /> Deploying...</> : 'Deploy'}
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            <button className="back-link" onClick={() => setStep('verified')} disabled={deploying}>
-              ← Back to bot details
-            </button>
+                <button className="back-link" onClick={() => setStep('verified')} disabled={deploying}>
+                  ← Back to bot details
+                </button>
+              </>
+            )}
           </div>
         )}
       </Card>

@@ -27,7 +27,7 @@ The application:
 
 | Provider | Model ID | Alias | Role |
 |----------|----------|-------|------|
-| Google | `google/gemini-3-flash-preview` | Gemini | **Primary (default)** |
+| Google | `google/gemini-3-pro-preview` | Gemini | **Primary (default)** |
 | Anthropic | `anthropic/claude-sonnet-4-6` | Sonnet | Fallback 1 |
 | OpenAI | `openai/gpt-5.2-codex` | Codex | Fallback 2 |
 
@@ -587,17 +587,17 @@ Pre-baked config template for machine image:
     defaults: {
       workspace: "~/.openclaw/workspace",
       model: {
-        primary: "google/gemini-3-flash-preview",
+        primary: "google/gemini-3-pro-preview",
         fallbacks: ["anthropic/claude-sonnet-4-6", "openai/gpt-5.2-codex"],
       },
       models: {
-        "google/gemini-3-flash-preview": { alias: "Gemini" },
+        "google/gemini-3-pro-preview": { alias: "Gemini" },
         "anthropic/claude-sonnet-4-6": { alias: "Sonnet" },
         "openai/gpt-5.2-codex": { alias: "Codex" },
       },
     },
   },
-  session: { dmScope: "per-channel-peer" },
+  session: { dmScope: "main" },
 }
 ```
 
@@ -750,7 +750,7 @@ All API keys are operator-provided and stored in `.env`. Users never provide the
 
 Keys are injected into each OpenClaw instance at image build time or via environment variables:
 
-- `GEMINI_API_KEY` — Google Gemini (primary model: `google/gemini-3-flash-preview`)
+- `GEMINI_API_KEY` — Google Gemini (primary model: `google/gemini-3-pro-preview`)
 - `ANTHROPIC_API_KEY` — Anthropic (`anthropic/claude-sonnet-4-6`)
 - `OPENAI_API_KEY` — OpenAI (`openai/gpt-5.2-codex`)
 - `GOG_KEYRING_PASSWORD` — Gmail keyring

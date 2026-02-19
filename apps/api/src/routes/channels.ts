@@ -2,26 +2,95 @@ import { Hono } from 'hono';
 import { authMiddleware } from '../middleware/auth.js';
 import { supabase } from '../services/supabase.js';
 import { createGatewayRpcClient } from '../services/gateway-rpc.js';
+import fetch from 'node-fetch';
+import { Agent } from 'node:https';
+
+const ipv4Agent = new Agent({ family: 4 });
 
 
 export const channelRoutes = new Hono();
 
-// All channel routes require authentication
-channelRoutes.use('*', authMiddleware);
-
 /**
- * POST /api/channels/setup
- * 
- * Full channel setup flow:
- * 1. Check if user has an instance (or claim one)
- * 2. Build the channel config patch based on channel type
- * 3. Connect to Gateway via WS RPC
- * 4. Call config.patch to enable the channel
- * 5. Store the channel connection in DB
- * 
  * In dev mode (no GCP infra): skips instance claiming and Gateway RPC,
  * saves the connection directly to DB as active.
  */
+
+/**
+ * POST /api/channels/verify
+ * Backend proxy for bot token verification (bypasses CORS)
+ */
+channelRoutes.post('/verify', async (c) => {
+    try {
+        const body = await c.req.json();
+        const { channel, token } = body as { channel: string, token: string };
+
+        console.log(`[verify] Verifying ${channel}...`);
+
+        if (channel === 'telegram') {
+            const res = await fetch(`https://api.telegram.org/bot${token}/getMe`, { agent: ipv4Agent });
+            const data = await res.json() as any;
+            if (res.ok && data.ok) {
+                return c.json({
+                    ok: true,
+                    data: {
+                        name: data.result.first_name,
+                        username: `@${data.result.username}`,
+                        id: String(data.result.id)
+                    }
+                });
+            }
+            return c.json({ ok: false, error: data.description || 'Telegram verification failed' }, 401);
+        } else if (channel === 'discord') {
+            const res = await fetch('https://discord.com/api/v10/users/@me', {
+                headers: { Authorization: `Bot ${token}` },
+                agent: ipv4Agent
+            });
+            const data = await res.json() as any;
+            if (res.ok) {
+                return c.json({
+                    ok: true,
+                    data: {
+                        name: data.username,
+                        username: `@${data.username}`,
+                        id: data.id
+                    }
+                });
+            }
+            return c.json({ ok: false, error: data.message || 'Discord verification failed' }, 401);
+        } else if (channel === 'slack') {
+            const res = await fetch('https://slack.com/api/auth.test', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                agent: ipv4Agent
+            });
+            const data = await res.json() as any;
+            console.log('[verify] Slack auth.test response:', data);
+
+            if (res.ok && data.ok) {
+                return c.json({
+                    ok: true,
+                    data: {
+                        name: data.user || data.app_name || data.bot_id || 'Slack Bot',
+                        username: data.team ? `Workspace: ${data.team}` : 'Slack Application',
+                        id: data.user_id || data.bot_id || data.app_id || 'N/A'
+                    }
+                });
+            }
+            return c.json({ ok: false, error: data.error || 'Slack verification failed' }, 401);
+        }
+        return c.json({ ok: false, error: 'Unsupported channel for verification' }, 400);
+    } catch (err) {
+        console.error('[verify] Internal error:', err);
+        return c.json({ ok: false, error: (err as Error).message || 'Verification service unreachable' }, 500);
+    }
+});
+
+// All other channel routes require authentication
+channelRoutes.use('*', authMiddleware);
+
 channelRoutes.post('/setup', async (c) => {
     const userId = c.get('userId' as never) as string;
     const body = await c.req.json();
@@ -47,19 +116,29 @@ channelRoutes.post('/setup', async (c) => {
 
     // ─── Dev Mode: Skip infra, save directly to DB ──────────────────────────
 
-    // Check if there are any instances in the pool
-    const { count } = await supabase
+    // ─── Infra Detection ─────────────────────────────────────────────────────
+
+    // Check if user already has an instance (claimed or active)
+    const { data: userInstance } = await supabase
+        .from('instances')
+        .select('id')
+        .eq('user_id', userId)
+        .in('status', ['claimed', 'active'])
+        .maybeSingle();
+
+    // Check if there are any available instances in the pool
+    const { count: availableCount } = await supabase
         .from('instances')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'available');
 
-    const hasInfra = (count ?? 0) > 0;
+    const hasInfra = !!userInstance || (availableCount ?? 0) > 0;
 
     if (!hasInfra) {
-        // No infrastructure available — save channel connection directly (dev mode)
-        console.log(`[dev] No instances in pool — saving ${channel} connection directly for user ${userId}`);
+        // No infrastructure available anywhere — save channel connection directly (dev mode)
+        console.log(`[dev] No instances available or claimed — saving ${channel} connection directly for user ${userId}`);
 
-        // Check for duplicate
+        // ... (rest of the dev mode logic remains same)
         const { data: existing } = await supabase
             .from('channel_connections')
             .select('id')
@@ -78,26 +157,20 @@ channelRoutes.post('/setup', async (c) => {
                 user_id: userId,
                 instance_id: null,
                 channel,
-                status: 'active', // Mark active so dashboard shows it
+                status: 'active',
             })
             .select()
             .single();
 
-        if (connErr) {
-            return c.json({ ok: false, error: connErr.message }, 500);
-        }
+        if (connErr) return c.json({ ok: false, error: connErr.message }, 500);
 
-        // Update user plan
-        await supabase
-            .from('users')
-            .update({ plan: plan.toLowerCase() })
-            .eq('id', userId);
+        await supabase.from('users').update({ plan: plan.toLowerCase() }).eq('id', userId);
 
         return c.json({
             ok: true,
             data: {
                 connection,
-                message: `${channel} channel saved (dev mode — no Gateway RPC). Will connect when infrastructure is provisioned.`,
+                message: `${channel} channel saved (dev mode — no Gateway RPC).`,
                 devMode: true,
             },
         });
@@ -204,9 +277,30 @@ channelRoutes.post('/setup', async (c) => {
         const config = await rpc.call('config.get') as { hash: string };
         const baseHash = config.hash;
 
-        // 2. Patch config using the Gateway protocol: needs 'raw' JSON string and 'baseHash'
+        // 2. Build the full config patch (channels + agents + session)
+        const fullPatch = {
+            channels: channelPatch,
+            agents: {
+                defaults: {
+                    model: {
+                        primary: "google/gemini-3-pro-preview",
+                        fallbacks: ["anthropic/claude-sonnet-4-6", "openai/gpt-5.2-codex"],
+                    },
+                    models: {
+                        "google/gemini-3-pro-preview": { alias: "Gemini" },
+                        "anthropic/claude-sonnet-4-6": { alias: "Sonnet" },
+                        "openai/gpt-5.2-codex": { alias: "Codex" },
+                    },
+                },
+            },
+            session: {
+                dmScope: "main"
+            }
+        };
+
+        // 3. Patch config using the Gateway protocol
         await rpc.call('config.patch', {
-            raw: JSON.stringify({ channels: channelPatch }),
+            raw: JSON.stringify(fullPatch),
             baseHash
         });
 
@@ -226,23 +320,14 @@ channelRoutes.post('/setup', async (c) => {
 
         return c.json({
             ok: true,
-            data: { connection, message: `${channel} channel enabled with dmPolicy: open` },
+            data: { connection, message: `${channel} channel enabled successfully` },
         });
     } catch (err) {
-        const { data: connection } = await supabase
-            .from('channel_connections')
-            .insert({ user_id: userId, instance_id: inst.id as string, channel, status: 'pending' })
-            .select()
-            .single();
-
+        console.error('[setup] Gateway RPC failed:', err);
         return c.json({
-            ok: true,
-            data: {
-                connection,
-                message: 'Gateway unreachable. Channel saved and will be configured when instance comes online.',
-                gatewayError: (err as Error).message,
-            },
-        });
+            ok: false,
+            error: `Gateway configuration failed: ${(err as Error).message}`,
+        }, 500);
     } finally {
         rpc.disconnect();
     }
@@ -317,3 +402,5 @@ channelRoutes.post('/:id/disconnect', async (c) => {
 
     return c.json({ ok: true, data: { message: `${connection.channel} disconnected` } });
 });
+
+

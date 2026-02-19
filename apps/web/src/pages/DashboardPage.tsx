@@ -5,10 +5,11 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { BrandIcons } from '../components/ui/BrandIcons';
 import { ChannelSetupModal } from '../components/ui/ChannelSetupModal';
-import { listChannels, disconnectChannel, type ChannelConnection } from '../lib/api';
+import { CronSetupModal } from '../components/ui/CronSetupModal';
+import { listChannels, disconnectChannel, type ChannelConnection, getCronJobs, getUsageStats, removeCronJob } from '../lib/api';
 import {
   LogOut, Wifi, WifiOff, Clock, BarChart3,
-  Plus, MoreHorizontal, Activity, Zap, Loader2,
+  Plus, MoreHorizontal, Activity, Zap, Loader2, AlertCircle, Calendar, Trash2
 } from 'lucide-react';
 import './DashboardPage.css';
 
@@ -35,43 +36,87 @@ const upcomingChannels = [
   { name: 'Matrix', color: '#0DBD8B' },
 ];
 
-const mockCronJobs = [
-  { id: 1, name: 'Daily Digest', schedule: '0 9 * * *', status: 'active', lastRun: '2h ago' },
-  { id: 2, name: 'Weekly Report', schedule: '0 8 * * 1', status: 'active', lastRun: '3d ago' },
-  { id: 3, name: 'Cache Cleanup', schedule: '0 */6 * * *', status: 'paused', lastRun: '6h ago' },
-];
-
-const mockUsageData = {
-  messagesThisMonth: 2847,
-  tokensUsed: '1.2M',
-  apiCreditsLeft: '$18.40',
-  uptime: '99.97%',
-};
+// No longer using global mock constants
 
 export const DashboardPage: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('connections');
   const [setupChannel, setSetupChannel] = useState<ChannelType | null>(null);
+  const [showCronModal, setShowCronModal] = useState(false);
   const [connections, setConnections] = useState<ChannelConnection[]>([]);
   const [loadingChannels, setLoadingChannels] = useState(true);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
+
+  // Cron State
+  const [cronJobs, setCronJobs] = useState<any[]>([]);
+  const [loadingCron, setLoadingCron] = useState(false);
+  const [cronError, setCronError] = useState<string | null>(null);
+
+  // Usage State
+  const [usageData, setUsageData] = useState<any>(null);
+  const [loadingUsage, setLoadingUsage] = useState(false);
+  const [usageError, setUsageError] = useState<string | null>(null);
 
   const fetchChannels = useCallback(async () => {
     try {
       const data = await listChannels();
       setConnections(data);
     } catch {
-      // API might not be running — show empty state
       setConnections([]);
     } finally {
       setLoadingChannels(false);
     }
   }, []);
 
+  const fetchCron = useCallback(async () => {
+    setLoadingCron(true);
+    setCronError(null);
+    try {
+      const data = await getCronJobs();
+      setCronJobs(data);
+    } catch (err: any) {
+      setCronError(err.message || 'Failed to fetch cron jobs');
+    } finally {
+      setLoadingCron(false);
+    }
+  }, []);
+
+  const fetchUsage = useCallback(async () => {
+    setLoadingUsage(true);
+    setUsageError(null);
+    try {
+      const data = await getUsageStats();
+      setUsageData(data);
+    } catch (err: any) {
+      setUsageError(err.message || 'Failed to fetch usage data');
+    } finally {
+      setLoadingUsage(false);
+    }
+  }, []);
+
+  const handleNewCron = () => {
+    setShowCronModal(true);
+  };
+
+  const handleDeleteCron = async (id: string, name: string) => {
+    if (!window.confirm(`Are you sure you want to remove the cron job "${name || id}"?`)) return;
+    try {
+      await removeCronJob(id);
+      fetchCron(); // Refresh
+    } catch (err: any) {
+      alert(`Failed to remove job: ${err.message}`);
+    }
+  };
+
   useEffect(() => {
     fetchChannels();
   }, [fetchChannels]);
+
+  useEffect(() => {
+    if (activeTab === 'cron') fetchCron();
+    if (activeTab === 'usage') fetchUsage();
+  }, [activeTab, fetchCron, fetchUsage]);
 
   const getChannelStatus = (key: string): { status: 'active' | 'pending' | 'inactive'; connectionId?: string } => {
     const conn = connections.find(c => c.channel === key && (c.status === 'active' || c.status === 'pending'));
@@ -244,27 +289,60 @@ export const DashboardPage: React.FC = () => {
             <div className="cron-tab">
               <div className="cron-header">
                 <div className="section-label">Scheduled Jobs</div>
-                <Button size="sm" className="add-cron-btn">
+                <Button size="sm" className="add-cron-btn" onClick={handleNewCron}>
                   <Plus size={14} /> New Job
                 </Button>
               </div>
               <div className="cron-list">
-                {mockCronJobs.map((job) => (
-                  <Card key={job.id} className="cron-card">
-                    <div className="cron-info">
-                      <div className="cron-name-row">
-                        <Activity size={16} className={job.status === 'active' ? 'cron-active' : 'cron-paused'} />
-                        <h4>{job.name}</h4>
-                        <span className={`cron-status-badge ${job.status}`}>{job.status}</span>
+                {loadingCron ? (
+                  <div className="loading-state">
+                    <Loader2 size={24} className="spin" />
+                    <span>Fetching jobs from Gateway...</span>
+                  </div>
+                ) : cronError ? (
+                  <div className="error-state">
+                    <AlertCircle size={24} />
+                    <span>{cronError}</span>
+                    <Button size="sm" variant="ghost" onClick={fetchCron}>Retry</Button>
+                  </div>
+                ) : cronJobs.length === 0 ? (
+                  <div className="empty-state">
+                    <span>No scheduled jobs found.</span>
+                  </div>
+                ) : (
+                  cronJobs.map((job) => (
+                    <Card key={job.id} className="cron-card">
+                      <div className="cron-info">
+                        <div className="cron-name-row">
+                          <Activity size={16} className={job.disabled ? 'cron-paused' : 'cron-active'} />
+                          <h4>{job.name || job.id}</h4>
+                          <span className={`cron-status-badge ${job.disabled ? 'paused' : 'active'}`}>
+                            {job.disabled ? 'paused' : 'active'}
+                          </span>
+                        </div>
+                        <div className="cron-meta">
+                          <code>{
+                            typeof job.schedule === 'string' 
+                              ? job.schedule 
+                              : (job.schedule?.expr || job.schedule?.at || JSON.stringify(job.schedule))
+                          }</code>
+                          {job.lastRunAt && (
+                            <span className="cron-last-run">
+                              Last run: {new Date(job.lastRunAt).toLocaleDateString()} {new Date(job.lastRunAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="cron-meta">
-                        <code>{job.schedule}</code>
-                        <span className="cron-last-run">Last run: {job.lastRun}</span>
-                      </div>
-                    </div>
-                    <button className="channel-menu"><MoreHorizontal size={16} /></button>
-                  </Card>
-                ))}
+                      <button 
+                        className="cron-delete-btn" 
+                        onClick={() => handleDeleteCron(job.id, job.name)}
+                        title="Delete cron job"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </Card>
+                  ))
+                )}
               </div>
             </div>
           )}
@@ -272,28 +350,69 @@ export const DashboardPage: React.FC = () => {
           {/* Usage Tab */}
           {activeTab === 'usage' && (
             <div className="usage-tab">
-              <div className="section-label">This Month</div>
+              <div className="section-label"><Calendar size={14} style={{ marginRight: '6px' }} /> Last 30 Days</div>
               <div className="usage-grid">
-                <Card className="usage-card">
-                  <div className="usage-icon"><Zap size={20} /></div>
-                  <div className="usage-value">{mockUsageData.messagesThisMonth.toLocaleString()}</div>
-                  <div className="usage-label">Messages Processed</div>
-                </Card>
-                <Card className="usage-card">
-                  <div className="usage-icon tokens"><BarChart3 size={20} /></div>
-                  <div className="usage-value">{mockUsageData.tokensUsed}</div>
-                  <div className="usage-label">Tokens Used</div>
-                </Card>
-                <Card className="usage-card">
-                  <div className="usage-icon credits"><Activity size={20} /></div>
-                  <div className="usage-value">{mockUsageData.apiCreditsLeft}</div>
-                  <div className="usage-label">API Credits Remaining</div>
-                </Card>
-                <Card className="usage-card">
-                  <div className="usage-icon uptime"><Wifi size={20} /></div>
-                  <div className="usage-value">{mockUsageData.uptime}</div>
-                  <div className="usage-label">Uptime</div>
-                </Card>
+                {loadingUsage ? (
+                  <div className="loading-state" style={{ gridColumn: '1 / -1' }}>
+                    <Loader2 size={24} className="spin" />
+                    <span>Calculating usage...</span>
+                  </div>
+                ) : usageError ? (
+                  <div className="error-state" style={{ gridColumn: '1 / -1' }}>
+                    <AlertCircle size={24} />
+                    <span>{usageError}</span>
+                    <Button size="sm" variant="ghost" onClick={fetchUsage}>Retry</Button>
+                  </div>
+                ) : usageData ? (
+                  <>
+                    <Card className="usage-card">
+                      <div className="usage-icon"><Zap size={20} /></div>
+                      <div className="usage-value">{usageData.messagesThisMonth.toLocaleString()}</div>
+                      <div className="usage-label">Messages</div>
+                    </Card>
+                    <Card className="usage-card">
+                      <div className="usage-icon tokens"><BarChart3 size={20} /></div>
+                      <div className="usage-value">{(usageData.tokensUsed / 1000).toFixed(1)}k</div>
+                      <div className="usage-label">Tokens Used</div>
+                    </Card>
+                    <Card className="usage-card">
+                      <div className="usage-icon credits"><Activity size={20} /></div>
+                      <div className="usage-value">${Number(usageData.costThisMonth).toFixed(4)}</div>
+                      <div className="usage-label">Total Cost</div>
+                    </Card>
+                    <Card className="usage-card">
+                      <div className="usage-icon uptime"><Wifi size={20} /></div>
+                      <div className="usage-value">{usageData.uptime}</div>
+                      <div className="usage-label">Uptime</div>
+                    </Card>
+
+                    {usageData.byModel && usageData.byModel.length > 0 && (
+                      <div className="model-usage-section">
+                        <div className="section-label" style={{ marginTop: '2rem' }}>Breakdown by Model</div>
+                        <div className="model-usage-list">
+                          {usageData.byModel.map((item: any, idx: number) => (
+                            <Card key={idx} className="model-usage-item">
+                              <div className="model-info">
+                                <span className="model-name">{item.model}</span>
+                                <span className="model-provider">{item.provider}</span>
+                              </div>
+                              <div className="model-stats">
+                                <div className="model-stat">
+                                  <span className="stat-value">{(item.totals.totalTokens / 1000).toFixed(1)}k</span>
+                                  <span className="stat-label">Tokens</span>
+                                </div>
+                                <div className="model-stat">
+                                  <span className="stat-value">${Number(item.totals.totalCost).toFixed(4)}</span>
+                                  <span className="stat-label">Cost</span>
+                                </div>
+                              </div>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : null}
               </div>
             </div>
           )}
@@ -305,6 +424,14 @@ export const DashboardPage: React.FC = () => {
         <ChannelSetupModal
           channel={setupChannel}
           onClose={handleModalClose}
+        />
+      )}
+
+      {/* Cron Setup Modal */}
+      {showCronModal && (
+        <CronSetupModal
+          onClose={() => setShowCronModal(false)}
+          onSuccess={fetchCron}
         />
       )}
     </div>
