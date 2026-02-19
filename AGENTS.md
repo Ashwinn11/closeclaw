@@ -183,34 +183,31 @@ Generate strong secrets: `openssl rand -hex 32`. Do not commit this file.
 #### 7) Docker Compose configuration
 
 ```yaml
+# NOTE: network_mode: host is required. Without it, Docker bridge networking
+# causes internal tool connections to appear as non-local (172.18.x.x),
+# rejecting device pairing with "pairing required". Do NOT add a ports: section.
 services:
   openclaw-gateway:
     image: ${OPENCLAW_IMAGE}
-    build: .
+    network_mode: host
     restart: unless-stopped
-    env_file:
-      - .env
     environment:
-      - HOME=/home/node
-      - NODE_ENV=production
-      - TERM=xterm-256color
-      - OPENCLAW_GATEWAY_BIND=${OPENCLAW_GATEWAY_BIND}
-      - OPENCLAW_GATEWAY_PORT=${OPENCLAW_GATEWAY_PORT}
-      - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN}
-      - GOG_KEYRING_PASSWORD=${GOG_KEYRING_PASSWORD}
-      - XDG_CONFIG_HOME=${XDG_CONFIG_HOME}
-      - PATH=/home/linuxbrew/.linuxbrew/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      HOME: /home/node
+      TERM: xterm-256color
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GOG_KEYRING_PASSWORD: ${GOG_KEYRING_PASSWORD}
+      XDG_CONFIG_HOME: /home/node/.openclaw
     volumes:
       - ${OPENCLAW_CONFIG_DIR}:/home/node/.openclaw
       - ${OPENCLAW_WORKSPACE_DIR}:/home/node/.openclaw/workspace
-    ports:
-      # Keep loopback-only; access via SSH tunnel. Remove 127.0.0.1: to expose publicly.
-      - "127.0.0.1:${OPENCLAW_GATEWAY_PORT}:18789"
     command:
       [
         "node", "dist/index.js", "gateway",
-        "--bind", "${OPENCLAW_GATEWAY_BIND}",
-        "--port", "${OPENCLAW_GATEWAY_PORT}",
+        "--bind", "${OPENCLAW_GATEWAY_BIND:-lan}",
+        "--port", "18789",
       ]
 ```
 

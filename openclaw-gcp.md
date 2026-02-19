@@ -19,7 +19,7 @@ This guide uses Debian on GCP Compute Engine. Ubuntu also works; map packages ac
 ​
 Quick path (experienced operators)
 Create GCP project + enable Compute Engine API
-Create Compute Engine VM (e2-small, Debian 12, 20GB)
+Create Compute Engine VM (e2-medium, Debian 12, 20GB)
 SSH into the VM
 Install Docker
 Clone OpenClaw repository
@@ -65,12 +65,13 @@ Navigate to APIs & Services > Enable APIs > search “Compute Engine API” > En
 3) Create the VM
 Machine types:
 Type	Specs	Cost	Notes
-e2-small	2 vCPU, 2GB RAM	~$12/mo	Recommended
+e2-medium	2 vCPU, 4GB RAM	~$24/mo	Recommended
+e2-small	2 vCPU, 2GB RAM	~$12/mo	Minimum viable
 e2-micro	2 vCPU (shared), 1GB RAM	Free tier eligible	May OOM under load
 CLI:
 gcloud compute instances create openclaw-gateway \
   --zone=us-central1-a \
-  --machine-type=e2-small \
+  --machine-type=e2-medium \
   --boot-disk-size=20GB \
   --image-family=debian-12 \
   --image-project=debian-cloud
@@ -78,7 +79,7 @@ Console:
 Go to Compute Engine > VM instances > Create instance
 Name: openclaw-gateway
 Region: us-central1, Zone: us-central1-a
-Machine type: e2-small
+Machine type: e2-medium
 Boot disk: Debian 12, 20GB
 Create
 ​
@@ -115,54 +116,60 @@ mkdir -p ~/.openclaw/workspace
 8) Configure environment variables
 Create .env in the repository root.
 OPENCLAW_IMAGE=openclaw:latest
-OPENCLAW_GATEWAY_TOKEN=change-me-now
-OPENCLAW_GATEWAY_BIND=lan
+OPENCLAW_GATEWAY_TOKEN=change-me-now   # generate: openssl rand -hex 32
+OPENCLAW_GATEWAY_BIND=lan              # server bind mode — lan = 0.0.0.0
 OPENCLAW_GATEWAY_PORT=18789
 
 OPENCLAW_CONFIG_DIR=/home/$USER/.openclaw
 OPENCLAW_WORKSPACE_DIR=/home/$USER/.openclaw/workspace
 
-GOG_KEYRING_PASSWORD=change-me-now
+# AI provider keys
+GEMINI_API_KEY=
+OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
+
+GOG_KEYRING_PASSWORD=change-me-now     # generate: openssl rand -hex 32
 XDG_CONFIG_HOME=/home/node/.openclaw
-Generate strong secrets:
-openssl rand -hex 32
+
+NOTE: Do NOT set gateway.bind in openclaw.json — leave it unset so internal
+tool clients default to ws://127.0.0.1 (required for device pairing with network_mode: host).
 Do not commit this file.
 ​
 9) Docker Compose configuration
 Create or update docker-compose.yml.
+
+CRITICAL: Use network_mode: host. This is required so that internal tool-to-gateway
+connections use 127.0.0.1 (loopback), which enables device pairing auto-approval.
+With Docker bridge networking, internal connections use the bridge IP (172.18.x.x),
+which the gateway treats as non-local and rejects with "pairing required".
+Do NOT add a ports: section — it is incompatible with network_mode: host.
+
 services:
   openclaw-gateway:
     image: ${OPENCLAW_IMAGE}
-    build: .
+    network_mode: host
     restart: unless-stopped
-    env_file:
-      - .env
     environment:
-      - HOME=/home/node
-      - NODE_ENV=production
-      - TERM=xterm-256color
-      - OPENCLAW_GATEWAY_BIND=${OPENCLAW_GATEWAY_BIND}
-      - OPENCLAW_GATEWAY_PORT=${OPENCLAW_GATEWAY_PORT}
-      - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN}
-      - GOG_KEYRING_PASSWORD=${GOG_KEYRING_PASSWORD}
-      - XDG_CONFIG_HOME=${XDG_CONFIG_HOME}
-      - PATH=/home/linuxbrew/.linuxbrew/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      HOME: /home/node
+      TERM: xterm-256color
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GOG_KEYRING_PASSWORD: ${GOG_KEYRING_PASSWORD}
+      XDG_CONFIG_HOME: /home/node/.openclaw
     volumes:
       - ${OPENCLAW_CONFIG_DIR}:/home/node/.openclaw
       - ${OPENCLAW_WORKSPACE_DIR}:/home/node/.openclaw/workspace
-    ports:
-      # Recommended: keep the Gateway loopback-only on the VM; access via SSH tunnel.
-      # To expose it publicly, remove the `127.0.0.1:` prefix and firewall accordingly.
-      - "127.0.0.1:${OPENCLAW_GATEWAY_PORT}:18789"
     command:
       [
         "node",
         "dist/index.js",
         "gateway",
         "--bind",
-        "${OPENCLAW_GATEWAY_BIND}",
+        "${OPENCLAW_GATEWAY_BIND:-lan}",
         "--port",
-        "${OPENCLAW_GATEWAY_PORT}",
+        "18789",
       ]
 ​
 10) Bake required binaries into the image (critical)
@@ -266,14 +273,14 @@ Check your OS Login profile:
 gcloud compute os-login describe-profile
 Ensure your account has the required IAM permissions (Compute OS Login or Compute OS Admin Login).
 Out of memory (OOM)
-If using e2-micro and hitting OOM, upgrade to e2-small or e2-medium:
+If using e2-micro and hitting OOM, upgrade to e2-medium:
 # Stop the VM first
 gcloud compute instances stop openclaw-gateway --zone=us-central1-a
 
 # Change machine type
 gcloud compute instances set-machine-type openclaw-gateway \
   --zone=us-central1-a \
-  --machine-type=e2-small
+  --machine-type=e2-medium
 
 # Start the VM
 gcloud compute instances start openclaw-gateway --zone=us-central1-a
