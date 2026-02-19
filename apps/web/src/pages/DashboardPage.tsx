@@ -249,7 +249,7 @@ export const DashboardPage: React.FC = () => {
                         {status === 'active' || status === 'pending' ? (
                           <Button
                             className="channel-action-btn"
-                            variant="ghost"
+                            variant="secondary"
                             size="sm"
                             onClick={() => connectionId && handleDisconnect(connectionId)}
                             disabled={isDisconnecting}
@@ -303,7 +303,7 @@ export const DashboardPage: React.FC = () => {
                   <div className="error-state">
                     <AlertCircle size={24} />
                     <span>{cronError}</span>
-                    <Button size="sm" variant="ghost" onClick={fetchCron}>Retry</Button>
+                    <Button size="sm" variant="secondary" onClick={fetchCron}>Retry</Button>
                   </div>
                 ) : cronJobs.length === 0 ? (
                   <div className="empty-state">
@@ -361,7 +361,7 @@ export const DashboardPage: React.FC = () => {
                   <div className="error-state" style={{ gridColumn: '1 / -1' }}>
                     <AlertCircle size={24} />
                     <span>{usageError}</span>
-                    <Button size="sm" variant="ghost" onClick={fetchUsage}>Retry</Button>
+                    <Button size="sm" variant="secondary" onClick={fetchUsage}>Retry</Button>
                   </div>
                 ) : usageData ? (
                   <>

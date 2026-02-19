@@ -116,6 +116,17 @@
     resize: none;
 }
 
+.step-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.step-actions button {
+    flex: 1;
+}
+
 .modal-overlay {
     position: fixed;
     top: 0;

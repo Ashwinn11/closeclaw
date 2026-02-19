@@ -315,23 +315,22 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
                   </div>
                 )}
 
-                <Button
-                  className="verify-btn"
-                  onClick={handleVerify}
-                  disabled={verifying || !token.trim() || (needsSecondToken && !secondToken.trim())}
-                >
-                  {verifying ? (
-                    <>
-                      <Loader2 size={16} className="spin" />
-                      Verifying...
-                    </>
-                  ) : (
-                    <>
-                      Verify Bot
-                      <ArrowRight size={16} />
-                    </>
-                  )}
-                </Button>
+                <div className="step-actions">
+                  <Button
+                    className="verify-btn"
+                    variant="primary"
+                    size="md"
+                    onClick={handleVerify}
+                    disabled={verifying}
+                    fullWidth
+                  >
+                    {verifying ? (
+                      <><Loader2 size={16} className="spin" /> Verifying...</>
+                    ) : (
+                      <>Verify Token <ArrowRight size={16} /></>
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -360,13 +359,16 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
               agent server. Choose a plan to deploy.
             </p>
 
-            <Button
-              className="deploy-btn"
-              onClick={() => setStep('owner-id')}
-            >
-              Continue
-              <ArrowRight size={16} />
-            </Button>
+            <div className="step-actions">
+              <Button variant="secondary" onClick={() => setStep('token')}>← Back</Button>
+              <Button
+                className="deploy-btn"
+                onClick={() => setStep('owner-id')}
+              >
+                Continue
+                <ArrowRight size={16} />
+              </Button>
+            </div>
           </div>
         )}
 
@@ -394,17 +396,18 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
                 </div>
                 {error && <div className="token-error"><AlertCircle size={14} /><span>{error}</span></div>}
                 
-                {!ownerUserId ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div className="step-actions">
+                  <Button variant="secondary" onClick={() => setStep('verified')}>← Back</Button>
+                  {!ownerUserId ? (
                     <Button className="deploy-btn" onClick= {pollForOwnerId} disabled={polling}>
                       {polling ? <><Loader2 size={16} className="spin" /> Waiting for message...</> : <><ArrowRight size={16} /> I sent a message</>}
                     </Button>
-                  </div>
-                ) : (
-                  <Button className="deploy-btn" onClick={() => { setStep('billing'); handleDeploy('Existing'); }}>
-                    {hasInstance ? 'Confirm and Link Bot' : 'Confirm and Continue'} <ArrowRight size={16} />
-                  </Button>
-                )}
+                  ) : (
+                    <Button className="deploy-btn" onClick={() => { setStep('billing'); handleDeploy('Existing'); }}>
+                      {hasInstance ? 'Confirm and Link Bot' : 'Confirm and Continue'} <ArrowRight size={16} />
+                    </Button>
+                  )}
+                </div>
               </>
             ) : (
               <>
@@ -429,21 +432,23 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
                   </div>
                 </div>
                 {error && <div className="token-error"><AlertCircle size={14} /><span>{error}</span></div>}
-                <Button className="deploy-btn" onClick={() => {
-                  if (!manualOwnerId.trim()) { setError('Please enter your user ID'); return; }
-                  setOwnerUserId(manualOwnerId.trim());
-                  if (hasInstance) {
-                    setStep('billing');
-                    handleDeploy('Existing');
-                  } else {
-                    setStep('billing');
-                  }
-                }}>
-                  {hasInstance ? 'Link Bot to Instance' : 'Continue'} <ArrowRight size={16} />
-                </Button>
+                <div className="step-actions">
+                  <Button variant="secondary" onClick={() => setStep('verified')}>← Back</Button>
+                  <Button className="deploy-btn" onClick={() => {
+                    if (!manualOwnerId.trim()) { setError('Please enter your user ID'); return; }
+                    setOwnerUserId(manualOwnerId.trim());
+                    if (hasInstance) {
+                      setStep('billing');
+                      handleDeploy('Existing');
+                    } else {
+                      setStep('billing');
+                    }
+                  }}>
+                    {hasInstance ? 'Link Bot to Instance' : 'Continue'} <ArrowRight size={16} />
+                  </Button>
+                </div>
               </>
             )}
-            <button className="back-link" onClick={() => setStep('verified')}>← Back</button>
           </div>
         )}
 
@@ -486,9 +491,11 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
                   ))}
                 </div>
 
-                <button className="back-link" onClick={() => setStep('verified')} disabled={deploying}>
-                  ← Back to bot details
-                </button>
+                <div className="step-actions">
+                  <Button variant="secondary" onClick={() => setStep('verified')} disabled={deploying}>
+                    ← Back to bot details
+                  </Button>
+                </div>
               </>
             )}
           </div>

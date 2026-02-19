@@ -420,11 +420,32 @@
 }
 
 .deploy-btn {
-    width: 100%;
+    width: auto;
     display: flex !important;
     align-items: center;
     justify-content: center;
     gap: 8px;
+}
+
+.step-actions {
+    display: flex;
+    align-items: center;
+    justify-content: stretch;
+    gap: 1rem;
+    width: 100%;
+    margin-top: 1.5rem;
+}
+
+.step-actions>button,
+.step-actions>.btn {
+    flex: 1;
+    font-size: 0.9rem;
+    height: 44px;
+}
+
+.step-actions .back-link {
+    display: none;
+    /* Removed in favor of pill buttons */
 }
 
 /* ─── Billing Step ────────────────────────────────────────────────────────── */

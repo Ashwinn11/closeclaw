@@ -379,7 +379,8 @@ channelRoutes.post('/:id/disconnect', async (c) => {
             const config = await rpc.call('config.get') as { hash: string };
             await rpc.call('config.patch', {
                 raw: JSON.stringify({
-                    channels: { [connection.channel]: { enabled: false } },
+                    channels: { [connection.channel]: null },
+                    plugins: { entries: { [connection.channel]: null } }
                 }),
                 baseHash: config.hash
             });

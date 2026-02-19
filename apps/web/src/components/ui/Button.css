@@ -2,10 +2,13 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 8px;
-    font-weight: 500;
+    border-radius: 100px;
+    font-weight: 600;
     transition: all var(--transition-fast);
     white-space: nowrap;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
 }
 
 .btn:disabled {
