@@ -72,7 +72,7 @@ const predefinedCrons = [
 
 export const DashboardPage: React.FC = () => {
   const { user, logout } = useAuth();
-  const { status: gatewayStatus } = useGateway();
+  const { status: gatewayStatus, subscribe } = useGateway();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('connections');
   const [cronView, setCronView] = useState<'active' | 'templates'>('active');
@@ -87,6 +87,7 @@ export const DashboardPage: React.FC = () => {
   const [cronJobs, setCronJobs] = useState<any[]>([]);
   const [loadingCron, setLoadingCron] = useState(false);
   const [cronError, setCronError] = useState<string | null>(null);
+  const [executingCrons, setExecutingCrons] = useState<Set<string>>(new Set());
 
   // Usage State
   const [usageData, setUsageData] = useState<any>(null);
@@ -138,9 +139,13 @@ export const DashboardPage: React.FC = () => {
   const handleDeleteCron = async (id: string, name: string) => {
     if (!window.confirm(`Are you sure you want to remove the cron job "${name || id}"?`)) return;
     try {
+      // Optimistically remove from UI
+      setCronJobs(prev => prev.filter(j => j.id !== id));
       await removeCronJob(id);
-      fetchCron(); // Refresh
+      // Event will update state, but optimistic remove is instant
     } catch (err: any) {
+      // Restore on error
+      fetchCron();
       alert(`Failed to remove job: ${err.message}`);
     }
   };
@@ -149,10 +154,66 @@ export const DashboardPage: React.FC = () => {
     fetchChannels();
   }, [fetchChannels]);
 
+  // Subscribe to cron WebSocket events
   useEffect(() => {
-    if (activeTab === 'cron') fetchCron();
+    if (activeTab !== 'cron') return;
+
+    const unsubscribe = subscribe(
+      ['cron.added', 'cron.removed', 'cron.executed', 'cron.execution_complete'],
+      (event, payload: any) => {
+        switch (event) {
+          case 'cron.added':
+            // Add new job to list if not already present
+            setCronJobs(prev => {
+              const exists = prev.some(j => j.id === payload?.id);
+              if (exists) return prev;
+              return [...prev, payload];
+            });
+            break;
+
+          case 'cron.removed':
+            // Remove job from list
+            setCronJobs(prev => prev.filter(j => j.id !== payload?.id));
+            break;
+
+          case 'cron.executed':
+            // Mark job as executing
+            setExecutingCrons(prev => {
+              const next = new Set(prev);
+              next.add(payload?.id);
+              return next;
+            });
+            break;
+
+          case 'cron.execution_complete':
+            // Mark job execution as complete
+            setExecutingCrons(prev => {
+              const next = new Set(prev);
+              next.delete(payload?.id);
+              return next;
+            });
+            // Update job's lastRunAt
+            setCronJobs(prev =>
+              prev.map(j =>
+                j.id === payload?.id
+                  ? { ...j, lastRunAt: new Date().toISOString() }
+                  : j
+              )
+            );
+            break;
+        }
+      }
+    );
+
+    // Fetch initial data
+    fetchCron();
+
+    return unsubscribe;
+  }, [activeTab, subscribe]);
+
+  useEffect(() => {
     if (activeTab === 'usage') fetchUsage();
-  }, [activeTab, fetchCron, fetchUsage]);
+  }, [activeTab, fetchUsage]);
 
   const getChannelStatus = (key: string): { status: 'active' | 'pending' | 'inactive'; connectionId?: string } => {
     const conn = connections.find(c => c.channel === key && (c.status === 'active' || c.status === 'pending'));
@@ -394,14 +455,20 @@ export const DashboardPage: React.FC = () => {
                     </div>
                   ) : (
                     <div className="cron-list">
-                      {cronJobs.map((job) => (
-                        <Card key={job.id} className="cron-card">
+                      {cronJobs.map((job) => {
+                        const isExecuting = executingCrons.has(job.id);
+                        return (
+                        <Card key={job.id} className={`cron-card ${isExecuting ? 'executing' : ''}`}>
                           <div className="cron-info">
                             <div className="cron-name-row">
-                              <Activity size={16} className={job.disabled ? 'cron-paused' : 'cron-active'} />
+                              {isExecuting ? (
+                                <Loader2 size={16} className="cron-executing spin" />
+                              ) : (
+                                <Activity size={16} className={job.disabled ? 'cron-paused' : 'cron-active'} />
+                              )}
                               <h4>{job.name || job.id}</h4>
-                              <span className={`cron-status-badge ${job.disabled ? 'paused' : 'active'}`}>
-                                {job.disabled ? 'paused' : 'active'}
+                              <span className={`cron-status-badge ${isExecuting ? 'executing' : job.disabled ? 'paused' : 'active'}`}>
+                                {isExecuting ? 'executing' : job.disabled ? 'paused' : 'active'}
                               </span>
                             </div>
                             <div className="cron-meta">
@@ -417,15 +484,16 @@ export const DashboardPage: React.FC = () => {
                               )}
                             </div>
                           </div>
-                          <button 
-                            className="cron-delete-btn" 
+                          <button
+                            className="cron-delete-btn"
                             onClick={() => handleDeleteCron(job.id, job.name)}
                             title="Delete cron job"
                           >
                             <Trash2 size={16} />
                           </button>
                         </Card>
-                      ))}
+                        );
+                      })}
                       
                       <div className="fab-container">
                         <Button className="create-cron-pill" onClick={() => handleNewCron()}>

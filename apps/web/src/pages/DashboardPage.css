@@ -581,6 +581,12 @@
 .cron-card {
     background: rgba(0, 0, 0, 0.3) !important;
     border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    transition: all 0.3s ease;
+}
+
+.cron-card.executing {
+    background: rgba(74, 144, 226, 0.08) !important;
+    border-color: rgba(74, 144, 226, 0.15) !important;
 }
 
 .cron-name-row {
@@ -606,6 +612,7 @@
     letter-spacing: 0.05em;
     margin-left: auto;
     /* Push to right */
+    transition: all 0.3s ease;
 }
 
 .cron-status-badge.active {
@@ -616,6 +623,11 @@
 .cron-status-badge.paused {
     background: rgba(255, 189, 46, 0.1);
     color: #FFBD2E;
+}
+
+.cron-status-badge.executing {
+    background: rgba(74, 144, 226, 0.1);
+    color: #4A90E2;
 }
 
 .cron-delete-btn {
