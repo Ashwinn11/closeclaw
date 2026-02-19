@@ -3,11 +3,17 @@
 .setup-modal {
     width: 100%;
     max-width: 720px;
-    background: #0C0E14 !important;
-    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    background: transparent !important;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
     position: relative;
-    padding: 2.5rem !important;
+    padding: 0 !important;
+    border-radius: 20px;
+    overflow: hidden;
     animation: modalSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5),
+        inset 0 1px 1px rgba(255, 255, 255, 0.05);
 }
 
 @keyframes modalSlideUp {
@@ -28,16 +34,20 @@
     display: flex;
     align-items: center;
     padding: 20px 24px;
-    margin: -2.5rem -2.5rem 1.5rem -2.5rem;
+    margin: 0;
     background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(60px) saturate(200%);
     -webkit-backdrop-filter: blur(60px) saturate(200%);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 20px 20px 0 0;
     position: relative;
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.06),
-        0 4px 20px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+}
+
+.modal-content {
+    background: var(--bg-root);
+    padding: 2.5rem;
+    position: relative;
+    z-index: 1;
 }
 
 .traffic-lights {
@@ -45,7 +55,8 @@
     gap: 8px;
     flex-shrink: 0;
     z-index: 2;
-    margin-left: 4px;
+    margin-left: -4px;
+    align-items: center;
 }
 
 .light {
@@ -56,26 +67,52 @@
     cursor: default;
     transition: all 0.15s ease;
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.light svg {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    color: rgba(0, 0, 0, 0.6);
+    /* Icon color */
+}
+
+/* Show all icons when hovering over the container group */
+.traffic-lights:hover .light svg {
+    opacity: 1;
 }
 
 .light.red {
     background: #FF5F56;
-    cursor: pointer;
+    border: 1px solid rgba(224, 68, 62, 0.6);
 }
 
-.light.red:hover {
-    background: #FF3B30;
-    box-shadow: 0 0 6px rgba(255, 59, 48, 0.4);
+.light.red:active {
+    background: #e0443e;
+    border-color: rgba(224, 68, 62, 0.8);
 }
 
 .light.yellow {
     background: #FFBD2E;
-    opacity: 0.5;
+    border: 1px solid rgba(224, 163, 40, 0.6);
+}
+
+.light.yellow:active {
+    background: #dea429;
+    border-color: rgba(224, 163, 40, 0.8);
 }
 
 .light.green {
     background: #27C93F;
-    opacity: 0.5;
+    border: 1px solid rgba(26, 171, 41, 0.6);
+}
+
+.light.green:active {
+    background: #1aab29;
+    border-color: rgba(26, 171, 41, 0.8);
 }
 
 .titlebar-center {

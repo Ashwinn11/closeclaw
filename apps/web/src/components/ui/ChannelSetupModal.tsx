@@ -46,6 +46,11 @@ function buildChannelPatch(
         },
       },
     },
+    browser: {
+      enabled: true,
+      noSandbox: true,
+      headless: true,
+    },
     session: { dmScope: 'main' },
   };
 }
@@ -294,9 +299,21 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
         {/* macOS glassmorphic title bar */}
         <div className="modal-titlebar">
           <div className="traffic-lights">
-            <button className="light red" onClick={onClose} aria-label="Close" />
-            <div className="light yellow" />
-            <div className="light green" />
+            <button className="light red" onClick={onClose} aria-label="Close">
+              <svg width="6" height="6" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
+                <path d="M14 1.41L12.59 0L7 5.59L1.41 0L0 1.41L5.59 7L0 12.59L1.41 14L7 8.41L12.59 14L14 12.59L8.41 7L14 1.41Z" fill="currentColor"/>
+              </svg>
+            </button>
+            <button className="light yellow" aria-label="Minimize">
+              <svg width="8" height="2" viewBox="0 0 14 2" xmlns="http://www.w3.org/2000/svg">
+                <path d="M14 2H0V0H14V2Z" fill="currentColor"/>
+              </svg>
+            </button>
+            <button className="light green" aria-label="Zoom">
+              <svg width="6" height="6" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 2H12L8.5 5.5L9.5 6.5L13 3V7H14V0H7V1H8V2ZM6 12H2L5.5 8.5L4.5 7.5L1 11V7H0V14H7V13H6V12Z" fill="currentColor"/>
+              </svg>
+            </button>
           </div>
           <div className="titlebar-center">
             <div className="titlebar-icon">
@@ -312,6 +329,8 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
             </span>
           </div>
         </div>
+
+        <div className="modal-content">
 
         {/* Progress dots */}
         <div className="setup-progress">
@@ -575,6 +594,7 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
             )}
           </div>
         )}
+        </div>
       </Card>
     </div>
   );

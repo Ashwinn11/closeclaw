@@ -1,0 +1,61 @@
+# ============================================================================
+# CloseClaw Gateway Image
+#
+# Extends upstream OpenClaw with additional tools baked in:
+#   - ffmpeg        (media processing)
+#   - python3 + pip (scripting)
+#   - uv            (fast Python package manager)
+#   - Chromium      (pre-installed via Playwright, accessible by node user)
+#
+# Do NOT modify openclaw/Dockerfile — this is a CloseClaw-specific build.
+#
+# Build (from closeclaw repo root):
+#   docker build -f infra/Dockerfile.closeclaw -t openclaw:latest .
+# ============================================================================
+
+FROM node:22-bookworm@sha256:cd7bcd2e7a1e6f72052feb023c7f6b722205d3fcab7bbcbd2d1bfdab10b1e935
+
+# Install Bun (required for openclaw build scripts)
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/root/.bun/bin:${PATH}"
+
+RUN corepack enable
+
+WORKDIR /app
+
+# Extra tools for agent use
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      ffmpeg python3 python3-pip xvfb && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
+
+# Install uv (fast Python package manager)
+RUN curl -LsSf https://astral.sh/uv/install.sh | UV_INSTALL_DIR=/usr/local/bin sh
+
+COPY openclaw/package.json openclaw/pnpm-lock.yaml openclaw/pnpm-workspace.yaml openclaw/.npmrc ./
+COPY openclaw/ui/package.json ./ui/package.json
+COPY openclaw/patches ./patches
+COPY openclaw/scripts ./scripts
+
+RUN pnpm install --frozen-lockfile
+
+# Install Chromium to a node-user-accessible path (not /root/.cache)
+# Must come after pnpm install so playwright-core is available
+ENV PLAYWRIGHT_BROWSERS_PATH=/app/.playwright
+RUN node /app/node_modules/playwright-core/cli.js install --with-deps chromium
+
+COPY openclaw/ .
+RUN pnpm build
+# Force pnpm for UI build (Bun may fail on ARM architectures)
+ENV OPENCLAW_PREFER_PNPM=1
+RUN pnpm ui:build
+
+ENV NODE_ENV=production
+
+RUN chown -R node:node /app
+
+# Run as non-root for security
+USER node
+
+CMD ["node", "openclaw.mjs", "gateway", "--allow-unconfigured"]
