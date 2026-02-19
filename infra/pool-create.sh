@@ -29,9 +29,11 @@ fi
 GCP_PROJECT="${GCP_PROJECT:-glowing-harmony-362803}"
 GCP_ZONE="${GCP_ZONE:-us-central1-a}"
 MACHINE_IMAGE="${MACHINE_IMAGE:-openclaw-base-image}"
-MACHINE_TYPE="${MACHINE_TYPE:-e2-small}"
+MACHINE_TYPE="${MACHINE_TYPE:-e2-medium}"
 VM_COUNT="${1:-1}"
+SA_EMAIL="closeclaw-gateway-sa@${GCP_PROJECT}.iam.gserviceaccount.com"
 
+# Supabase — still needed locally to register the VM after creation
 SUPABASE_URL="${SUPABASE_URL:?SUPABASE_URL is required}"
 SUPABASE_SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:?SUPABASE_SERVICE_ROLE_KEY is required}"
 TAILSCALE_AUTHKEY="${TAILSCALE_AUTHKEY:?TAILSCALE_AUTHKEY is required}"
@@ -56,12 +58,15 @@ create_vm() {
 
   # Startup script that:
   # 1. Installs + authenticates Tailscale
-  # 2. Sets the gateway token in the OpenClaw env
-  # 3. Starts the Docker container
+  # 2. Sets the gateway token in .env (only non-secret config)
+  # 3. Fetches API keys from Secret Manager (never written to disk)
+  # 4. Starts Docker with secrets injected as env vars only
   local startup_script="#!/bin/bash
 set -e
+log() { echo "[closeclaw-startup] \$*" | tee -a /var/log/closeclaw-startup.log; }
 
 # ── Tailscale ──
+log 'Setting up Tailscale...'
 if ! command -v tailscale &>/dev/null; then
   curl -fsSL https://tailscale.com/install.sh | sh
 fi
@@ -73,38 +78,39 @@ for i in {1..30}; do
   if [ -n \"\$TS_IP\" ]; then break; fi
   sleep 2
 done
+log \"Tailscale IP: \${TS_IP:-unknown}\"
 
-# ── Update Gateway token ──
+# ── Update gateway token (only non-secret config in .env) ──
 cd /home/\$(ls /home/ | head -1)/openclaw
 if [ -f .env ]; then
   sed -i \"s|^OPENCLAW_GATEWAY_TOKEN=.*|OPENCLAW_GATEWAY_TOKEN=${gateway_token}|\" .env
 else
-  echo \"OPENCLAW_GATEWAY_TOKEN=${gateway_token}\" >> .env
+  echo \"OPENCLAW_GATEWAY_TOKEN=${gateway_token}\" > .env
 fi
+log 'Gateway token set.'
 
-# ── Ensure Gateway binds to tailnet ──
-# Update openclaw.json if it exists
+# ── Patch openclaw.json (no gateway.bind — keeps internal tools on loopback) ──
 CONFIG_DIR=\"/home/\$(ls /home/ | head -1)/.openclaw\"
-if [ -f \"\${CONFIG_DIR}/openclaw.json\" ]; then
-  # Use node to patch the config if available, otherwise manual sed
-  if command -v node &>/dev/null; then
-    node -e \"
-      const fs = require('fs');
-      const p = '\${CONFIG_DIR}/openclaw.json';
-      const c = JSON.parse(fs.readFileSync(p, 'utf8'));
-      c.gateway = c.gateway || {};
-      delete c.gateway.bind; // DO NOT set bind — default loopback for internal tools pairing
-      c.gateway.auth = c.gateway.auth || {};
-      c.gateway.auth.mode = 'token';
-      fs.writeFileSync(p, JSON.stringify(c, null, 2));
-    \"
-  fi
+if [ -f \"\${CONFIG_DIR}/openclaw.json\" ] && command -v node &>/dev/null; then
+  node -e \"
+    const fs = require('fs');
+    const p = '\${CONFIG_DIR}/openclaw.json';
+    const c = JSON.parse(fs.readFileSync(p, 'utf8'));
+    c.gateway = c.gateway || {};
+    delete c.gateway.bind;
+    c.gateway.auth = c.gateway.auth || {};
+    c.gateway.auth.mode = 'token';
+    fs.writeFileSync(p, JSON.stringify(c, null, 2));
+  \"
+  log 'openclaw.json patched.'
 fi
 
-# ── Start/restart OpenClaw Gateway ──
-docker compose up -d openclaw-gateway 2>/dev/null || true
+# ── Start Gateway via systemd (service fetches secrets from Secret Manager) ──
+log 'Starting closeclaw-gateway systemd service...'
+sudo systemctl restart closeclaw-gateway.service
+log 'Gateway service started.'
 
-echo \"VM ${vm_name} bootstrapped. Tailscale IP: \${TS_IP:-unknown}\"
+log \"VM ${vm_name} bootstrapped. Tailscale IP: \${TS_IP:-unknown}\"
 "
 
   gcloud compute instances create "$vm_name" \
@@ -112,6 +118,8 @@ echo \"VM ${vm_name} bootstrapped. Tailscale IP: \${TS_IP:-unknown}\"
     --zone="$GCP_ZONE" \
     --source-machine-image="$MACHINE_IMAGE" \
     --machine-type="$MACHINE_TYPE" \
+    --service-account="$SA_EMAIL" \
+    --scopes="cloud-platform" \
     --tags="pool-available" \
     --labels="pool=available,instance-id=${instance_id}" \
     --metadata="startup-script=${startup_script}" \

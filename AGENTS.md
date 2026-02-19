@@ -84,7 +84,7 @@ GCP project: `glowing-harmony-362803`. All VMs join the Tailscale mesh via `TAIL
 CloseClaw does not use Docker locally. Instead:
 
 1. Create a GCP project and enable billing + Compute Engine API
-2. Create a Compute Engine VM (e2-small, Debian 12, 20GB)
+2. Create a Compute Engine VM (e2-medium, Debian 12, 20GB)
 3. SSH into the VM, install Docker
 4. Clone OpenClaw repo, build the Docker image with all required binaries baked in
 5. Configure `.env` and `docker-compose.yml` with operator API keys
@@ -116,13 +116,13 @@ Enable billing at https://console.cloud.google.com/billing.
 
 | Type | Specs | Cost | Notes |
 |------|-------|------|-------|
-| e2-small | 2 vCPU, 2GB RAM | ~$12/mo | Recommended |
+| e2-medium | 2 vCPU, 2GB RAM | ~$12/mo | Recommended |
 | e2-micro | 2 vCPU (shared), 1GB RAM | Free tier eligible | May OOM under load |
 
 ```bash
 gcloud compute instances create openclaw-gateway \
   --zone=us-central1-a \
-  --machine-type=e2-small \
+  --machine-type=e2-medium \
   --boot-disk-size=20GB \
   --image-family=debian-12 \
   --image-project=debian-cloud
@@ -318,7 +318,7 @@ docker compose up -d
 
 - **SSH refused**: Key propagation takes 1-2 minutes after VM creation. Wait and retry.
 - **OS Login issues**: Check `gcloud compute os-login describe-profile` and IAM permissions.
-- **OOM on e2-micro**: Upgrade to e2-small: stop VM → `gcloud compute instances set-machine-type ... --machine-type=e2-small` → start VM.
+- **OOM on e2-micro**: Upgrade to e2-medium: stop VM → `gcloud compute instances set-machine-type ... --machine-type=e2-medium` → start VM.
 
 ### Service accounts (for automation)
 
