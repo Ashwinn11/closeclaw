@@ -7,9 +7,10 @@ import { BrandIcons } from '../components/ui/BrandIcons';
 import { ChannelSetupModal } from '../components/ui/ChannelSetupModal';
 import { CronSetupModal } from '../components/ui/CronSetupModal';
 import { listChannels, disconnectChannel, type ChannelConnection, getCronJobs, getUsageStats, removeCronJob } from '../lib/api';
+import { NebulaBackground } from '../components/ui/NebulaBackground';
 import {
   LogOut, Wifi, WifiOff, Clock, BarChart3,
-  Plus, MoreHorizontal, Activity, Zap, Loader2, AlertCircle, Calendar, Trash2
+  Plus, Activity, Zap, Loader2, AlertCircle, Calendar, Trash2, Smartphone, ArrowRight, Sun, Receipt, TrendingDown, Server, MessageCircle
 } from 'lucide-react';
 import './DashboardPage.css';
 
@@ -21,29 +22,61 @@ interface ChannelDef {
   key: string; // lowercase key used in DB
   icon: React.FC;
   color: string;
+  description: string;
 }
 
 const channelDefs: ChannelDef[] = [
-  { name: 'Telegram', key: 'telegram', icon: BrandIcons.Telegram, color: '#2AABEE' },
-  { name: 'Discord', key: 'discord', icon: BrandIcons.Discord, color: '#5865F2' },
-  { name: 'Slack', key: 'slack', icon: BrandIcons.Slack, color: '#E01E5A' },
+  { name: 'Telegram', key: 'telegram', icon: BrandIcons.Telegram, color: '#2AABEE', description: 'Bot API via grammY; supports groups' },
+  { name: 'Discord', key: 'discord', icon: BrandIcons.Discord, color: '#5865F2', description: 'Servers, channels, and DMs' },
+  { name: 'Slack', key: 'slack', icon: BrandIcons.Slack, color: '#E01E5A', description: 'Bolt SDK; workspace apps' },
 ];
 
 const upcomingChannels = [
-  { name: 'WhatsApp', color: '#25D366' },
-  { name: 'Signal', color: '#3A76F0' },
-  { name: 'iMessage', color: '#34C759' },
-  { name: 'Matrix', color: '#0DBD8B' },
+  { name: 'WhatsApp', color: '#25D366', description: 'Uses Baileys; requires QR pairing', icon: BrandIcons.WhatsApp },
+  { name: 'Signal', color: '#3A76F0', description: 'Privacy-focused via signal-cli', icon: BrandIcons.Signal },
+  { name: 'iMessage', color: '#34C759', description: 'Via BlueBubbles macOS server', icon: BrandIcons.iMessage },
+  { name: 'Matrix', color: '#0DBD8B', description: 'Federated Synapse protocol', icon: BrandIcons.Matrix },
 ];
 
-// No longer using global mock constants
+const predefinedCrons = [
+  {
+     title: 'Morning Briefing',
+     description: "Give me a morning briefing every day at 7 AM — weather, calendar, important emails, and top news",
+     icon: <Sun size={20} color="#FFBD2E" />,
+     schedule: '0 7 * * *',
+     text: 'Give me a morning briefing — weather, calendar, important emails, and top news'
+  },
+  {
+     title: 'Bill Reminder',
+     description: "Remind me before every bill and subscription renewal — Netflix, AWS, rent, everything",
+     icon: <Receipt size={20} color="#ECEEF3" />,
+     schedule: '0 9 1 * *',
+     text: 'Remind me to check upcoming bills and subscription renewals'
+  },
+  {
+     title: 'Price Drop Alert',
+     description: "Watch this product link and alert me instantly when the price drops",
+     icon: <TrendingDown size={20} color="#2AABEE" />,
+     schedule: '0 * * * *',
+     text: 'Check the price of previously tracked items and alert me if there is a drop'
+  },
+  {
+     title: 'Server Down Alert',
+     description: "Monitor my website every 5 minutes and alert me immediately if it goes down",
+     icon: <Server size={20} color="#FF5F56" />,
+     schedule: '*/5 * * * *',
+     text: 'Check if my website is online and responsive'
+  }
+];
 
 export const DashboardPage: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('connections');
+  const [cronView, setCronView] = useState<'active' | 'templates'>('active');
   const [setupChannel, setSetupChannel] = useState<ChannelType | null>(null);
   const [showCronModal, setShowCronModal] = useState(false);
+  const [initialCronValues, setInitialCronValues] = useState<{name?: string, schedule?: string, text?: string} | undefined>(undefined);
   const [connections, setConnections] = useState<ChannelConnection[]>([]);
   const [loadingChannels, setLoadingChannels] = useState(true);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
@@ -95,7 +128,8 @@ export const DashboardPage: React.FC = () => {
     }
   }, []);
 
-  const handleNewCron = () => {
+  const handleNewCron = (initial?: typeof initialCronValues) => {
+    setInitialCronValues(initial);
     setShowCronModal(true);
   };
 
@@ -154,6 +188,7 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <div className="dashboard-page">
+      <NebulaBackground />
       {/* Sidebar */}
       <aside className="dashboard-sidebar">
         <div className="sidebar-header">
@@ -234,18 +269,21 @@ export const DashboardPage: React.FC = () => {
                           <div className="channel-card-icon" style={{ '--ch-color': ch.color } as React.CSSProperties}>
                             <Icon />
                           </div>
-                          <button className="channel-menu"><MoreHorizontal size={16} /></button>
+                          <div className="channel-status top-right">
+                             {status === 'active' ? (
+                               <div className="status-badge connected"><Wifi size={12} /> Connected</div>
+                             ) : status === 'pending' ? (
+                               <div className="status-badge pending"><Loader2 size={12} className="spin" /> Provisioning</div>
+                             ) : (
+                               <div className="status-badge disconnected"><WifiOff size={12} /> Not Connected</div>
+                             )}
+                          </div>
                         </div>
-                        <h3>{ch.name}</h3>
-                        <div className="channel-status">
-                          {status === 'active' ? (
-                            <><Wifi size={14} /> <span className="connected">Connected</span></>
-                          ) : status === 'pending' ? (
-                            <><Loader2 size={14} className="spin" /> <span className="pending">Provisioning...</span></>
-                          ) : (
-                            <><WifiOff size={14} /> <span className="disconnected">Not Connected</span></>
-                          )}
+                        <div className="channel-content">
+                            <h3>{ch.name}</h3>
+                            <p className="channel-desc">{ch.description}</p>
                         </div>
+                        
                         {status === 'active' || status === 'pending' ? (
                           <Button
                             className="channel-action-btn"
@@ -273,77 +311,150 @@ export const DashboardPage: React.FC = () => {
               )}
 
               <div className="section-label upcoming-label">Coming Soon</div>
-              <div className="upcoming-grid">
-                {upcomingChannels.map((ch) => (
-                  <div key={ch.name} className="upcoming-card">
-                    <div className="upcoming-dot" style={{ background: ch.color }} />
-                    <span>{ch.name}</span>
-                  </div>
-                ))}
+              <div className="channels-grid">
+                {upcomingChannels.map((ch) => {
+                  const Icon = ch.icon || MessageCircle;
+                  return (
+                    <Card key={ch.name} className="channel-card coming-soon" hoverable={false}>
+                        <div className="channel-card-header">
+                          <div className="channel-card-icon" style={{ '--ch-color': ch.color } as React.CSSProperties}>
+                            <Icon />
+                          </div>
+                          <div className="channel-status top-right">
+                               <div className="status-badge coming-soon">SOON</div>
+                          </div>
+                        </div>
+                        <div className="channel-content">
+                            <h3>{ch.name}</h3>
+                            <p className="channel-desc">{ch.description}</p>
+                        </div>
+                        {/* No buttons for upcoming channels */}
+                        <div className="coming-soon-spacer"></div>
+                    </Card>
+                  );
+                })}
               </div>
             </div>
           )}
 
-          {/* Cron Tab */}
+{/* Cron Tab */}
           {activeTab === 'cron' && (
             <div className="cron-tab">
-              <div className="cron-header">
-                <div className="section-label">Scheduled Jobs</div>
-                <Button size="sm" className="add-cron-btn" onClick={handleNewCron}>
-                  <Plus size={14} /> New Job
-                </Button>
+              <div className="cron-header-redesigned">
+                <div className="cron-tabs-toggle">
+                  <button 
+                    className={`cron-tab-btn ${cronView === 'active' ? 'active' : ''}`}
+                    onClick={() => setCronView('active')}
+                  >
+                    Active Tasks
+                  </button>
+                  <button 
+                    className={`cron-tab-btn ${cronView === 'templates' ? 'active' : ''}`}
+                    onClick={() => setCronView('templates')}
+                  >
+                    Explore Templates
+                  </button>
+                </div>
               </div>
-              <div className="cron-list">
-                {loadingCron ? (
-                  <div className="loading-state">
-                    <Loader2 size={24} className="spin" />
-                    <span>Fetching jobs from Gateway...</span>
-                  </div>
-                ) : cronError ? (
-                  <div className="error-state">
-                    <AlertCircle size={24} />
-                    <span>{cronError}</span>
-                    <Button size="sm" variant="secondary" onClick={fetchCron}>Retry</Button>
-                  </div>
-                ) : cronJobs.length === 0 ? (
-                  <div className="empty-state">
-                    <span>No scheduled jobs found.</span>
-                  </div>
-                ) : (
-                  cronJobs.map((job) => (
-                    <Card key={job.id} className="cron-card">
-                      <div className="cron-info">
-                        <div className="cron-name-row">
-                          <Activity size={16} className={job.disabled ? 'cron-paused' : 'cron-active'} />
-                          <h4>{job.name || job.id}</h4>
-                          <span className={`cron-status-badge ${job.disabled ? 'paused' : 'active'}`}>
-                            {job.disabled ? 'paused' : 'active'}
-                          </span>
-                        </div>
-                        <div className="cron-meta">
-                          <code>{
-                            typeof job.schedule === 'string' 
-                              ? job.schedule 
-                              : (job.schedule?.expr || job.schedule?.at || JSON.stringify(job.schedule))
-                          }</code>
-                          {job.lastRunAt && (
-                            <span className="cron-last-run">
-                              Last run: {new Date(job.lastRunAt).toLocaleDateString()} {new Date(job.lastRunAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                          )}
-                        </div>
+
+              <div className="pro-tip-banner">
+                 <Smartphone size={16} />
+                 <span><span className="highlight">Pro tip:</span> Cron jobs deliver alerts straight to Telegram or WhatsApp — connect a channel for the best experience.</span>
+                 <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('connections'); }} className="connect-link">Connect <ArrowRight size={12} /></a>
+              </div>
+
+              {cronView === 'active' ? (
+                <div className="cron-content-wrapper">
+                  {loadingCron ? (
+                    <div className="loading-state">
+                      <Loader2 size={24} className="spin" />
+                      <span>Fetching jobs from Gateway...</span>
+                    </div>
+                  ) : cronError ? (
+                    <div className="error-state">
+                      <AlertCircle size={24} />
+                      <span>{cronError}</span>
+                      <Button size="sm" variant="secondary" onClick={fetchCron}>Retry</Button>
+                    </div>
+                  ) : cronJobs.length === 0 ? (
+                    <div className="empty-state-redesigned">
+                       <div className="empty-icon"><Clock size={48} strokeWidth={1} /></div>
+                       <h3>No cron jobs yet</h3>
+                       <p>Set up automated tasks — just tell your bot what to do and when</p>
+                       <Button className="create-cron-pill large" onClick={() => handleNewCron()}>
+                          Create Cron Job
+                       </Button>
+                    </div>
+                  ) : (
+                    <div className="cron-list">
+                      {cronJobs.map((job) => (
+                        <Card key={job.id} className="cron-card">
+                          <div className="cron-info">
+                            <div className="cron-name-row">
+                              <Activity size={16} className={job.disabled ? 'cron-paused' : 'cron-active'} />
+                              <h4>{job.name || job.id}</h4>
+                              <span className={`cron-status-badge ${job.disabled ? 'paused' : 'active'}`}>
+                                {job.disabled ? 'paused' : 'active'}
+                              </span>
+                            </div>
+                            <div className="cron-meta">
+                              <code>{
+                                typeof job.schedule === 'string' 
+                                  ? job.schedule 
+                                  : (job.schedule?.expr || job.schedule?.at || JSON.stringify(job.schedule))
+                              }</code>
+                              {job.lastRunAt && (
+                                <span className="cron-last-run">
+                                  Last run: {new Date(job.lastRunAt).toLocaleDateString()} {new Date(job.lastRunAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <button 
+                            className="cron-delete-btn" 
+                            onClick={() => handleDeleteCron(job.id, job.name)}
+                            title="Delete cron job"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </Card>
+                      ))}
+                      
+                      <div className="fab-container">
+                        <Button className="create-cron-pill" onClick={() => handleNewCron()}>
+                            <Plus size={16} /> Create New Job
+                        </Button>
                       </div>
-                      <button 
-                        className="cron-delete-btn" 
-                        onClick={() => handleDeleteCron(job.id, job.name)}
-                        title="Delete cron job"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </Card>
-                  ))
-                )}
-              </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="cron-templates-view">
+                   <div className="templates-grid">
+                      {predefinedCrons.map((template, idx) => (
+                        <Card key={idx} className="template-card" hoverable onClick={() => {
+                           handleNewCron({
+                              name: template.title,
+                              schedule: template.schedule,
+                              text: template.text
+                           });
+                        }}>
+                           <div className="template-header">
+                              <div className="template-icon">{template.icon}</div>
+                              <h4>{template.title}</h4>
+                           </div>
+                           <p>{template.description}</p>
+                        </Card>
+                      ))}
+                   </div>
+                   
+                   <div className="fab-container">
+                      <Button className="create-cron-pill" onClick={() => handleNewCron()}>
+                          Create Custom Job
+                      </Button>
+                   </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -432,6 +543,7 @@ export const DashboardPage: React.FC = () => {
         <CronSetupModal
           onClose={() => setShowCronModal(false)}
           onSuccess={fetchCron}
+          initialValues={initialCronValues}
         />
       )}
     </div>

@@ -17,8 +17,8 @@
     font-size: 0.85rem;
     color: rgba(255, 255, 255, 0.6);
     line-height: 1.6;
-    display: flex;
-    align-items: flex-start;
+    display: block;
+    margin-bottom: 0.5rem;
 }
 
 .setup-instructions b {
@@ -35,7 +35,6 @@
     font-family: 'JetBrains Mono', 'SF Mono', monospace;
     border: 1px solid rgba(255, 255, 255, 0.05);
     margin: 0 4px;
-    display: inline-block;
 }
 
 .cron-preview-info {

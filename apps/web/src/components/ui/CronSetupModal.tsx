@@ -8,12 +8,17 @@ import './CronSetupModal.css';
 interface CronSetupModalProps {
   onClose: () => void;
   onSuccess: () => void;
+  initialValues?: {
+    name?: string;
+    schedule?: string;
+    text?: string;
+  };
 }
 
-export const CronSetupModal: React.FC<CronSetupModalProps> = ({ onClose, onSuccess }) => {
-  const [name, setName] = useState('');
-  const [schedule, setSchedule] = useState('0 9 * * *');
-  const [text, setText] = useState('');
+export const CronSetupModal: React.FC<CronSetupModalProps> = ({ onClose, onSuccess, initialValues }) => {
+  const [name, setName] = useState(initialValues?.name || '');
+  const [schedule, setSchedule] = useState(initialValues?.schedule || '0 9 * * *');
+  const [text, setText] = useState(initialValues?.text || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
