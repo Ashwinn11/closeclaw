@@ -31,7 +31,7 @@
     align-items: center;
     gap: 0.75rem;
     font-weight: 800;
-    font-size: 1.25rem;
+    font-size: var(--text-xl);
     letter-spacing: -0.03em;
 }
 
@@ -56,7 +56,7 @@
     gap: 10px;
     padding: 10px 14px;
     border-radius: 100px;
-    font-size: 0.88rem;
+    font-size: var(--text-sm);
     font-weight: 500;
     color: var(--text-secondary);
     background: none;
@@ -108,7 +108,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.8rem;
+    font-size: var(--text-xs);
     font-weight: 700;
     flex-shrink: 0;
 }
@@ -120,7 +120,7 @@
 }
 
 .user-name {
-    font-size: 0.82rem;
+    font-size: var(--text-sm);
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
@@ -128,7 +128,7 @@
 }
 
 .user-email {
-    font-size: 0.7rem;
+    font-size: var(--text-2xs);
     color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
@@ -175,7 +175,7 @@
 }
 
 .dashboard-header h1 {
-    font-size: 1.75rem;
+    font-size: var(--text-3xl);
     font-weight: 700;
     letter-spacing: -0.02em;
     margin-bottom: 0.25rem;
@@ -183,7 +183,7 @@
 
 .header-subtitle {
     color: var(--text-secondary);
-    font-size: 0.9rem;
+    font-size: var(--text-sm);
 }
 
 .server-status {
@@ -194,7 +194,7 @@
     background: rgba(39, 201, 63, 0.08);
     border: 1px solid rgba(39, 201, 63, 0.15);
     border-radius: 10px;
-    font-size: 0.8rem;
+    font-size: var(--text-xs);
     font-weight: 500;
     color: #27C93F;
     flex-shrink: 0;
@@ -262,7 +262,7 @@
 /* ─── Section Labels ──────────────────────────────────────────────────────── */
 
 .section-label {
-    font-size: 0.75rem;
+    font-size: var(--text-xs);
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: var(--text-secondary);
@@ -316,13 +316,13 @@
 }
 
 .channel-card h3 {
-    font-size: 1.1rem;
+    font-size: var(--text-lg);
     font-weight: 600;
     margin-bottom: 0.25rem;
 }
 
 .channel-desc {
-    font-size: 0.82rem;
+    font-size: var(--text-sm);
     color: var(--text-secondary);
     line-height: 1.4;
     margin-bottom: 1rem;
@@ -342,7 +342,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 0.68rem;
+    font-size: var(--text-2xs);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -408,7 +408,7 @@
 .cron-tab-btn {
     padding: 8px 24px;
     border-radius: 100px;
-    font-size: 0.9rem;
+    font-size: var(--text-sm);
     font-weight: 500;
     color: var(--text-secondary);
     background: transparent;
@@ -435,7 +435,7 @@
     display: flex;
     align-items: center;
     gap: 1rem;
-    font-size: 0.9rem;
+    font-size: var(--text-sm);
     color: var(--text-secondary);
     margin-bottom: 3rem;
     width: 100%;
@@ -456,7 +456,7 @@
     align-items: center;
     gap: 4px;
     color: var(--accent-primary);
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
     font-weight: 500;
     white-space: nowrap;
 }
@@ -486,7 +486,7 @@
 }
 
 .empty-state-redesigned h3 {
-    font-size: 1.5rem;
+    font-size: var(--text-2xl);
     margin-bottom: 0.5rem;
 }
 
@@ -526,12 +526,12 @@
 }
 
 .template-header h4 {
-    font-size: 1.1rem;
+    font-size: var(--text-lg);
     font-weight: 600;
 }
 
 .template-card p {
-    font-size: 0.95rem;
+    font-size: var(--text-base);
     color: var(--text-secondary);
     line-height: 1.6;
 }
@@ -574,7 +574,7 @@
 }
 
 .create-cron-pill.large {
-    font-size: 1rem !important;
+    font-size: var(--text-base) !important;
     padding: 14px 32px !important;
 }
 
@@ -597,7 +597,7 @@
 }
 
 .cron-name-row h4 {
-    font-size: 1rem;
+    font-size: var(--text-base);
 }
 
 .cron-meta code {
@@ -607,7 +607,7 @@
 .cron-status-badge {
     padding: 2px 8px;
     border-radius: 6px;
-    font-size: 0.68rem;
+    font-size: var(--text-2xs);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -726,13 +726,13 @@
 }
 
 .usage-value {
-    font-size: 1.75rem;
+    font-size: var(--text-3xl);
     font-weight: 800;
     letter-spacing: -0.02em;
 }
 
 .usage-label {
-    font-size: 0.78rem;
+    font-size: var(--text-xs);
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -763,13 +763,13 @@
 }
 
 .model-name {
-    font-size: 1rem;
+    font-size: var(--text-base);
     font-weight: 700;
     color: var(--text-primary);
 }
 
 .model-provider {
-    font-size: 0.75rem;
+    font-size: var(--text-xs);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-secondary);
@@ -787,13 +787,13 @@
 }
 
 .model-stat .stat-value {
-    font-size: 1.1rem;
+    font-size: var(--text-lg);
     font-weight: 700;
     color: var(--text-primary);
 }
 
 .model-stat .stat-label {
-    font-size: 0.72rem;
+    font-size: var(--text-xs);
     color: var(--text-secondary);
     text-transform: uppercase;
 }

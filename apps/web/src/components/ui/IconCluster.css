@@ -29,9 +29,9 @@
 }
 
 .logo-placeholder {
-    font-family: 'Outfit', sans-serif;
+    font-family: var(--font-family);
     font-weight: 800;
-    font-size: 1.8rem;
+    font-size: var(--text-3xl);
     background: linear-gradient(135deg, #FF5A5F, #FF8A8E);
     -webkit-background-clip: text;
     background-clip: text;

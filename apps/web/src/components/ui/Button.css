@@ -59,19 +59,19 @@
 /* Sizes */
 .btn-sm {
     padding: 0.4rem 0.8rem;
-    font-size: 0.875rem;
+    font-size: var(--text-sm);
     height: 32px;
 }
 
 .btn-md {
     padding: 0.6rem 1.2rem;
-    font-size: 0.95rem;
+    font-size: var(--text-base);
     height: 40px;
 }
 
 .btn-lg {
     padding: 0.8rem 1.6rem;
-    font-size: 1.1rem;
+    font-size: var(--text-lg);
     height: 48px;
 }
 

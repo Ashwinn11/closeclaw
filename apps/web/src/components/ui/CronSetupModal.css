@@ -14,7 +14,7 @@
 }
 
 .setup-instructions li {
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
     color: rgba(255, 255, 255, 0.6);
     line-height: 1.6;
     display: block;
@@ -30,9 +30,9 @@
     background: rgba(255, 255, 255, 0.08);
     padding: 1px 4px;
     border-radius: 4px;
-    font-size: 0.82rem;
+    font-size: var(--text-sm);
     color: var(--accent-primary);
-    font-family: 'JetBrains Mono', 'SF Mono', monospace;
+    font-family: var(--font-family);
     border: 1px solid rgba(255, 255, 255, 0.05);
     margin: 0 4px;
 }
@@ -56,7 +56,7 @@
 }
 
 .cron-preview-info p {
-    font-size: 0.78rem;
+    font-size: var(--text-xs);
     color: rgba(255, 255, 255, 0.5);
     line-height: 1.5;
     margin: 0;
@@ -84,7 +84,7 @@
 }
 
 .cron-form label {
-    font-size: 0.8rem;
+    font-size: var(--text-xs);
     font-weight: 600;
     color: var(--text-secondary);
     text-transform: uppercase;
@@ -99,7 +99,7 @@
     border-radius: 12px;
     padding: 12px 16px;
     color: var(--text-primary);
-    font-size: 0.9rem;
+    font-size: var(--text-sm);
     font-family: inherit;
     transition: all 0.2s ease;
 }
