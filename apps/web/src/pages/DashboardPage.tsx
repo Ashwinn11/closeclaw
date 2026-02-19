@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useGateway } from '../context/GatewayContext';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -71,6 +72,7 @@ const predefinedCrons = [
 
 export const DashboardPage: React.FC = () => {
   const { user, logout } = useAuth();
+  const { status: gatewayStatus } = useGateway();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('connections');
   const [cronView, setCronView] = useState<'active' | 'templates'>('active');
@@ -242,9 +244,14 @@ export const DashboardPage: React.FC = () => {
               {activeTab === 'usage' && 'Monitor your agent\'s performance'}
             </p>
           </div>
-          <div className="server-status">
-            <span className="status-dot online" />
-            <span>Server Online</span>
+          <div className={`server-status ${gatewayStatus}`}>
+            <span className={`status-dot ${gatewayStatus}`} />
+            <span>
+              {gatewayStatus === 'connected' && 'Server Online'}
+              {gatewayStatus === 'connecting' && 'Connecting...'}
+              {gatewayStatus === 'disconnected' && 'Server Offline'}
+              {gatewayStatus === 'error' && 'Connection Error'}
+            </span>
           </div>
         </div>
 

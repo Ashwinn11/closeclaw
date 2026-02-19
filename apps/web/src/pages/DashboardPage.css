@@ -198,6 +198,25 @@
     font-weight: 500;
     color: #27C93F;
     flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.server-status.connecting {
+    background: rgba(255, 193, 7, 0.08);
+    border-color: rgba(255, 193, 7, 0.15);
+    color: #FFC107;
+}
+
+.server-status.disconnected {
+    background: rgba(100, 100, 110, 0.08);
+    border-color: rgba(100, 100, 110, 0.15);
+    color: #808080;
+}
+
+.server-status.error {
+    background: rgba(255, 107, 107, 0.08);
+    border-color: rgba(255, 107, 107, 0.15);
+    color: #FF6B6B;
 }
 
 .status-dot {
@@ -207,10 +226,28 @@
     background: #27C93F;
     box-shadow: 0 0 8px rgba(39, 201, 63, 0.4);
     animation: statusPulse 2s ease infinite;
+    transition: all 0.3s ease;
+}
+
+.status-dot.connecting {
+    background: #FFC107;
+    box-shadow: 0 0 8px rgba(255, 193, 7, 0.4);
+    animation: statusPulse 1s ease infinite;
+}
+
+.status-dot.disconnected {
+    background: #808080;
+    box-shadow: 0 0 8px rgba(128, 128, 128, 0.2);
+    animation: none;
+}
+
+.status-dot.error {
+    background: #FF6B6B;
+    box-shadow: 0 0 8px rgba(255, 107, 107, 0.4);
+    animation: statusPulse 0.5s ease infinite;
 }
 
 @keyframes statusPulse {
-
     0%,
     100% {
         opacity: 1;
