@@ -10,9 +10,10 @@
 #
 # Prerequisites:
 #   - gcloud CLI authenticated with project glowing-harmony-362803
-#   - TAILSCALE_AUTHKEY set in environment (or in infra/.env)
-#   - SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY set
+#   - SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY set in infra/.env
+#   - GCP Secret Manager secrets set up (TAILSCALE_AUTHKEY, API keys)
 #   - Machine image "openclaw-base-image" exists in the project
+#   - Service account closeclaw-gateway-sa has secretmanager.secretAccessor role
 # ============================================================================
 
 set -euo pipefail
@@ -33,10 +34,10 @@ MACHINE_TYPE="${MACHINE_TYPE:-e2-medium}"
 VM_COUNT="${1:-1}"
 SA_EMAIL="closeclaw-gateway-sa@${GCP_PROJECT}.iam.gserviceaccount.com"
 
-# Supabase — still needed locally to register the VM after creation
+# Supabase — needed locally to register the VM after creation.
+# Tailscale authkey is fetched from Secret Manager on the VM at boot.
 SUPABASE_URL="${SUPABASE_URL:?SUPABASE_URL is required}"
 SUPABASE_SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:?SUPABASE_SERVICE_ROLE_KEY is required}"
-TAILSCALE_AUTHKEY="${TAILSCALE_AUTHKEY:?TAILSCALE_AUTHKEY is required}"
 
 # ─── Functions ───────────────────────────────────────────────────────────────
 
@@ -56,62 +57,57 @@ create_vm() {
 
   echo "  Creating VM: ${vm_name} (${MACHINE_TYPE}, ${GCP_ZONE})"
 
-  # Startup script that:
-  # 1. Installs + authenticates Tailscale
-  # 2. Sets the gateway token in .env (only non-secret config)
-  # 3. Fetches API keys from Secret Manager (never written to disk)
-  # 4. Starts Docker with secrets injected as env vars only
-  local startup_script="#!/bin/bash
+  # Startup script runs on first boot:
+  # 1. Authenticates Tailscale (key from Secret Manager)
+  # 2. Fetches all API keys from Secret Manager → writes to .env
+  # 3. Sets unique gateway token
+  # 4. Starts docker compose
+  local startup_script='#!/bin/bash
 set -e
-log() { echo "[closeclaw-startup] \$*" | tee -a /var/log/closeclaw-startup.log; }
+log() { echo "[closeclaw-startup] $*" | sudo tee -a /var/log/closeclaw-startup.log; }
+PROJECT=GCP_PROJECT_PLACEHOLDER
+
+# ── Fetch secrets from Secret Manager ──
+log "Fetching secrets from Secret Manager..."
+TS_AUTHKEY=$(gcloud secrets versions access latest --secret=closeclaw-tailscale-authkey --project=$PROJECT 2>/dev/null)
+GEMINI_KEY=$(gcloud secrets versions access latest --secret=closeclaw-gemini-api-key --project=$PROJECT 2>/dev/null || true)
+OPENAI_KEY=$(gcloud secrets versions access latest --secret=closeclaw-openai-api-key --project=$PROJECT 2>/dev/null || true)
+ANTHROPIC_KEY=$(gcloud secrets versions access latest --secret=closeclaw-anthropic-api-key --project=$PROJECT 2>/dev/null || true)
 
 # ── Tailscale ──
-log 'Setting up Tailscale...'
-if ! command -v tailscale &>/dev/null; then
-  curl -fsSL https://tailscale.com/install.sh | sh
-fi
-sudo tailscale up --authkey=${TAILSCALE_AUTHKEY} --hostname=${vm_name}
-
-# Wait for Tailscale IP to resolve
+log "Setting up Tailscale..."
+sudo tailscale up --authkey="$TS_AUTHKEY" --hostname=VM_NAME_PLACEHOLDER
 for i in {1..30}; do
-  TS_IP=\$(tailscale ip -4 2>/dev/null || true)
-  if [ -n \"\$TS_IP\" ]; then break; fi
+  TS_IP=$(tailscale ip -4 2>/dev/null || true)
+  [ -n "$TS_IP" ] && break
   sleep 2
 done
-log \"Tailscale IP: \${TS_IP:-unknown}\"
+log "Tailscale IP: ${TS_IP:-unknown}"
 
-# ── Update gateway token (only non-secret config in .env) ──
-cd /home/\$(ls /home/ | head -1)/openclaw
-if [ -f .env ]; then
-  sed -i \"s|^OPENCLAW_GATEWAY_TOKEN=.*|OPENCLAW_GATEWAY_TOKEN=${gateway_token}|\" .env
-else
-  echo \"OPENCLAW_GATEWAY_TOKEN=${gateway_token}\" > .env
-fi
-log 'Gateway token set.'
+# ── Write .env with secrets + unique gateway token ──
+USER_DIR="/home/$(ls /home/ | head -1)"
+cd "$USER_DIR/openclaw"
+cat > .env << EOF
+OPENCLAW_IMAGE=openclaw:latest
+OPENCLAW_GATEWAY_TOKEN=GATEWAY_TOKEN_PLACEHOLDER
+OPENCLAW_GATEWAY_BIND=lan
+OPENCLAW_CONFIG_DIR=$USER_DIR/.openclaw
+OPENCLAW_WORKSPACE_DIR=$USER_DIR/.openclaw/workspace
+GEMINI_API_KEY=$GEMINI_KEY
+OPENAI_API_KEY=$OPENAI_KEY
+ANTHROPIC_API_KEY=$ANTHROPIC_KEY
+EOF
+log ".env written with secrets."
 
-# ── Patch openclaw.json (no gateway.bind — keeps internal tools on loopback) ──
-CONFIG_DIR=\"/home/\$(ls /home/ | head -1)/.openclaw\"
-if [ -f \"\${CONFIG_DIR}/openclaw.json\" ] && command -v node &>/dev/null; then
-  node -e \"
-    const fs = require('fs');
-    const p = '\${CONFIG_DIR}/openclaw.json';
-    const c = JSON.parse(fs.readFileSync(p, 'utf8'));
-    c.gateway = c.gateway || {};
-    delete c.gateway.bind;
-    c.gateway.auth = c.gateway.auth || {};
-    c.gateway.auth.mode = 'token';
-    fs.writeFileSync(p, JSON.stringify(c, null, 2));
-  \"
-  log 'openclaw.json patched.'
-fi
-
-# ── Start Gateway via systemd (service fetches secrets from Secret Manager) ──
-log 'Starting closeclaw-gateway systemd service...'
-sudo systemctl restart closeclaw-gateway.service
-log 'Gateway service started.'
-
-log \"VM ${vm_name} bootstrapped. Tailscale IP: \${TS_IP:-unknown}\"
-"
+# ── Start Gateway ──
+log "Starting openclaw gateway..."
+sudo docker compose up -d openclaw-gateway
+log "VM VM_NAME_PLACEHOLDER bootstrapped. Tailscale IP: ${TS_IP:-unknown}"
+'
+  # Inject runtime values into startup script
+  startup_script="${startup_script//GCP_PROJECT_PLACEHOLDER/${GCP_PROJECT}}"
+  startup_script="${startup_script//VM_NAME_PLACEHOLDER/${vm_name}}"
+  startup_script="${startup_script//GATEWAY_TOKEN_PLACEHOLDER/${gateway_token}}"
 
   gcloud compute instances create "$vm_name" \
     --project="$GCP_PROJECT" \
@@ -133,7 +129,7 @@ wait_for_tailscale_ip() {
   local vm_name="$1"
   local max_attempts=30
 
-  echo "  Waiting for Tailscale IP on ${vm_name}..."
+  echo "  Waiting for Tailscale IP on ${vm_name}..." >&2
 
   for i in $(seq 1 $max_attempts); do
     # Check Tailscale status for this hostname
@@ -152,7 +148,7 @@ for key, peer in peers.items():
 " 2>/dev/null || true)
 
     if [ -n "$ts_ip" ]; then
-      echo "  ✓ Tailscale IP: ${ts_ip}"
+      echo "  ✓ Tailscale IP: ${ts_ip}" >&2
       echo "$ts_ip"
       return 0
     fi
@@ -160,7 +156,7 @@ for key, peer in peers.items():
     sleep 5
   done
 
-  echo "  ⚠ Timeout waiting for Tailscale IP. Register manually later."
+  echo "  ⚠ Timeout waiting for Tailscale IP. Register manually later." >&2
   echo ""
   return 1
 }
@@ -199,7 +195,7 @@ EOF
   local http_code
   http_code=$(echo "$response" | tail -1)
   local body
-  body=$(echo "$response" | head -n -1)
+  body=$(echo "$response" | sed '$d')
 
   if [[ "$http_code" =~ ^2 ]]; then
     echo "  ✓ Registered in Supabase (HTTP ${http_code})"

@@ -17,13 +17,13 @@ import WebSocket from 'ws';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 
-const GATEWAY_IP = '100.116.66.86';
+const GATEWAY_IP = '100.87.246.102';
 const GATEWAY_PORT = 18789;
-const GATEWAY_TOKEN = 'REDACTED_GATEWAY_TOKEN_2';
+const GATEWAY_TOKEN = 'REDACTED_GATEWAY_TOKEN';
 
 const CHANNEL_TOKENS = {
     telegram: {
-        botToken: '8503915225:AAH8MiCOAHSCUpk549OG9ZbLNLPNRtDiRRY',
+        botToken: 'REDACTED_TELEGRAM_TOKEN',
     },
     discord: {
         token: 'REDACTED_DISCORD_TOKEN',

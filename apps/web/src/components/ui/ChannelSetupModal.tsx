@@ -109,6 +109,7 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
   const [error, setError] = useState<string | null>(null);
   const [botInfo, setBotInfo] = useState<BotInfo | null>(null);
   const [ownerUserId, setOwnerUserId] = useState('');
+  const [ownerInfo, setOwnerInfo] = useState<{ name?: string, username?: string } | null>(null);
   const [polling, setPolling] = useState(false);
   const [manualOwnerId, setManualOwnerId] = useState('');
 
@@ -144,15 +145,40 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
         } else {
           setError('Invalid token — bot not found. Double-check with @BotFather.');
         }
-      } else {
-        // Mock verification for Discord/Slack for now
-        await new Promise((r) => setTimeout(r, 1500));
-        setBotInfo({
-          name: `My ${channel} Bot`,
-          username: `${channel.toLowerCase()}-bot`,
-          id: 'mock-id-' + Date.now(),
+      } else if (channel === 'Discord') {
+        const res = await fetch('https://discord.com/api/v10/users/@me', {
+          headers: { Authorization: `Bot ${token.trim()}` }
         });
-        setStep('verified');
+        const data = await res.json();
+        if (res.ok) {
+          setBotInfo({
+            name: data.username,
+            username: `@${data.username}`,
+            id: data.id,
+          });
+          setStep('verified');
+        } else {
+          setError('Invalid Discord token or bot not found.');
+        }
+      } else if (channel === 'Slack') {
+        const res = await fetch('https://slack.com/api/auth.test', {
+          method: 'POST',
+          headers: { 
+            Authorization: `Bearer ${token.trim()}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        const data = await res.json();
+        if (data.ok) {
+          setBotInfo({
+            name: data.bot_id,
+            username: data.user,
+            id: data.user_id,
+          });
+          setStep('verified');
+        } else {
+          setError(`Slack verification failed: ${data.error}`);
+        }
       }
     } catch {
       setError('Failed to verify token. Check your connection and try again.');
@@ -168,10 +194,13 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
     try {
       const res = await fetch(`https://api.telegram.org/bot${token.trim()}/getUpdates?limit=1&timeout=30`);
       const data = await res.json();
-      const fromId = data?.result?.[0]?.message?.from?.id;
-      if (fromId) {
-        setOwnerUserId(String(fromId));
-        setStep('billing');
+      const from = data?.result?.[0]?.message?.from;
+      if (from?.id) {
+        setOwnerUserId(String(from.id));
+        setOwnerInfo({
+          name: from.first_name,
+          username: from.username ? `@${from.username}` : undefined
+        });
       } else {
         setError('No message received yet. Send any message to your bot and try again.');
       }
@@ -374,15 +403,34 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
               <>
                 <div className="bot-card">
                   <div className="bot-details">
-                    <h4>Send a message to your bot</h4>
-                    <span className="bot-username">Open Telegram, find your bot, and send any message to it.</span>
-                    <span className="bot-id">We'll automatically detect your user ID.</span>
+                    {ownerInfo ? (
+                      <>
+                        <h4 style={{ color: 'var(--accent-primary)' }}>Detected: {ownerInfo.name}</h4>
+                        <span className="bot-username">{ownerInfo.username || 'No username'}</span>
+                        <span className="bot-id">ID: {ownerUserId}</span>
+                      </>
+                    ) : (
+                      <>
+                        <h4>Send a message to your bot</h4>
+                        <span className="bot-username">Open Telegram, find your bot, and send any message to it.</span>
+                        <span className="bot-id">We'll automatically detect your user ID.</span>
+                      </>
+                    )}
                   </div>
                 </div>
                 {error && <div className="token-error"><AlertCircle size={14} /><span>{error}</span></div>}
-                <Button className="deploy-btn" onClick={pollForOwnerId} disabled={polling}>
-                  {polling ? <><Loader2 size={16} className="spin" /> Waiting for message...</> : <><ArrowRight size={16} /> I sent a message</>}
-                </Button>
+                
+                {!ownerUserId ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <Button className="deploy-btn" onClick= {pollForOwnerId} disabled={polling}>
+                      {polling ? <><Loader2 size={16} className="spin" /> Waiting for message...</> : <><ArrowRight size={16} /> I sent a message</>}
+                    </Button>
+                  </div>
+                ) : (
+                  <Button className="deploy-btn" onClick={() => setStep('billing')}>
+                    Confirm and Continue <ArrowRight size={16} />
+                  </Button>
+                )}
               </>
             ) : (
               <>

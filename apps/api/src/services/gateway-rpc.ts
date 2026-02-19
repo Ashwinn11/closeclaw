@@ -51,11 +51,11 @@ export function createGatewayRpcClient(tailscaleIp: string, port: number, token:
                                 minProtocol: 3,
                                 maxProtocol: 3,
                                 client: {
-                                    id: 'openclaw-control-ui',
+                                    id: 'gateway-client',
                                     displayName: 'CloseClaw API',
                                     version: '0.0.1',
                                     platform: 'linux',
-                                    mode: 'ui',
+                                    mode: 'backend',
                                 },
                                 auth: { token },
                                 role: 'operator',

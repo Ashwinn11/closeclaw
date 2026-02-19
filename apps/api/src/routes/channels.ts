@@ -200,7 +200,15 @@ channelRoutes.post('/setup', async (c) => {
     const rpc = createGatewayRpcClient(tailscaleIp, gatewayPort, gatewayToken);
 
     try {
-        await rpc.call('config.patch', { channels: channelPatch });
+        // 1. Get current config hash (required for patch)
+        const config = await rpc.call('config.get') as { hash: string };
+        const baseHash = config.hash;
+
+        // 2. Patch config using the Gateway protocol: needs 'raw' JSON string and 'baseHash'
+        await rpc.call('config.patch', {
+            raw: JSON.stringify({ channels: channelPatch }),
+            baseHash
+        });
 
         await supabase.from('instances').update({ status: 'active' }).eq('id', inst.id as string);
 
@@ -283,8 +291,12 @@ channelRoutes.post('/:id/disconnect', async (c) => {
             inst.gateway_token as string,
         );
         try {
+            const config = await rpc.call('config.get') as { hash: string };
             await rpc.call('config.patch', {
-                channels: { [connection.channel]: { enabled: false } },
+                raw: JSON.stringify({
+                    channels: { [connection.channel]: { enabled: false } },
+                }),
+                baseHash: config.hash
             });
         } catch {
             // Best-effort
