@@ -1,7 +1,6 @@
 import { Hono } from 'hono';
 import { authMiddleware } from '../middleware/auth.js';
 import { supabase } from '../services/supabase.js';
-import { createGatewayRpcClient } from '../services/gateway-rpc.js';
 import fetch from 'node-fetch';
 import { Agent } from 'node:https';
 
@@ -226,35 +225,7 @@ channelRoutes.post('/setup', async (c) => {
 
     const inst = instance!;
 
-    // Build channel config patch
-    type ChannelConfig = Record<string, unknown>;
-    let channelPatch: Record<string, ChannelConfig>;
-
-    const ownerAllowFrom = [ownerUserId.trim()];
-
-    switch (channel) {
-        case 'telegram':
-            channelPatch = {
-                telegram: { enabled: true, botToken: token, dmPolicy: 'allowlist', allowFrom: ownerAllowFrom },
-            };
-            break;
-        case 'discord':
-            channelPatch = {
-                discord: { enabled: true, token, dmPolicy: 'allowlist', allowFrom: ownerAllowFrom, dm: { enabled: true } },
-            };
-            break;
-        case 'slack':
-            channelPatch = {
-                slack: { enabled: true, botToken: token, appToken: appToken!, dmPolicy: 'allowlist', allowFrom: ownerAllowFrom, dm: { enabled: true } },
-            };
-            break;
-        default:
-            return c.json({ ok: false, error: `Unsupported channel: ${channel}` }, 400);
-    }
-
-    // Connect to Gateway and patch config
     const tailscaleIp = inst.internal_ip as string;
-    const gatewayPort = (inst.gateway_port as number) || 18789;
     const gatewayToken = inst.gateway_token as string;
 
     if (!tailscaleIp || !gatewayToken) {
@@ -270,67 +241,25 @@ channelRoutes.post('/setup', async (c) => {
         });
     }
 
-    const rpc = createGatewayRpcClient(tailscaleIp, gatewayPort, gatewayToken);
+    // Mark instance active and create connection — frontend applies Gateway config via WS
+    await supabase.from('instances').update({ status: 'active' }).eq('id', inst.id as string);
 
-    try {
-        // 1. Get current config hash (required for patch)
-        const config = await rpc.call('config.get') as { hash: string };
-        const baseHash = config.hash;
+    const { data: connection, error: connErr } = await supabase
+        .from('channel_connections')
+        .insert({ user_id: userId, instance_id: inst.id as string, channel, status: 'active' })
+        .select()
+        .single();
 
-        // 2. Build the full config patch (channels + agents + session)
-        const fullPatch = {
-            channels: channelPatch,
-            agents: {
-                defaults: {
-                    model: {
-                        primary: "google/gemini-3-flash-preview",
-                        fallbacks: ["anthropic/claude-sonnet-4-6", "openai/gpt-5.2-codex"],
-                    },
-                    models: {
-                        "google/gemini-3-flash-preview": { alias: "Gemini" },
-                        "anthropic/claude-sonnet-4-6": { alias: "Sonnet" },
-                        "openai/gpt-5.2-codex": { alias: "Codex" },
-                    },
-                },
-            },
-            session: {
-                dmScope: "main"
-            }
-        };
-
-        // 3. Patch config using the Gateway protocol
-        await rpc.call('config.patch', {
-            raw: JSON.stringify(fullPatch),
-            baseHash
-        });
-
-        await supabase.from('instances').update({ status: 'active' }).eq('id', inst.id as string);
-
-        const { data: connection, error: connErr } = await supabase
-            .from('channel_connections')
-            .insert({ user_id: userId, instance_id: inst.id as string, channel, status: 'active' })
-            .select()
-            .single();
-
-        if (connErr) {
-            return c.json({ ok: false, error: 'Channel configured but failed to save record' }, 500);
-        }
-
-        await supabase.from('users').update({ plan: plan.toLowerCase() }).eq('id', userId);
-
-        return c.json({
-            ok: true,
-            data: { connection, message: `${channel} channel enabled successfully` },
-        });
-    } catch (err) {
-        console.error('[setup] Gateway RPC failed:', err);
-        return c.json({
-            ok: false,
-            error: `Gateway configuration failed: ${(err as Error).message}`,
-        }, 500);
-    } finally {
-        rpc.disconnect();
+    if (connErr) {
+        return c.json({ ok: false, error: 'Failed to save channel record' }, 500);
     }
+
+    await supabase.from('users').update({ plan: plan.toLowerCase() }).eq('id', userId);
+
+    return c.json({
+        ok: true,
+        data: { connection, message: `${channel} channel enabled successfully` },
+    });
 });
 
 // GET /api/channels — List user's channel connections
@@ -367,30 +296,7 @@ channelRoutes.post('/:id/disconnect', async (c) => {
         return c.json({ ok: false, error: 'Channel connection not found' }, 404);
     }
 
-    // If instance is active, try to disable channel via Gateway RPC
-    const inst = connection.instances as Record<string, unknown> | null;
-    if (inst && inst.internal_ip && inst.gateway_token) {
-        const rpc = createGatewayRpcClient(
-            inst.internal_ip as string,
-            (inst.gateway_port as number) || 18789,
-            inst.gateway_token as string,
-        );
-        try {
-            const config = await rpc.call('config.get') as { hash: string };
-            await rpc.call('config.patch', {
-                raw: JSON.stringify({
-                    channels: { [connection.channel]: null },
-                    plugins: { entries: { [connection.channel]: null } }
-                }),
-                baseHash: config.hash
-            });
-        } catch {
-            // Best-effort
-        } finally {
-            rpc.disconnect();
-        }
-    }
-
+    // Gateway config is disabled by the frontend via WS before calling this endpoint
     // Update status in DB
     const { error } = await supabase
         .from('channel_connections')

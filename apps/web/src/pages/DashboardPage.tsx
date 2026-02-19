@@ -7,7 +7,7 @@ import { Button } from '../components/ui/Button';
 import { BrandIcons } from '../components/ui/BrandIcons';
 import { ChannelSetupModal } from '../components/ui/ChannelSetupModal';
 import { CronSetupModal } from '../components/ui/CronSetupModal';
-import { listChannels, disconnectChannel, type ChannelConnection, getCronJobs, getUsageStats, removeCronJob } from '../lib/api';
+import { listChannels, disconnectChannel, type ChannelConnection, getCronJobs, getUsageStats, removeCronJob, patchGatewayConfig } from '../lib/api';
 import { NebulaBackground } from '../components/ui/NebulaBackground';
 import {
   LogOut, Wifi, WifiOff, Clock, BarChart3,
@@ -87,12 +87,11 @@ export const DashboardPage: React.FC = () => {
   const [cronJobs, setCronJobs] = useState<any[]>([]);
   const [loadingCron, setLoadingCron] = useState(false);
   const [cronError, setCronError] = useState<string | null>(null);
-  const [executingCrons, setExecutingCrons] = useState<Set<string>>(new Set());
-
   // Usage State
   const [usageData, setUsageData] = useState<any>(null);
   const [loadingUsage, setLoadingUsage] = useState(false);
   const [usageError, setUsageError] = useState<string | null>(null);
+  const [updatedFields, setUpdatedFields] = useState<Set<string>>(new Set());
 
   const fetchChannels = useCallback(async () => {
     try {
@@ -154,54 +153,18 @@ export const DashboardPage: React.FC = () => {
     fetchChannels();
   }, [fetchChannels]);
 
-  // Subscribe to cron WebSocket events
+  // Subscribe to cron updates via chat completion events
+  // Gateway doesn't emit cron-specific events, so we silently re-fetch
+  // after any chat completes (agent may have added/removed cron jobs)
   useEffect(() => {
-    if (activeTab !== 'cron') return;
+    if (activeTab !== 'cron' || gatewayStatus !== 'connected') return;
 
     const unsubscribe = subscribe(
-      ['cron.added', 'cron.removed', 'cron.executed', 'cron.execution_complete'],
+      ['chat'],
       (event, payload: any) => {
-        switch (event) {
-          case 'cron.added':
-            // Add new job to list if not already present
-            setCronJobs(prev => {
-              const exists = prev.some(j => j.id === payload?.id);
-              if (exists) return prev;
-              return [...prev, payload];
-            });
-            break;
-
-          case 'cron.removed':
-            // Remove job from list
-            setCronJobs(prev => prev.filter(j => j.id !== payload?.id));
-            break;
-
-          case 'cron.executed':
-            // Mark job as executing
-            setExecutingCrons(prev => {
-              const next = new Set(prev);
-              next.add(payload?.id);
-              return next;
-            });
-            break;
-
-          case 'cron.execution_complete':
-            // Mark job execution as complete
-            setExecutingCrons(prev => {
-              const next = new Set(prev);
-              next.delete(payload?.id);
-              return next;
-            });
-            // Update job's lastRunAt
-            setCronJobs(prev =>
-              prev.map(j =>
-                j.id === payload?.id
-                  ? { ...j, lastRunAt: new Date().toISOString() }
-                  : j
-              )
-            );
-            break;
-        }
+        if (payload?.state !== 'final') return;
+        // Silent refresh after agent conversation completes
+        getCronJobs().then(setCronJobs).catch(() => {});
       }
     );
 
@@ -209,11 +172,41 @@ export const DashboardPage: React.FC = () => {
     fetchCron();
 
     return unsubscribe;
-  }, [activeTab, subscribe]);
+  }, [activeTab, gatewayStatus, subscribe]);
 
+  // Subscribe to usage WebSocket events
+  // Gateway emits 'chat' events with state: 'final' when a message completes
   useEffect(() => {
-    if (activeTab === 'usage') fetchUsage();
-  }, [activeTab, fetchUsage]);
+    if (activeTab !== 'usage' || gatewayStatus !== 'connected') return;
+
+    const unsubscribe = subscribe(
+      ['chat'],
+      (event, payload: any) => {
+        if (payload?.state !== 'final') return;
+        // Silent refresh — no loading spinner
+        getUsageStats()
+          .then(data => {
+            setUsageData(data);
+            setUpdatedFields(new Set(['messagesThisMonth', 'tokensUsed', 'costThisMonth']));
+          })
+          .catch(() => {});
+      }
+    );
+
+    // Fetch initial data (with loading spinner)
+    fetchUsage();
+
+    return unsubscribe;
+  }, [activeTab, gatewayStatus, subscribe, fetchUsage]);
+
+  // Clear highlight animation after delay
+  useEffect(() => {
+    if (updatedFields.size === 0) return;
+    const timer = setTimeout(() => {
+      setUpdatedFields(new Set());
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [updatedFields]);
 
   const getChannelStatus = (key: string): { status: 'active' | 'pending' | 'inactive'; connectionId?: string } => {
     const conn = connections.find(c => c.channel === key && (c.status === 'active' || c.status === 'pending'));
@@ -224,10 +217,18 @@ export const DashboardPage: React.FC = () => {
   const handleDisconnect = async (connectionId: string) => {
     setDisconnecting(connectionId);
     try {
+      // Disable channel in Gateway config via WS before deleting DB record
+      const conn = connections.find(c => c.id === connectionId);
+      if (conn?.channel && gatewayStatus === 'connected') {
+        await patchGatewayConfig({
+          channels: { [conn.channel]: null },
+          plugins: { entries: { [conn.channel]: null } },
+        }).catch(() => {}); // best-effort
+      }
       await disconnectChannel(connectionId);
-      await fetchChannels(); // Refresh
+      await fetchChannels();
     } catch {
-      // Ignore errors for now
+      // ignore
     } finally {
       setDisconnecting(null);
     }
@@ -455,20 +456,14 @@ export const DashboardPage: React.FC = () => {
                     </div>
                   ) : (
                     <div className="cron-list">
-                      {cronJobs.map((job) => {
-                        const isExecuting = executingCrons.has(job.id);
-                        return (
-                        <Card key={job.id} className={`cron-card ${isExecuting ? 'executing' : ''}`}>
+                      {cronJobs.map((job) => (
+                        <Card key={job.id} className="cron-card">
                           <div className="cron-info">
                             <div className="cron-name-row">
-                              {isExecuting ? (
-                                <Loader2 size={16} className="cron-executing spin" />
-                              ) : (
-                                <Activity size={16} className={job.disabled ? 'cron-paused' : 'cron-active'} />
-                              )}
+                              <Activity size={16} className={job.disabled ? 'cron-paused' : 'cron-active'} />
                               <h4>{job.name || job.id}</h4>
-                              <span className={`cron-status-badge ${isExecuting ? 'executing' : job.disabled ? 'paused' : 'active'}`}>
-                                {isExecuting ? 'executing' : job.disabled ? 'paused' : 'active'}
+                              <span className={`cron-status-badge ${job.disabled ? 'paused' : 'active'}`}>
+                                {job.disabled ? 'paused' : 'active'}
                               </span>
                             </div>
                             <div className="cron-meta">
@@ -492,8 +487,7 @@ export const DashboardPage: React.FC = () => {
                             <Trash2 size={16} />
                           </button>
                         </Card>
-                        );
-                      })}
+                      ))}
                       
                       <div className="fab-container">
                         <Button className="create-cron-pill" onClick={() => handleNewCron()}>
@@ -551,22 +545,22 @@ export const DashboardPage: React.FC = () => {
                   </div>
                 ) : usageData ? (
                   <>
-                    <Card className="usage-card">
+                    <Card className={`usage-card ${updatedFields.has('messagesThisMonth') ? 'updated' : ''}`}>
                       <div className="usage-icon"><Zap size={20} /></div>
                       <div className="usage-value">{usageData.messagesThisMonth.toLocaleString()}</div>
                       <div className="usage-label">Messages</div>
                     </Card>
-                    <Card className="usage-card">
+                    <Card className={`usage-card ${updatedFields.has('tokensUsed') ? 'updated' : ''}`}>
                       <div className="usage-icon tokens"><BarChart3 size={20} /></div>
                       <div className="usage-value">{(usageData.tokensUsed / 1000).toFixed(1)}k</div>
                       <div className="usage-label">Tokens Used</div>
                     </Card>
-                    <Card className="usage-card">
+                    <Card className={`usage-card ${updatedFields.has('costThisMonth') ? 'updated' : ''}`}>
                       <div className="usage-icon credits"><Activity size={20} /></div>
                       <div className="usage-value">${Number(usageData.costThisMonth).toFixed(4)}</div>
                       <div className="usage-label">Total Cost</div>
                     </Card>
-                    <Card className="usage-card">
+                    <Card className={`usage-card ${updatedFields.has('uptime') ? 'updated' : ''}`}>
                       <div className="usage-icon uptime"><Wifi size={20} /></div>
                       <div className="usage-value">{usageData.uptime}</div>
                       <div className="usage-label">Uptime</div>
@@ -617,7 +611,10 @@ export const DashboardPage: React.FC = () => {
       {showCronModal && (
         <CronSetupModal
           onClose={() => setShowCronModal(false)}
-          onSuccess={fetchCron}
+          onSuccess={() => {
+            // Silent refresh — no loading spinner
+            getCronJobs().then(setCronJobs).catch(() => {});
+          }}
           initialValues={initialCronValues}
         />
       )}

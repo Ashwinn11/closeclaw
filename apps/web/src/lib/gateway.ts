@@ -60,22 +60,25 @@ export function createGatewayClient(): GatewayClient {
         }
 
         return new Promise((resolve, reject) => {
-            ws = new WebSocket(`${WS_URL}/ws?token=${session.access_token}`);
+            const thisWs = new WebSocket(`${WS_URL}/ws?token=${session.access_token}`);
+            ws = thisWs;
 
-            ws.onopen = () => {
+            thisWs.onopen = () => {
+                if (ws !== thisWs) return; // Stale connection
                 connected = true;
                 console.log('[gateway] WS connected to proxy, waiting for Gateway auth...');
             };
 
-            ws.onmessage = (event) => {
+            thisWs.onmessage = (event) => {
                 try {
                     const msg = JSON.parse(event.data);
-                    console.log('[gateway] Received message:', msg);
+                    console.log('[gateway] MSG:', msg.type, msg.type === 'res' ? `id=${msg.id} ok=${msg.ok}` : msg.type === 'event' ? `event=${msg.event}` : '', 'pending:', [...pending.keys()]);
 
                     // Proxy-ready event: Gateway auth complete
                     if (msg.type === 'proxy-ready') {
                         ready = true;
-                        console.log('[gateway] ✅ Gateway ready', msg);
+                        connected = true;
+                        console.log('[gateway] ✅ Gateway ready');
                         resolve();
                         return;
                     }
@@ -110,6 +113,7 @@ export function createGatewayClient(): GatewayClient {
                         }
 
                         // Forward all events to handlers
+                        console.log('[gateway] Event received:', msg.event, msg.payload);
                         eventHandlers.forEach(h => {
                             try { h(msg.event, msg.payload); } catch { /* ignore */ }
                         });
@@ -120,13 +124,16 @@ export function createGatewayClient(): GatewayClient {
                 }
             };
 
-            ws.onerror = () => {
+            thisWs.onerror = () => {
                 if (!ready) {
                     reject(new Error('WebSocket connection failed'));
                 }
             };
 
-            ws.onclose = () => {
+            thisWs.onclose = () => {
+                // Only reset state if this is still the active connection
+                if (ws !== thisWs) return;
+                console.log('[gateway] WebSocket closed');
                 connected = false;
                 ready = false;
                 ws = null;
@@ -142,8 +149,8 @@ export function createGatewayClient(): GatewayClient {
 
             // Timeout for initial connection + auth
             setTimeout(() => {
-                if (!ready) {
-                    ws?.close();
+                if (!ready && ws === thisWs) {
+                    thisWs.close();
                     reject(new Error('Gateway connection timeout'));
                 }
             }, 20_000);
@@ -184,7 +191,9 @@ export function createGatewayClient(): GatewayClient {
     }
 
     function isConnected() {
-        return connected && ready;
+        const result = connected && ready;
+        console.log('[gateway] isConnected() called:', { connected, ready, result });
+        return result;
     }
 
     return { connect, disconnect, rpc, onEvent, isConnected };

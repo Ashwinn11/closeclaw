@@ -670,6 +670,30 @@
     gap: 0.75rem;
     text-align: center;
     align-items: center;
+    transition: all 0.3s ease;
+}
+
+.usage-card.updated {
+    animation: highlightUpdate 2s ease-out;
+    background: rgba(74, 144, 226, 0.08) !important;
+    border-color: rgba(74, 144, 226, 0.2) !important;
+}
+
+@keyframes highlightUpdate {
+    0% {
+        background: rgba(74, 144, 226, 0.2);
+        border-color: rgba(74, 144, 226, 0.4);
+        transform: scale(1.02);
+    }
+    50% {
+        background: rgba(74, 144, 226, 0.15);
+        border-color: rgba(74, 144, 226, 0.3);
+    }
+    100% {
+        background: rgba(74, 144, 226, 0.08);
+        border-color: rgba(74, 144, 226, 0.2);
+        transform: scale(1);
+    }
 }
 
 .usage-icon {

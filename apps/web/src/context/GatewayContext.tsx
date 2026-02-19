@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
-import { getMyInstance } from '../lib/api';
+import { getMyInstance, setGatewayClient } from '../lib/api';
 import { createGatewayClient } from '../lib/gateway';
 import type { GatewayClient } from '../lib/gateway';
 
@@ -12,6 +12,7 @@ interface GatewayContextType {
   error: string | null;
   subscribe: (events: string[], handler: (event: string, payload: unknown) => void) => () => void;
   rpc: (method: string, params?: Record<string, unknown>) => Promise<unknown>;
+  connect: () => void;
 }
 
 const GatewayContext = createContext<GatewayContextType | null>(null);
@@ -23,31 +24,45 @@ export const useGateway = () => {
 };
 
 export const GatewayProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [status, setStatus] = useState<ConnectionStatus>('disconnected');
   const [error, setError] = useState<string | null>(null);
   const clientRef = useRef<GatewayClient | null>(null);
+  const connectingRef = useRef(false);
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const heartbeatTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
-  const hasInstanceRef = useRef(false);
+  const mountedRef = useRef(true);
 
-  // Calculate exponential backoff delay
-  const getBackoffDelay = (attempt: number): number => {
-    const maxDelay = 30_000; // 30 seconds
-    const delay = Math.min(1000 * Math.pow(2, attempt), maxDelay);
-    return delay;
-  };
-
-  // Cleanup heartbeat timeout
-  const clearHeartbeat = () => {
+  const clearHeartbeat = useCallback(() => {
     if (heartbeatTimeoutRef.current) {
       clearTimeout(heartbeatTimeoutRef.current);
       heartbeatTimeoutRef.current = undefined;
     }
-  };
+  }, []);
 
-  // Setup heartbeat to monitor connection health
+  const clearReconnectTimeout = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = undefined;
+    }
+  }, []);
+
+  const disconnectClient = useCallback(() => {
+    clearHeartbeat();
+    clearReconnectTimeout();
+    connectingRef.current = false;
+    if (clientRef.current) {
+      clientRef.current.disconnect();
+      clientRef.current = null;
+    }
+    setGatewayClient(null);
+    if (mountedRef.current) {
+      setStatus('disconnected');
+      setError(null);
+    }
+  }, [clearHeartbeat, clearReconnectTimeout]);
+
   const setupHeartbeat = useCallback(() => {
     clearHeartbeat();
     heartbeatTimeoutRef.current = setTimeout(() => {
@@ -55,51 +70,37 @@ export const GatewayProvider: React.FC<{ children: React.ReactNode }> = ({ child
         clientRef.current
           .rpc('health')
           .then(() => {
-            // Health check passed, reschedule
             setupHeartbeat();
           })
           .catch((err) => {
             console.warn('[gateway] Health check failed:', err.message);
-            // Reconnect on health check failure
-            disconnect();
           });
       }
-    }, 30_000); // Check every 30 seconds
-  }, []);
+    }, 30_000);
+  }, [clearHeartbeat]);
 
-  // Cleanup reconnect timeout
-  const clearReconnectTimeout = () => {
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-      reconnectTimeoutRef.current = undefined;
-    }
-  };
+  // Single connect function that guards against duplicate calls
+  const connectToGateway = useCallback(async () => {
+    if (connectingRef.current) return;
+    if (clientRef.current?.isConnected()) return;
 
-  // Connect to WebSocket
-  const connect = useCallback(async () => {
-    if (!isAuthenticated || !user) {
-      setStatus('disconnected');
-      return;
-    }
+    connectingRef.current = true;
 
-    // Check if user has an active instance
+    // Check for active instance
     try {
       const instance = await getMyInstance();
       if (!instance) {
-        console.log('[gateway] No active instance found, skipping WebSocket connection');
-        hasInstanceRef.current = false;
-        setStatus('disconnected');
+        console.log('[gateway] No active instance, skipping WebSocket');
+        connectingRef.current = false;
         return;
       }
-      hasInstanceRef.current = true;
-    } catch (err) {
-      console.warn('[gateway] Failed to check instance:', (err as Error).message);
-      hasInstanceRef.current = false;
-      setStatus('disconnected');
+    } catch {
+      connectingRef.current = false;
       return;
     }
 
-    if (clientRef.current?.isConnected()) {
+    if (!mountedRef.current) {
+      connectingRef.current = false;
       return;
     }
 
@@ -107,64 +108,68 @@ export const GatewayProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setStatus('connecting');
       setError(null);
 
-      if (!clientRef.current) {
-        clientRef.current = createGatewayClient();
+      const client = createGatewayClient();
+      clientRef.current = client;
+
+      await client.connect();
+
+      if (!mountedRef.current) {
+        client.disconnect();
+        connectingRef.current = false;
+        return;
       }
 
-      await clientRef.current.connect();
-
       reconnectAttemptsRef.current = 0;
+      setGatewayClient(client);
       setStatus('connected');
       console.log('[gateway] Connected successfully');
 
-      // Setup heartbeat
       setupHeartbeat();
 
-      // Setup error handler for future disconnections
-      clientRef.current.onEvent((event, payload) => {
+      client.onEvent((event, payload) => {
         if (event === 'close' || event === 'proxy.disconnected') {
           console.log('[gateway] Connection closed, will attempt reconnect');
-          disconnect();
+          setStatus('disconnected');
+          setGatewayClient(null);
+          clientRef.current = null;
+          connectingRef.current = false;
+
+          // Auto-reconnect with backoff
+          const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30_000);
+          reconnectAttemptsRef.current++;
+          clearReconnectTimeout();
+          reconnectTimeoutRef.current = setTimeout(() => {
+            if (mountedRef.current) connectToGateway();
+          }, delay);
         } else if (event === 'error') {
           console.error('[gateway] Connection error:', payload);
           setError((payload as { message?: string })?.message || 'Connection error');
-          disconnect();
         }
       });
     } catch (err) {
       const errorMsg = (err as Error).message;
       console.error('[gateway] Connection failed:', errorMsg);
-      setError(errorMsg);
-      setStatus('error');
+      if (mountedRef.current) {
+        setError(errorMsg);
+        setStatus('error');
+      }
 
-      // Schedule reconnect with exponential backoff
-      const delay = getBackoffDelay(reconnectAttemptsRef.current);
+      // Reconnect with backoff
+      const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30_000);
       reconnectAttemptsRef.current++;
-      console.log(`[gateway] Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current})`);
-
       clearReconnectTimeout();
       reconnectTimeoutRef.current = setTimeout(() => {
-        connect();
+        if (mountedRef.current) connectToGateway();
       }, delay);
+    } finally {
+      connectingRef.current = false;
     }
-  }, [isAuthenticated, user, setupHeartbeat]);
-
-  // Disconnect from WebSocket
-  const disconnect = useCallback(() => {
-    clearHeartbeat();
-    clearReconnectTimeout();
-    if (clientRef.current) {
-      clientRef.current.disconnect();
-    }
-    setStatus('disconnected');
-    setError(null);
-  }, []);
+  }, [setupHeartbeat, clearReconnectTimeout]);
 
   // Subscribe to events
   const subscribe = useCallback(
     (events: string[], handler: (event: string, payload: unknown) => void) => {
       if (!clientRef.current) {
-        console.warn('[gateway] Cannot subscribe: client not initialized');
         return () => {};
       }
 
@@ -179,7 +184,7 @@ export const GatewayProvider: React.FC<{ children: React.ReactNode }> = ({ child
     []
   );
 
-  // Make RPC calls with fallback
+  // Make RPC calls
   const rpc = useCallback(
     async (method: string, params?: Record<string, unknown>): Promise<unknown> => {
       if (!clientRef.current?.isConnected()) {
@@ -190,24 +195,24 @@ export const GatewayProvider: React.FC<{ children: React.ReactNode }> = ({ child
     []
   );
 
-  // Connect/disconnect on auth state change
+  // Connect on auth, disconnect on logout - only depends on isAuthenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      connect();
-    } else {
-      disconnect();
-    }
-  }, [isAuthenticated, connect, disconnect]);
+    mountedRef.current = true;
 
-  // Cleanup on unmount
-  useEffect(() => {
+    if (isAuthenticated) {
+      connectToGateway();
+    } else {
+      disconnectClient();
+    }
+
     return () => {
-      disconnect();
+      mountedRef.current = false;
+      disconnectClient();
     };
-  }, [disconnect]);
+  }, [isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <GatewayContext.Provider value={{ status, client: clientRef.current, error, subscribe, rpc }}>
+    <GatewayContext.Provider value={{ status, client: clientRef.current, error, subscribe, rpc, connect: connectToGateway }}>
       {children}
     </GatewayContext.Provider>
   );

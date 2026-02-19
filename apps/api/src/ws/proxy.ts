@@ -32,6 +32,7 @@ interface ProxyConnection {
     gatewayWs: WebSocket | null;
     instanceId: string;
     authenticated: boolean;
+    authTimeout?: ReturnType<typeof setTimeout>;
 }
 
 const activeConnections = new Map<string, ProxyConnection>();
@@ -98,6 +99,7 @@ export function attachWsProxy(server: HttpServer) {
         // Close existing connection for this user
         const existing = activeConnections.get(userId);
         if (existing) {
+            if (existing.authTimeout) clearTimeout(existing.authTimeout);
             existing.clientWs.close();
             existing.gatewayWs?.close();
             activeConnections.delete(userId);
@@ -132,8 +134,8 @@ export function attachWsProxy(server: HttpServer) {
             try {
                 msg = JSON.parse(raw);
             } catch {
-                // Forward raw data
-                if (clientWs.readyState === WebSocket.OPEN) clientWs.send(data);
+                // Forward raw data as string
+                if (clientWs.readyState === WebSocket.OPEN) clientWs.send(raw);
                 return;
             }
 
@@ -170,6 +172,7 @@ export function attachWsProxy(server: HttpServer) {
                 if (msg.type === 'res' && msg.id === 'proxy-connect') {
                     if (msg.ok) {
                         conn.authenticated = true;
+                        if (conn.authTimeout) clearTimeout(conn.authTimeout);
                         console.log(`[ws-proxy] ✅ Authenticated with Gateway for user ${userId.slice(0, 8)}`);
                         // Forward hello-ok to client so they know the connection is live
                         if (clientWs.readyState === WebSocket.OPEN) {
@@ -196,10 +199,10 @@ export function attachWsProxy(server: HttpServer) {
                 return;
             }
 
-            // ── After auth: pipe everything ──
+            // ── After auth: pipe everything (send as string, not Buffer) ──
 
             if (clientWs.readyState === WebSocket.OPEN) {
-                clientWs.send(data);
+                clientWs.send(raw);
             }
         });
 
@@ -230,6 +233,8 @@ export function attachWsProxy(server: HttpServer) {
         // ─── Client connection lifecycle ─────────────────────────────────────
 
         clientWs.on('message', (data) => {
+            const raw = data.toString();
+            console.log(`[ws-proxy] Client message from user ${userId.slice(0, 8)}: authenticated=${conn.authenticated}, gatewayReady=${gatewayWs.readyState === WebSocket.OPEN}`, raw.slice(0, 200));
             if (!conn.authenticated) {
                 clientWs.send(JSON.stringify({
                     type: 'event',
@@ -263,15 +268,17 @@ export function attachWsProxy(server: HttpServer) {
 
         // ─── Connection timeout ──────────────────────────────────────────────
 
-        setTimeout(() => {
+        conn.authTimeout = setTimeout(() => {
             if (!conn.authenticated) {
                 console.error(`[ws-proxy] Gateway auth timeout for user ${userId.slice(0, 8)}`);
-                clientWs.send(JSON.stringify({
-                    type: 'event',
-                    event: 'error',
-                    payload: { message: 'Gateway connection timeout', code: 504 },
-                }));
-                clientWs.close();
+                if (clientWs.readyState === WebSocket.OPEN) {
+                    clientWs.send(JSON.stringify({
+                        type: 'event',
+                        event: 'error',
+                        payload: { message: 'Gateway connection timeout', code: 504 },
+                    }));
+                    clientWs.close();
+                }
                 gatewayWs.terminate();
                 activeConnections.delete(userId);
             }

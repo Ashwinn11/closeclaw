@@ -72,22 +72,35 @@ export async function getMyInstance() {
     return request('/api/instances/mine');
 }
 
+// ─── Gateway WebSocket RPC ────────────────────────────────────────────────
+
+let gatewayClient: any = null;
+
+export function setGatewayClient(client: any) {
+    gatewayClient = client;
+}
+
+function requireGateway() {
+    if (!gatewayClient?.isConnected()) {
+        throw new Error('Gateway not connected');
+    }
+    return gatewayClient;
+}
+
 export async function getCronJobs(): Promise<any[]> {
-    return request('/api/instances/mine/cron');
+    const gw = requireGateway();
+    const result = await gw.rpc('cron.list');
+    return result.jobs || [];
 }
 
 export async function createCronJob(params: any): Promise<any> {
-    return request('/api/instances/mine/cron', {
-        method: 'POST',
-        body: JSON.stringify(params),
-    });
+    const gw = requireGateway();
+    return gw.rpc('cron.add', params);
 }
 
 export async function removeCronJob(id: string): Promise<any> {
-    return request('/api/instances/mine/cron/remove', {
-        method: 'POST',
-        body: JSON.stringify({ id }),
-    });
+    const gw = requireGateway();
+    return gw.rpc('cron.remove', { id });
 }
 
 export async function getUsageStats(): Promise<{
@@ -97,7 +110,38 @@ export async function getUsageStats(): Promise<{
     apiCreditsLeft: number;
     uptime: string;
 }> {
-    return request('/api/instances/mine/usage');
+    const gw = requireGateway();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const startDate = thirtyDaysAgo.toISOString().split('T')[0];
+
+    const usage: any = await gw.rpc('sessions.usage', { startDate });
+
+    // Map raw Gateway format to dashboard format
+    return {
+        messagesThisMonth: usage.totals?.totalMessages || usage.aggregates?.messages?.total || 0,
+        tokensUsed: usage.totals?.totalTokens || 0,
+        costThisMonth: usage.totals?.totalCost || 0,
+        apiCreditsLeft: 0,
+        uptime: usage.totals?.uptime || 'N/A',
+        byModel: usage.aggregates?.byModel || [],
+    } as any;
+}
+
+// ─── Gateway Config ────────────────────────────────────────────────────────
+
+export async function getGatewayConfig(): Promise<{ config: Record<string, unknown>; hash: string }> {
+    const gw = requireGateway();
+    return gw.rpc('config.get');
+}
+
+export async function patchGatewayConfig(patch: Record<string, unknown>): Promise<void> {
+    const gw = requireGateway();
+    const current = await gw.rpc('config.get') as { hash: string };
+    await gw.rpc('config.patch', {
+        raw: JSON.stringify(patch),
+        baseHash: current.hash,
+    });
 }
 
 // ─── Auth ──────────────────────────────────────────────────────────────────

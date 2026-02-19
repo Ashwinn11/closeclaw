@@ -2,9 +2,53 @@ import { useState, useEffect } from 'react';
 import { Card } from './Card';
 import { Button } from './Button';
 import { BrandIcons } from './BrandIcons';
-import { setupChannel, verifyChannel, getMyInstance } from '../../lib/api';
+import { setupChannel, verifyChannel, getMyInstance, patchGatewayConfig } from '../../lib/api';
+import { useGateway } from '../../context/GatewayContext';
 import { Check, Loader2, AlertCircle, Bot, ArrowRight } from 'lucide-react';
 import './ChannelSetupModal.css';
+
+function buildChannelPatch(
+  channel: string,
+  token: string,
+  appToken: string | undefined,
+  ownerUserId: string,
+): Record<string, unknown> {
+  const ch = channel.toLowerCase();
+  const ownerAllowFrom = [ownerUserId.trim()];
+  let channelConfig: Record<string, unknown>;
+
+  switch (ch) {
+    case 'telegram':
+      channelConfig = { enabled: true, botToken: token, dmPolicy: 'allowlist', allowFrom: ownerAllowFrom };
+      break;
+    case 'discord':
+      channelConfig = { enabled: true, token, dmPolicy: 'allowlist', allowFrom: ownerAllowFrom, dm: { enabled: true } };
+      break;
+    case 'slack':
+      channelConfig = { enabled: true, botToken: token, appToken: appToken!, dmPolicy: 'allowlist', allowFrom: ownerAllowFrom, dm: { enabled: true } };
+      break;
+    default:
+      channelConfig = {};
+  }
+
+  return {
+    channels: { [ch]: channelConfig },
+    agents: {
+      defaults: {
+        model: {
+          primary: 'google/gemini-3-flash-preview',
+          fallbacks: ['anthropic/claude-sonnet-4-6', 'openai/gpt-5.2-codex'],
+        },
+        models: {
+          'google/gemini-3-flash-preview': { alias: 'Gemini' },
+          'anthropic/claude-sonnet-4-6': { alias: 'Sonnet' },
+          'openai/gpt-5.2-codex': { alias: 'Codex' },
+        },
+      },
+    },
+    session: { dmScope: 'main' },
+  };
+}
 
 type ChannelType = 'Telegram' | 'Discord' | 'Slack';
 type SetupStep = 'token' | 'verified' | 'owner-id' | 'billing';
@@ -102,6 +146,7 @@ const planData = [
 ];
 
 export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, onClose }) => {
+  const { status: gatewayStatus, connect } = useGateway();
   const [step, setStep] = useState<SetupStep>('token');
   const [token, setToken] = useState('');
   const [secondToken, setSecondToken] = useState('');
@@ -113,6 +158,7 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
   const [polling, setPolling] = useState(false);
   const [manualOwnerId, setManualOwnerId] = useState('');
   const [hasInstance, setHasInstance] = useState(false);
+  const [pendingPatch, setPendingPatch] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     const checkInstance = async () => {
@@ -183,6 +229,19 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
 
   const [deploying, setDeploying] = useState(false);
 
+  // Apply pending config patch once WS connects (for new users whose instance was just claimed)
+  useEffect(() => {
+    if (gatewayStatus !== 'connected' || !pendingPatch) return;
+    const patch = pendingPatch;
+    setPendingPatch(null);
+    patchGatewayConfig(patch)
+      .then(() => onClose())
+      .catch((err: Error) => {
+        setError(err.message || 'Failed to configure Gateway');
+        setDeploying(false);
+      });
+  }, [gatewayStatus, pendingPatch]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleDeploy = async (plan: string) => {
     setDeploying(true);
     setError(null);
@@ -193,14 +252,30 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
       return;
     }
     try {
-      await setupChannel({
+      const result = await setupChannel({
         channel: channel.toLowerCase() as 'telegram' | 'discord' | 'slack',
         token: token.trim(),
         appToken: needsSecondToken ? secondToken.trim() : undefined,
         plan,
         ownerUserId: resolvedOwnerId.trim(),
       });
-      onClose();
+
+      // Dev mode or pending instance — no Gateway config needed yet
+      if ((result as any).devMode) {
+        onClose();
+        return;
+      }
+
+      const patch = buildChannelPatch(channel, token.trim(), needsSecondToken ? secondToken.trim() : undefined, resolvedOwnerId.trim());
+
+      if (gatewayStatus === 'connected') {
+        await patchGatewayConfig(patch);
+        onClose();
+      } else {
+        // Instance was just claimed — trigger WS connect, apply patch once connected
+        setPendingPatch(patch);
+        connect();
+      }
     } catch (err) {
       setError((err as Error).message || 'Deployment failed. Please try again.');
       setDeploying(false);
