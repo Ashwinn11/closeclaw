@@ -283,11 +283,11 @@ channelRoutes.post('/setup', async (c) => {
             agents: {
                 defaults: {
                     model: {
-                        primary: "google/gemini-3-pro-preview",
+                        primary: "google/gemini-3-flash-preview",
                         fallbacks: ["anthropic/claude-sonnet-4-6", "openai/gpt-5.2-codex"],
                     },
                     models: {
-                        "google/gemini-3-pro-preview": { alias: "Gemini" },
+                        "google/gemini-3-flash-preview": { alias: "Gemini" },
                         "anthropic/claude-sonnet-4-6": { alias: "Sonnet" },
                         "openai/gpt-5.2-codex": { alias: "Codex" },
                     },
