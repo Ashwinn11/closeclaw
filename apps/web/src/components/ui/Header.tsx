@@ -1,9 +1,74 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useGateway } from '../../context/GatewayContext';
 import './Header.css';
 import { Button } from './Button';
 import { Menu } from 'lucide-react';
+
+const StatusIndicator: React.FC = () => {
+  const { status, error } = useGateway();
+  const [showModal, setShowModal] = useState(false);
+
+  const getStatusIcon = () => {
+    switch (status) {
+      case 'connected':
+        return '🟢';
+      case 'connecting':
+        return '🟡';
+      case 'error':
+        return '🔴';
+      default:
+        return '⚪';
+    }
+  };
+
+  const getStatusText = () => {
+    switch (status) {
+      case 'connected':
+        return 'Connected';
+      case 'connecting':
+        return 'Connecting...';
+      case 'error':
+        return 'Error';
+      default:
+        return 'Disconnected';
+    }
+  };
+
+  return (
+    <>
+      <button
+        className="connection-status"
+        onClick={() => setShowModal(true)}
+        title={error || getStatusText()}
+      >
+        <span className="status-icon">{getStatusIcon()}</span>
+        <span className="status-text">{getStatusText()}</span>
+      </button>
+
+      {showModal && (
+        <div className="status-modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="status-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Connection Status</h3>
+              <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
+            </div>
+            <div className="modal-content">
+              <div className="status-info">
+                <span className="status-icon-large">{getStatusIcon()}</span>
+                <div>
+                  <p className="status-name">{getStatusText()}</p>
+                  {error && <p className="status-error">{error}</p>}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -27,6 +92,7 @@ export const Header: React.FC = () => {
 
         {/* Right: CTA */}
         <div className="header-right">
+          {isAuthenticated && <StatusIndicator />}
           <Button
             variant="primary"
             size="sm"

@@ -70,11 +70,12 @@ export function createGatewayClient(): GatewayClient {
             ws.onmessage = (event) => {
                 try {
                     const msg = JSON.parse(event.data);
+                    console.log('[gateway] Received message:', msg);
 
                     // Proxy-ready event: Gateway auth complete
                     if (msg.type === 'proxy-ready') {
                         ready = true;
-                        console.log('[gateway] ✅ Gateway ready');
+                        console.log('[gateway] ✅ Gateway ready', msg);
                         resolve();
                         return;
                     }
