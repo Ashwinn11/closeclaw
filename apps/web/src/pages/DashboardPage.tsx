@@ -71,6 +71,15 @@ const predefinedCrons = [
   }
 ];
 
+const formatTokens = (tokens: number): string => {
+  if (tokens >= 1000000) {
+    return (tokens / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  } else if (tokens >= 1000) {
+    return (tokens / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+  }
+  return tokens.toString();
+};
+
 export const DashboardPage: React.FC = () => {
   const { user, logout } = useAuth();
   const { status: gatewayStatus, subscribe } = useGateway();
@@ -555,7 +564,7 @@ export const DashboardPage: React.FC = () => {
                     </Card>
                     <Card className={`usage-card ${updatedFields.has('tokensUsed') ? 'updated' : ''}`}>
                       <div className="usage-icon tokens"><BarChart3 size={20} /></div>
-                      <div className="usage-value">{(usageData.tokensUsed / 1000).toFixed(1)}k</div>
+                      <div className="usage-value">{formatTokens(usageData.tokensUsed)}</div>
                       <div className="usage-label">Tokens Used</div>
                     </Card>
                     <Card className={`usage-card ${updatedFields.has('costThisMonth') ? 'updated' : ''}`}>
@@ -581,7 +590,7 @@ export const DashboardPage: React.FC = () => {
                               </div>
                               <div className="model-stats">
                                 <div className="model-stat">
-                                  <span className="stat-value">{(item.totals.totalTokens / 1000).toFixed(1)}k</span>
+                                  <span className="stat-value">{formatTokens(item.totals.totalTokens)}</span>
                                   <span className="stat-label">Tokens</span>
                                 </div>
                                 <div className="model-stat">
