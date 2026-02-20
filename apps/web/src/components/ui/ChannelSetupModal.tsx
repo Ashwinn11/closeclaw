@@ -4,6 +4,7 @@ import { Button } from './Button';
 import { BrandIcons } from './BrandIcons';
 import { setupChannel, verifyChannel, getMyInstance, patchGatewayConfig } from '../../lib/api';
 import { useGateway } from '../../context/GatewayContext';
+import { useError } from '../../context/ErrorContext';
 import { Check, Loader2, AlertCircle, Bot, ArrowRight } from 'lucide-react';
 import './ChannelSetupModal.css';
 
@@ -152,6 +153,7 @@ const planData = [
 
 export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, onClose }) => {
   const { status: gatewayStatus, connect } = useGateway();
+  const { showError } = useError();
   const [step, setStep] = useState<SetupStep>('token');
   const [token, setToken] = useState('');
   const [secondToken, setSecondToken] = useState('');
@@ -202,7 +204,7 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
       setBotInfo(data);
       setStep('verified');
     } catch (err) {
-      setError((err as Error).message || 'Failed to verify token. Check your connection and try again.');
+      showError((err as Error).message || 'Failed to verify token. Check your connection and try again.', 'Verification Error');
     } finally {
       setVerifying(false);
     }
@@ -226,7 +228,7 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
         setError('No message received yet. Send any message to your bot and try again.');
       }
     } catch {
-      setError('Failed to poll for updates. Check your connection.');
+      showError('Failed to poll for updates. Check your connection.', 'Polling Error');
     } finally {
       setPolling(false);
     }
@@ -242,7 +244,7 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
     patchGatewayConfig(patch)
       .then(() => onClose())
       .catch((err: Error) => {
-        setError(err.message || 'Failed to configure Gateway');
+        showError(err.message || 'Failed to configure Gateway', 'Gateway Setup Error');
         setDeploying(false);
       });
   }, [gatewayStatus, pendingPatch]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -282,7 +284,7 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
         connect();
       }
     } catch (err) {
-      setError((err as Error).message || 'Deployment failed. Please try again.');
+      showError((err as Error).message || 'Deployment failed. Please try again.', 'Deployment Error');
       setDeploying(false);
     }
   };

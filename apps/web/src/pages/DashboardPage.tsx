@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useGateway } from '../context/GatewayContext';
+import { useError } from '../context/ErrorContext';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -73,6 +74,7 @@ const predefinedCrons = [
 export const DashboardPage: React.FC = () => {
   const { user, logout } = useAuth();
   const { status: gatewayStatus, subscribe } = useGateway();
+  const { showError } = useError();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('connections');
   const [cronView, setCronView] = useState<'active' | 'templates'>('active');
@@ -97,12 +99,13 @@ export const DashboardPage: React.FC = () => {
     try {
       const data = await listChannels();
       setConnections(data);
-    } catch {
+    } catch (err: any) {
       setConnections([]);
+      showError(err.message || 'Failed to fetch channels', 'Fetch Error');
     } finally {
       setLoadingChannels(false);
     }
-  }, []);
+  }, [showError]);
 
   const fetchCron = useCallback(async () => {
     setLoadingCron(true);
@@ -145,7 +148,7 @@ export const DashboardPage: React.FC = () => {
     } catch (err: any) {
       // Restore on error
       fetchCron();
-      alert(`Failed to remove job: ${err.message}`);
+      showError(`Failed to remove job: ${err.message}`, 'Deletion Failed');
     }
   };
 
@@ -161,7 +164,7 @@ export const DashboardPage: React.FC = () => {
 
     const unsubscribe = subscribe(
       ['chat'],
-      (event, payload: any) => {
+      (_event, payload: any) => {
         if (payload?.state !== 'final') return;
         // Silent refresh after agent conversation completes
         getCronJobs().then(setCronJobs).catch(() => {});
@@ -181,7 +184,7 @@ export const DashboardPage: React.FC = () => {
 
     const unsubscribe = subscribe(
       ['chat'],
-      (event, payload: any) => {
+      (_event, payload: any) => {
         if (payload?.state !== 'final') return;
         // Silent refresh — no loading spinner
         getUsageStats()
@@ -227,8 +230,8 @@ export const DashboardPage: React.FC = () => {
       }
       await disconnectChannel(connectionId);
       await fetchChannels();
-    } catch {
-      // ignore
+    } catch (err: any) {
+      showError(err.message || 'Failed to disconnect channel', 'Disconnect Error');
     } finally {
       setDisconnecting(null);
     }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card } from './Card';
 import { Button } from './Button';
 import { createCronJob } from '../../lib/api';
+import { useError } from '../../context/ErrorContext';
 import { Loader2, AlertCircle, Clock, Send } from 'lucide-react';
 import './CronSetupModal.css';
 
@@ -21,6 +22,7 @@ export const CronSetupModal: React.FC<CronSetupModalProps> = ({ onClose, onSucce
   const [text, setText] = useState(initialValues?.text || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { showError } = useError();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +48,7 @@ export const CronSetupModal: React.FC<CronSetupModalProps> = ({ onClose, onSucce
       onSuccess();
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Failed to create cron job');
+      showError(err.message || 'Failed to create cron job', 'Creation Failed');
     } finally {
       setLoading(false);
     }

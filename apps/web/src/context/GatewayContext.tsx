@@ -30,8 +30,8 @@ export const GatewayProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const clientRef = useRef<GatewayClient | null>(null);
   const connectingRef = useRef(false);
   const reconnectAttemptsRef = useRef(0);
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
-  const heartbeatTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const heartbeatTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const mountedRef = useRef(true);
 
   const clearHeartbeat = useCallback(() => {

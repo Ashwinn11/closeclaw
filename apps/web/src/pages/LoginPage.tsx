@@ -24,7 +24,7 @@ export const LoginPage: React.FC = () => {
     setError(null);
     try {
       await login(); // Will redirect to Google
-    } catch (err) {
+    } catch (_err) {
       setError('Failed to sign in. Please try again.');
       setLoggingIn(false);
     }
