@@ -59,6 +59,10 @@ export async function disconnectChannel(connectionId: string): Promise<{ message
     return request(`/api/channels/${connectionId}/disconnect`, { method: 'POST' });
 }
 
+export async function getGatewayProviderConfig(): Promise<Record<string, unknown>> {
+    return request('/api/channels/gateway-config');
+}
+
 export async function verifyChannel(channel: string, token: string): Promise<{ name: string; username: string; id: string }> {
     return request('/api/channels/verify', {
         method: 'POST',
@@ -142,6 +146,54 @@ export async function patchGatewayConfig(patch: Record<string, unknown>): Promis
         raw: JSON.stringify(patch),
         baseHash: current.hash,
     });
+}
+
+// ─── Billing ───────────────────────────────────────────────────────────────
+
+export async function getCredits(): Promise<{ api_credits: number; plan: string }> {
+    return request('/api/billing/credits');
+}
+
+export async function createCheckout(planName: string): Promise<{ checkoutUrl: string }> {
+    return request('/api/billing/checkout', {
+        method: 'POST',
+        body: JSON.stringify({ planName }),
+    });
+}
+
+export async function createTopup(pack: string): Promise<{ checkoutUrl: string }> {
+    return request('/api/billing/topup', {
+        method: 'POST',
+        body: JSON.stringify({ pack }),
+    });
+}
+
+export interface UsageLogRow {
+    id: string;
+    provider: string;
+    model: string | null;
+    input_tokens: number;
+    output_tokens: number;
+    cost: number;
+    created_at: string;
+}
+
+export interface UsageLogResponse {
+    rows: UsageLogRow[];
+    totals: {
+        totalTokens: number;
+        totalCost: number;
+        totalMessages: number;
+    };
+    byModel: Array<{
+        model: string;
+        provider: string;
+        totals: { totalTokens: number; totalCost: number };
+    }>;
+}
+
+export async function getUsageLog(): Promise<UsageLogResponse> {
+    return request('/api/billing/usage-log');
 }
 
 // ─── Auth ──────────────────────────────────────────────────────────────────

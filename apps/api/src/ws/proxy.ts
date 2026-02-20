@@ -4,7 +4,7 @@
  * Flow:
  *   1. Frontend opens WS to /ws?token=<supabase-jwt>
  *   2. Backend validates JWT, looks up user's claimed instance
- *   3. Backend opens WS to Gateway at ws://<tailscale-ip>:18789
+ *   3. Backend opens WS to Gateway at ws://<internal-ip>:18789
  *   4. Gateway sends connect.challenge; backend replies with connect request
  *   5. Gateway replies with hello-ok; proxy starts piping messages
  *

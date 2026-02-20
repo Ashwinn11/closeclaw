@@ -655,7 +655,7 @@
 }
 
 .text-gradient {
-    background: linear-gradient(135deg, #FF5A5F 0%, #A43BB2 100%);
+    background: linear-gradient(135deg, #FF4D4D 0%, #A43BB2 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -746,7 +746,7 @@
     height: 32px;
     background: linear-gradient(135deg, var(--accent-primary), #A43BB2);
     border-radius: 10px;
-    box-shadow: 0 0 20px rgba(255, 90, 95, 0.3);
+    box-shadow: 0 0 20px rgba(255, 77, 77, 0.3);
 }
 
 .powered-badge {

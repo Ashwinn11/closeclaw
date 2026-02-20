@@ -44,7 +44,7 @@ instanceRoutes.get('/mine', async (c) => {
  *
  * Atomically:
  * 1. Check user doesn't already have an instance
- * 2. Find an available instance with a Tailscale IP
+ * 2. Find an available instance with a internal IP
  * 3. Mark it as claimed with user_id + timestamp
  *
  * The GCP tag update happens asynchronously (or via a background job).
@@ -70,7 +70,7 @@ instanceRoutes.post('/claim', async (c) => {
         });
     }
 
-    // 2. Find an available instance (must have Tailscale IP)
+    // 2. Find an available instance (must have internal IP)
     const { data: available, error: findError } = await supabase
         .from('instances')
         .select('*')

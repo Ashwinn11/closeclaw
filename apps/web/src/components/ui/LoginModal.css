@@ -46,7 +46,7 @@
     height: 36px;
     background: linear-gradient(135deg, var(--accent-primary), #A43BB2);
     border-radius: 10px;
-    box-shadow: 0 0 20px rgba(255, 90, 95, 0.3);
+    box-shadow: 0 0 20px rgba(255, 77, 77, 0.3);
 }
 
 .login-logo span {

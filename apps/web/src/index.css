@@ -7,8 +7,8 @@
   --surface-hover: rgba(255, 255, 255, 0.05);
   --text-primary: #ECEEF3;
   --text-secondary: #8E96A3;
-  --accent-primary: #FF5A5F;
-  --accent-glow: rgba(255, 90, 95, 0.3);
+  --accent-primary: #FF4D4D;
+  --accent-glow: rgba(255, 77, 77, 0.3);
 
   /* Typography */
   --font-family: 'Outfit', sans-serif;
@@ -86,7 +86,7 @@ button {
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, #FF5A5F, #FF8A8E);
+  background: linear-gradient(135deg, #FF4D4D, #FF8A8E);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;

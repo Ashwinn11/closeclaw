@@ -22,16 +22,16 @@ type GatewayConnection = {
     authenticated: boolean;
 };
 
-export function createGatewayRpcClient(tailscaleIp: string, port: number, token: string) {
+export function createGatewayRpcClient(gatewayIp: string, port: number, token: string) {
     let conn: GatewayConnection | null = null;
 
     async function connect(): Promise<GatewayConnection> {
         if (conn?.ws.readyState === WebSocket.OPEN && conn.authenticated) return conn;
 
         return new Promise((resolve, reject) => {
-            const ws = new WebSocket(`ws://${tailscaleIp}:${port}`, {
+            const ws = new WebSocket(`ws://${gatewayIp}:${port}`, {
                 headers: {
-                    'Origin': `http://${tailscaleIp}:${port}`,
+                    'Origin': `http://${gatewayIp}:${port}`,
                 },
             });
             const pending = new Map<string, { resolve: (v: unknown) => void; reject: (e: Error) => void }>();

@@ -2,59 +2,12 @@ import { useState, useEffect } from 'react';
 import { Card } from './Card';
 import { Button } from './Button';
 import { BrandIcons } from './BrandIcons';
-import { setupChannel, verifyChannel, getMyInstance, patchGatewayConfig } from '../../lib/api';
+import { setupChannel, verifyChannel, getMyInstance, getCredits, createCheckout, patchGatewayConfig, getGatewayProviderConfig } from '../../lib/api';
+import { buildChannelPatch } from '../../lib/channelConfig';
 import { useGateway } from '../../context/GatewayContext';
 import { useError } from '../../context/ErrorContext';
 import { Check, Loader2, AlertCircle, Bot, ArrowRight } from 'lucide-react';
 import './ChannelSetupModal.css';
-
-function buildChannelPatch(
-  channel: string,
-  token: string,
-  appToken: string | undefined,
-  ownerUserId: string,
-): Record<string, unknown> {
-  const ch = channel.toLowerCase();
-  const ownerAllowFrom = [ownerUserId.trim()];
-  let channelConfig: Record<string, unknown>;
-
-  switch (ch) {
-    case 'telegram':
-      channelConfig = { enabled: true, botToken: token, dmPolicy: 'allowlist', allowFrom: ownerAllowFrom };
-      break;
-    case 'discord':
-      channelConfig = { enabled: true, token, dmPolicy: 'allowlist', allowFrom: ownerAllowFrom, dm: { enabled: true } };
-      break;
-    case 'slack':
-      channelConfig = { enabled: true, botToken: token, appToken: appToken!, dmPolicy: 'allowlist', allowFrom: ownerAllowFrom, dm: { enabled: true } };
-      break;
-    default:
-      channelConfig = {};
-  }
-
-  return {
-    channels: { [ch]: channelConfig },
-    agents: {
-      defaults: {
-        model: {
-          primary: 'google/gemini-3-flash-preview',
-          fallbacks: ['anthropic/claude-sonnet-4-6', 'openai/gpt-5.2-codex'],
-        },
-        models: {
-          'google/gemini-3-flash-preview': { alias: 'Gemini' },
-          'anthropic/claude-sonnet-4-6': { alias: 'Sonnet' },
-          'openai/gpt-5.2-codex': { alias: 'Codex' },
-        },
-      },
-    },
-    browser: {
-      enabled: true,
-      noSandbox: true,
-      headless: true,
-    },
-    session: { dmScope: 'main' },
-  };
-}
 
 type ChannelType = 'Telegram' | 'Discord' | 'Slack';
 type SetupStep = 'token' | 'verified' | 'owner-id' | 'billing';
@@ -68,6 +21,8 @@ interface BotInfo {
 interface ChannelSetupModalProps {
   channel: ChannelType;
   onClose: () => void;
+  /** Pre-filled data from a billing redirect — skips straight to deploy */
+  resumeData?: { token: string; appToken?: string; ownerUserId: string };
 }
 
 const channelConfig: Record<ChannelType, {
@@ -151,35 +106,54 @@ const planData = [
   },
 ];
 
-export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, onClose }) => {
+export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, onClose, resumeData }) => {
   const { status: gatewayStatus, connect } = useGateway();
   const { showError } = useError();
-  const [step, setStep] = useState<SetupStep>('token');
-  const [token, setToken] = useState('');
-  const [secondToken, setSecondToken] = useState('');
+  // If resuming after billing, start directly at billing step with pre-filled values
+  const [step, setStep] = useState<SetupStep>(resumeData ? 'billing' : 'token');
+  const [token, setToken] = useState(resumeData?.token ?? '');
+  const [secondToken, setSecondToken] = useState(resumeData?.appToken ?? '');
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [botInfo, setBotInfo] = useState<BotInfo | null>(null);
-  const [ownerUserId, setOwnerUserId] = useState('');
+  const [ownerUserId, setOwnerUserId] = useState(resumeData?.ownerUserId ?? '');
   const [ownerInfo, setOwnerInfo] = useState<{ name?: string, username?: string } | null>(null);
   const [polling, setPolling] = useState(false);
   const [manualOwnerId, setManualOwnerId] = useState('');
   const [hasInstance, setHasInstance] = useState(false);
+  const [hasPlan, setHasPlan] = useState(false);
   const [pendingPatch, setPendingPatch] = useState<Record<string, unknown> | null>(null);
+  const [statusChecked, setStatusChecked] = useState(false);
 
   useEffect(() => {
-    const checkInstance = async () => {
+    const checkStatus = async () => {
       try {
-        const inst = await getMyInstance() as any;
+        const [inst, credits] = await Promise.all([
+          getMyInstance() as Promise<any>,
+          getCredits().catch(() => ({ api_credits: 0, plan: 'none' })),
+        ]);
         if (inst && (inst.status === 'active' || inst.status === 'claimed' || inst.status === 'running')) {
           setHasInstance(true);
         }
+        if (credits.plan && credits.plan !== 'none' && credits.plan !== 'cancelled') {
+          setHasPlan(true);
+        }
       } catch {
-        setHasInstance(false);
+        // silently ignore — defaults to false
+      } finally {
+        setStatusChecked(true);
       }
     };
-    checkInstance();
+    checkStatus();
   }, []);
+
+  // After billing redirect: auto-trigger deploy once instance/plan check is done.
+  // We always deploy here — the user came back from a completed payment.
+  // The channels.ts /setup endpoint handles instance claiming.
+  useEffect(() => {
+    if (!resumeData || !statusChecked || deploying) return;
+    handleDeploy('Existing');
+  }, [statusChecked]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const config = channelConfig[channel];
   const ChannelIcon = config.icon;
@@ -273,7 +247,17 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
         return;
       }
 
-      const patch = buildChannelPatch(channel, token.trim(), needsSecondToken ? secondToken.trim() : undefined, resolvedOwnerId.trim());
+      const channelPatch = buildChannelPatch(channel, token.trim(), needsSecondToken ? secondToken.trim() : undefined, resolvedOwnerId.trim());
+
+      // Fetch provider config (proxy baseUrl + gateway token) from backend and merge in.
+      // This ensures closeclaw-google/anthropic/openai providers are always registered,
+      // even on VMs provisioned before the proxy was introduced.
+      let providerPatch: Record<string, unknown> = {};
+      try {
+        providerPatch = await getGatewayProviderConfig();
+      } catch { /* silently ignore — provider config may already be set */ }
+
+      const patch = { ...channelPatch, ...providerPatch };
 
       if (gatewayStatus === 'connected') {
         await patchGatewayConfig(patch);
@@ -285,6 +269,30 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
       }
     } catch (err) {
       showError((err as Error).message || 'Deployment failed. Please try again.', 'Deployment Error');
+      setDeploying(false);
+    }
+  };
+
+  const handlePlanSelect = async (planName: string) => {
+    const resolvedOwnerId = ownerUserId || manualOwnerId;
+    if (!resolvedOwnerId.trim()) {
+      setError('Owner user ID is required.');
+      return;
+    }
+    setDeploying(true);
+    setError(null);
+    try {
+      const { checkoutUrl } = await createCheckout(planName);
+      // Save setup state so dashboard can complete it after payment
+      localStorage.setItem('cc_pending_setup', JSON.stringify({
+        channel: channel.toLowerCase(),
+        token: token.trim(),
+        appToken: needsSecondToken ? secondToken.trim() : undefined,
+        ownerUserId: resolvedOwnerId.trim(),
+      }));
+      window.location.href = checkoutUrl;
+    } catch (err) {
+      showError((err as Error).message || 'Failed to create checkout. Please try again.', 'Billing Error');
       setDeploying(false);
     }
   };
@@ -327,7 +335,7 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
               {step === 'token' && 'Enter Bot Token'}
               {step === 'verified' && 'Bot Verified'}
               {step === 'owner-id' && 'Identify Yourself'}
-              {step === 'billing' && (hasInstance ? 'Linking Bot...' : 'Select Plan')}
+              {step === 'billing' && ((hasInstance || hasPlan || !!resumeData) ? 'Linking Bot...' : 'Select Plan')}
             </span>
           </div>
         </div>
@@ -341,7 +349,7 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
           <div className={`progress-dot ${step === 'verified' ? 'active' : ['owner-id','billing'].includes(step) ? 'done' : ''}`} />
           <div className="progress-line" />
           <div className={`progress-dot ${step === 'owner-id' ? 'active' : step === 'billing' ? 'done' : ''}`} />
-          {!hasInstance && (
+          {!hasInstance && !hasPlan && (
             <>
               <div className="progress-line" />
               <div className={`progress-dot ${step === 'billing' ? 'active' : ''}`} />
@@ -499,8 +507,11 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
                       {polling ? <><Loader2 size={16} className="spin" /> Waiting for message...</> : <><ArrowRight size={16} /> I sent a message</>}
                     </Button>
                   ) : (
-                    <Button className="deploy-btn" onClick={() => { setStep('billing'); handleDeploy('Existing'); }}>
-                      {hasInstance ? 'Confirm and Link Bot' : 'Confirm and Continue'} <ArrowRight size={16} />
+                    <Button className="deploy-btn" onClick={() => {
+                      setStep('billing');
+                      if (hasInstance || hasPlan) handleDeploy('Existing');
+                    }}>
+                      {(hasInstance || hasPlan) ? 'Confirm and Link Bot' : 'Confirm and Continue'} <ArrowRight size={16} />
                     </Button>
                   )}
                 </div>
@@ -533,14 +544,10 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
                   <Button className="deploy-btn" onClick={() => {
                     if (!manualOwnerId.trim()) { setError('Please enter your user ID'); return; }
                     setOwnerUserId(manualOwnerId.trim());
-                    if (hasInstance) {
-                      setStep('billing');
-                      handleDeploy('Existing');
-                    } else {
-                      setStep('billing');
-                    }
+                    setStep('billing');
+                    if (hasInstance || hasPlan) handleDeploy('Existing');
                   }}>
-                    {hasInstance ? 'Link Bot to Instance' : 'Continue'} <ArrowRight size={16} />
+                    {(hasInstance || hasPlan) ? 'Link Bot to Instance' : 'Continue'} <ArrowRight size={16} />
                   </Button>
                 </div>
               </>
@@ -551,11 +558,11 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
         {/* Step 4: Billing / Plan Selection */}
         {step === 'billing' && (
           <div className="setup-step billing-step">
-            {hasInstance ? (
+            {(hasInstance || hasPlan || !!resumeData) ? (
               <div className="linking-state">
                 <Loader2 size={48} className="spin" />
-                <h3>Linking Bot to your Instance</h3>
-                <p>We're configuring your existing Gateway to handle the new {channel} connection.</p>
+                <h3>{hasInstance ? 'Linking Bot to your Instance' : 'Claiming your Agent Instance'}</h3>
+                <p>We're configuring your Gateway to handle the new {channel} connection.</p>
               </div>
             ) : (
               <>
@@ -570,7 +577,7 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
                     <div
                       key={plan.name}
                       className={`plan-card ${plan.isPopular ? 'popular' : ''} ${deploying ? 'disabled' : ''}`}
-                      onClick={() => !deploying && handleDeploy(plan.name)}
+                      onClick={() => !deploying && handlePlanSelect(plan.name)}
                     >
                       {plan.isPopular && <div className="popular-badge">Most Popular</div>}
                       <h4>{plan.name}</h4>
@@ -581,7 +588,7 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
                         ))}
                       </ul>
                       <Button variant={plan.isPopular ? 'primary' : 'secondary'} fullWidth disabled={deploying}>
-                        {deploying ? <><Loader2 size={14} className="spin" /> Deploying...</> : 'Deploy'}
+                        {deploying ? <><Loader2 size={14} className="spin" /> Redirecting...</> : 'Subscribe'}
                       </Button>
                     </div>
                   ))}

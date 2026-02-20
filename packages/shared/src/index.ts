@@ -8,7 +8,7 @@ export type Instance = {
     id: string;
     userId: string | null;
     gcpInstanceName: string;
-    tailscaleIp: string;
+    internalIp: string;
     gatewayPort: number;
     status: InstanceStatus;
     createdAt: string;

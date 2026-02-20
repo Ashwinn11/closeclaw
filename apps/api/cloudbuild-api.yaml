@@ -1,0 +1,5 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/glowing-harmony-362803/closeclaw-api', '-f', 'apps/api/Dockerfile.api', '.']
+images:
+  - 'gcr.io/glowing-harmony-362803/closeclaw-api'

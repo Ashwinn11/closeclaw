@@ -24,7 +24,7 @@
     height: 100px;
     z-index: 20;
     background: radial-gradient(circle, rgba(255, 90, 95, 0.15) 0%, rgba(10, 10, 15, 0.8) 100%);
-    border-color: rgba(255, 90, 95, 0.3);
+    border-color: rgba(255, 77, 77, 0.3);
     box-shadow: 0 0 40px rgba(255, 90, 95, 0.2);
 }
 
@@ -32,7 +32,7 @@
     font-family: var(--font-family);
     font-weight: 800;
     font-size: var(--text-3xl);
-    background: linear-gradient(135deg, #FF5A5F, #FF8A8E);
+    background: linear-gradient(135deg, #FF4D4D, #FF8A8E);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;

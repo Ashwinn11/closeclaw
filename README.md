@@ -282,7 +282,7 @@ Open in browser: `http://127.0.0.1:18789/` and paste gateway token.
 After verifying the base VM works, create a machine image:
 
 ```bash
-gcloud compute machine-images create openclaw-base-image \
+gcloud compute machine-images create openclaw-base-image-v2 \
   --source-instance=openclaw-gateway \
   --source-instance-zone=us-central1-a
 ```
@@ -783,7 +783,7 @@ CloseClaw must visually match OpenClaw.ai and follow the dark nebula aesthetic u
 - surfaceHover: `rgba(255,255,255,0.06)`
 - textPrimary: `#ECEEF3`
 - textSecondary: `#9AA0AA`
-- accentPrimary: `#FF5A5F` (OpenClaw coral)
+- accentPrimary: `#FF4D4D` (OpenClaw coral)
 - accentGlow: `rgba(255,90,95,0.45)`
 
 **Motion:**

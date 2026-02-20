@@ -8,15 +8,16 @@ import { Button } from '../components/ui/Button';
 import { BrandIcons } from '../components/ui/BrandIcons';
 import { ChannelSetupModal } from '../components/ui/ChannelSetupModal';
 import { CronSetupModal } from '../components/ui/CronSetupModal';
-import { listChannels, disconnectChannel, type ChannelConnection, getCronJobs, getUsageStats, removeCronJob, patchGatewayConfig } from '../lib/api';
+import { listChannels, disconnectChannel, type ChannelConnection, getCronJobs, getUsageStats, getCredits, getUsageLog, createTopup, removeCronJob, patchGatewayConfig } from '../lib/api';
 import { NebulaBackground } from '../components/ui/NebulaBackground';
+import { ChatTab } from '../components/chat/ChatTab';
 import {
   LogOut, Wifi, WifiOff, Clock, BarChart3,
   Plus, Activity, Zap, Loader2, AlertCircle, Calendar, Trash2, Smartphone, ArrowRight, Sun, Receipt, TrendingDown, Server, MessageCircle
 } from 'lucide-react';
 import './DashboardPage.css';
 
-type Tab = 'connections' | 'cron' | 'usage';
+type Tab = 'connections' | 'chat' | 'cron' | 'usage';
 type ChannelType = 'Telegram' | 'Discord' | 'Slack';
 
 interface ChannelDef {
@@ -104,6 +105,11 @@ export const DashboardPage: React.FC = () => {
   const [usageError, setUsageError] = useState<string | null>(null);
   const [updatedFields, setUpdatedFields] = useState<Set<string>>(new Set());
 
+  // Billing return state
+  const [topupSuccess, setTopupSuccess] = useState(false);
+  const [toppingUp, setToppingUp] = useState<string | null>(null);
+  const [channelResumeData, setChannelResumeData] = useState<{ token: string; appToken?: string; ownerUserId: string } | null>(null);
+
   const fetchChannels = useCallback(async () => {
     try {
       const data = await listChannels();
@@ -116,7 +122,7 @@ export const DashboardPage: React.FC = () => {
     }
   }, [showError]);
 
-  const fetchCron = useCallback(async () => {
+const fetchCron = useCallback(async () => {
     setLoadingCron(true);
     setCronError(null);
     try {
@@ -133,10 +139,22 @@ export const DashboardPage: React.FC = () => {
     setLoadingUsage(true);
     setUsageError(null);
     try {
-      const data = await getUsageStats();
-      setUsageData(data);
+      const [log, credits] = await Promise.all([getUsageLog(), getCredits()]);
+      setUsageData({
+        messagesThisMonth: log.totals.totalMessages,
+        tokensUsed: log.totals.totalTokens,
+        costThisMonth: log.totals.totalCost,
+        apiCreditsLeft: credits.api_credits,
+        byModel: log.byModel,
+      });
     } catch (err: any) {
-      setUsageError(err.message || 'Failed to fetch usage data');
+      // Fall back to gateway-reported usage if DB tables don't exist yet
+      try {
+        const data = await getUsageStats();
+        setUsageData(data);
+      } catch {
+        setUsageError(err.message || 'Failed to fetch usage data');
+      }
     } finally {
       setLoadingUsage(false);
     }
@@ -164,6 +182,43 @@ export const DashboardPage: React.FC = () => {
   useEffect(() => {
     fetchChannels();
   }, [fetchChannels]);
+
+  // Handle return from LemonSqueezy checkout
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get('cc_topup') === 'success') {
+      window.history.replaceState({}, '', '/dashboard');
+      setTopupSuccess(true);
+      setActiveTab('usage');
+      setTimeout(() => setTopupSuccess(false), 5000);
+      return;
+    }
+
+    if (params.get('cc_setup') === 'resume') {
+      window.history.replaceState({}, '', '/dashboard');
+      const raw = localStorage.getItem('cc_pending_setup');
+      if (!raw) return;
+      localStorage.removeItem('cc_pending_setup');
+      try {
+        const pending = JSON.parse(raw);
+        const channelName = (pending.channel.charAt(0).toUpperCase() + pending.channel.slice(1)) as ChannelType;
+        setChannelResumeData({ token: pending.token, appToken: pending.appToken, ownerUserId: pending.ownerUserId });
+        setSetupChannel(channelName);
+      } catch { /* ignore corrupt localStorage */ }
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleTopup = async (pack: string) => {
+    setToppingUp(pack);
+    try {
+      const { checkoutUrl } = await createTopup(pack);
+      window.location.href = checkoutUrl;
+    } catch (err: any) {
+      showError(err.message || 'Failed to create checkout', 'Top-up Error');
+      setToppingUp(null);
+    }
+  };
 
   // Subscribe to cron updates via chat completion events
   // Gateway doesn't emit cron-specific events, so we silently re-fetch
@@ -196,9 +251,15 @@ export const DashboardPage: React.FC = () => {
       (_event, payload: any) => {
         if (payload?.state !== 'final') return;
         // Silent refresh — no loading spinner
-        getUsageStats()
-          .then(data => {
-            setUsageData(data);
+        Promise.all([getUsageLog(), getCredits()])
+          .then(([log, credits]) => {
+            setUsageData({
+              messagesThisMonth: log.totals.totalMessages,
+              tokensUsed: log.totals.totalTokens,
+              costThisMonth: log.totals.totalCost,
+              apiCreditsLeft: credits.api_credits,
+              byModel: log.byModel,
+            });
             setUpdatedFields(new Set(['messagesThisMonth', 'tokensUsed', 'costThisMonth']));
           })
           .catch(() => {});
@@ -248,6 +309,7 @@ export const DashboardPage: React.FC = () => {
 
   const handleModalClose = () => {
     setSetupChannel(null);
+    setChannelResumeData(null);
     fetchChannels(); // Refresh connections after modal closes
   };
 
@@ -258,6 +320,7 @@ export const DashboardPage: React.FC = () => {
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: 'connections', label: 'Connections', icon: <Wifi size={16} /> },
+    { key: 'chat', label: 'Chat', icon: <MessageCircle size={16} /> },
     { key: 'cron', label: 'Cron', icon: <Clock size={16} /> },
     { key: 'usage', label: 'Usage', icon: <BarChart3 size={16} /> },
   ];
@@ -314,6 +377,7 @@ export const DashboardPage: React.FC = () => {
             <h1>{tabs.find(t => t.key === activeTab)?.label}</h1>
             <p className="header-subtitle">
               {activeTab === 'connections' && 'Manage your channel connections'}
+              {activeTab === 'chat' && 'Chat with your assistant'}
               {activeTab === 'cron' && 'Schedule and manage automated tasks'}
               {activeTab === 'usage' && 'Monitor your agent\'s performance'}
             </p>
@@ -328,6 +392,15 @@ export const DashboardPage: React.FC = () => {
             </span>
           </div>
         </div>
+
+        {/* Billing / setup banners */}
+        {topupSuccess && (
+          <div className="billing-banner success">
+            <Zap size={15} />
+            <span>Credits topped up! Your balance has been updated.</span>
+            <button className="banner-close" onClick={() => setTopupSuccess(false)}>×</button>
+          </div>
+        )}
 
         <div className="dashboard-content">
           {/* Connections Tab */}
@@ -416,6 +489,11 @@ export const DashboardPage: React.FC = () => {
                 })}
               </div>
             </div>
+          )}
+
+          {/* Chat Tab */}
+          {activeTab === 'chat' && (
+             <ChatTab />
           )}
 
 {/* Cron Tab */}
@@ -572,10 +650,10 @@ export const DashboardPage: React.FC = () => {
                       <div className="usage-value">${Number(usageData.costThisMonth).toFixed(4)}</div>
                       <div className="usage-label">Total Cost</div>
                     </Card>
-                    <Card className={`usage-card ${updatedFields.has('uptime') ? 'updated' : ''}`}>
-                      <div className="usage-icon uptime"><Wifi size={20} /></div>
-                      <div className="usage-value">{usageData.uptime}</div>
-                      <div className="usage-label">Uptime</div>
+                    <Card className={`usage-card ${updatedFields.has('apiCreditsLeft') ? 'updated' : ''}`}>
+                      <div className="usage-icon uptime"><Zap size={20} /></div>
+                      <div className="usage-value">${Number(usageData.apiCreditsLeft ?? 0).toFixed(2)}</div>
+                      <div className="usage-label">Credits Left</div>
                     </Card>
 
                     {usageData.byModel && usageData.byModel.length > 0 && (
@@ -605,6 +683,33 @@ export const DashboardPage: React.FC = () => {
                     )}
                   </>
                 ) : null}
+
+              {/* Top-up section — always visible */}
+              <div className="topup-section">
+                <div className="section-label" style={{ marginTop: '2rem' }}>Top Up Credits</div>
+                <div className="topup-grid">
+                  {[
+                    { pack: '5',  label: '$5',  credits: 5  },
+                    { pack: '10', label: '$10', credits: 10 },
+                    { pack: '25', label: '$25', credits: 25 },
+                    { pack: '50', label: '$50', credits: 50 },
+                  ].map(({ pack, label, credits }) => (
+                    <Card key={pack} className="topup-card" hoverable onClick={() => !toppingUp && handleTopup(pack)}>
+                      <div className="topup-amount">{label}</div>
+                      <div className="topup-credits">+${credits} credits</div>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        fullWidth
+                        disabled={!!toppingUp}
+                        onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleTopup(pack); }}
+                      >
+                        {toppingUp === pack ? <><Loader2 size={13} className="spin" /> Redirecting...</> : 'Top Up'}
+                      </Button>
+                    </Card>
+                  ))}
+                </div>
+              </div>
               </div>
             </div>
           )}
@@ -616,6 +721,7 @@ export const DashboardPage: React.FC = () => {
         <ChannelSetupModal
           channel={setupChannel}
           onClose={handleModalClose}
+          resumeData={channelResumeData ?? undefined}
         />
       )}
 

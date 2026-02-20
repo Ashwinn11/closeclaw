@@ -513,7 +513,7 @@
 }
 
 .billing-step .plan-card.popular {
-    border-color: rgba(255, 90, 95, 0.3);
+    border-color: rgba(255, 77, 77, 0.3);
     background: linear-gradient(180deg, rgba(255, 90, 95, 0.06) 0%, rgba(255, 90, 95, 0.02) 100%);
 }
 

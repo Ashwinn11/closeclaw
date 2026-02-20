@@ -1,0 +1,10 @@
+node_modules
+apps/web
+apps/api/dist
+**/dist
+**/.env
+**/*.local
+infra
+supabase
+.git
+.claude

@@ -49,7 +49,7 @@ reset = '\033[0m'
 
 counts = {}
 
-print(f'  {'VM Name':<30} {'Status':<12} {'Tailscale IP':<18} {'User':<12} {'Zone'}')
+print(f'  {'VM Name':<30} {'Status':<12} {'Internal IP':<18} {'User':<12} {'Zone'}')
 print(f'  {'-'*30} {'-'*12} {'-'*18} {'-'*12} {'-'*15}')
 
 for inst in instances:

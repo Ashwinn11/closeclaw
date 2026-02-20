@@ -927,3 +927,80 @@
         gap: 1rem;
     }
 }
+/* ─── Billing banners ──────────────────────────────────────────────────────── */
+
+.billing-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    margin: 0 0 1rem;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.billing-banner.success {
+    background: rgba(74, 222, 128, 0.08);
+    border-color: rgba(74, 222, 128, 0.25);
+    color: #4ade80;
+}
+
+.billing-banner .banner-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 1.1rem;
+    cursor: pointer;
+    opacity: 0.6;
+    line-height: 1;
+    padding: 0;
+}
+
+.billing-banner .banner-close:hover {
+    opacity: 1;
+}
+
+/* ─── Top-up section ───────────────────────────────────────────────────────── */
+
+.topup-section {
+    grid-column: 1 / -1;
+}
+
+.topup-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.topup-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.25rem 1rem !important;
+    text-align: center;
+    cursor: pointer;
+}
+
+.topup-amount {
+    font-size: var(--text-2xl);
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.topup-credits {
+    font-size: var(--text-sm);
+    color: var(--accent-primary);
+    margin-bottom: 0.25rem;
+}
+
+@media (max-width: 768px) {
+    .topup-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

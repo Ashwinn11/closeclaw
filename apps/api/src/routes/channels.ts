@@ -163,7 +163,10 @@ channelRoutes.post('/setup', async (c) => {
 
         if (connErr) return c.json({ ok: false, error: connErr.message }, 500);
 
-        await supabase.from('users').update({ plan: plan.toLowerCase() }).eq('id', userId);
+        const knownPlans = ['basic', 'guardian', 'fortress'];
+        if (knownPlans.includes(plan.toLowerCase())) {
+            await supabase.from('users').update({ plan: plan.toLowerCase() }).eq('id', userId);
+        }
 
         return c.json({
             ok: true,
@@ -225,10 +228,10 @@ channelRoutes.post('/setup', async (c) => {
 
     const inst = instance!;
 
-    const tailscaleIp = inst.internal_ip as string;
+    const gatewayIp = inst.internal_ip as string;
     const gatewayToken = inst.gateway_token as string;
 
-    if (!tailscaleIp || !gatewayToken) {
+    if (!gatewayIp || !gatewayToken) {
         const { data: connection } = await supabase
             .from('channel_connections')
             .insert({ user_id: userId, instance_id: inst.id as string, channel, status: 'pending' })
@@ -254,11 +257,61 @@ channelRoutes.post('/setup', async (c) => {
         return c.json({ ok: false, error: 'Failed to save channel record' }, 500);
     }
 
-    await supabase.from('users').update({ plan: plan.toLowerCase() }).eq('id', userId);
+    const knownPlans = ['basic', 'guardian', 'fortress'];
+    if (knownPlans.includes(plan.toLowerCase())) {
+        await supabase.from('users').update({ plan: plan.toLowerCase() }).eq('id', userId);
+    }
 
     return c.json({
         ok: true,
         data: { connection, message: `${channel} channel enabled successfully` },
+    });
+});
+
+// GET /api/channels/gateway-config — Provider patch pre-filled with gateway token
+// Frontend merges this into the config patch so the proxy providers are always registered
+channelRoutes.get('/gateway-config', async (c) => {
+    const userId = c.get('userId' as never) as string;
+
+    const { data: instance } = await supabase
+        .from('instances')
+        .select('gateway_token')
+        .eq('user_id', userId)
+        .in('status', ['claimed', 'active'])
+        .maybeSingle();
+
+    if (!instance?.gateway_token) {
+        return c.json({ ok: false, error: 'No active instance' }, 404);
+    }
+
+    const proxyBase = `${process.env.PROXY_BASE_URL ?? 'https://api.closeclaw.in'}/api/proxy`;
+
+    return c.json({
+        ok: true,
+        data: {
+            models: {
+                providers: {
+                    'closeclaw-openai': {
+                        api: 'openai-completions',
+                        baseUrl: `${proxyBase}/openai/v1`,
+                        apiKey: instance.gateway_token,
+                        models: [],
+                    },
+                    'closeclaw-anthropic': {
+                        api: 'anthropic-messages',
+                        baseUrl: `${proxyBase}/anthropic`,
+                        apiKey: instance.gateway_token,
+                        models: [],
+                    },
+                    'closeclaw-google': {
+                        api: 'google-generative-ai',
+                        baseUrl: `${proxyBase}/google/v1beta`,
+                        apiKey: instance.gateway_token,
+                        models: [],
+                    },
+                },
+            },
+        },
     });
 });
 
