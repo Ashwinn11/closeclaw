@@ -33,6 +33,7 @@
     font-weight: 800;
     font-size: var(--text-xl);
     letter-spacing: -0.03em;
+    cursor: pointer;
 }
 
 .sidebar-logo .logo-icon.small {
@@ -286,7 +287,8 @@
     padding: 1.5rem !important;
     display: flex;
     flex-direction: column;
-    height: 190px;
+    height: auto;
+    min-height: 190px;
     background: rgba(0, 0, 0, 0.4) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
@@ -342,7 +344,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: var(--text-base);
+    font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -462,6 +464,29 @@
 }
 
 /* Empty State */
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    grid-column: 1 / -1;
+    color: var(--text-secondary);
+    gap: 1rem;
+}
+
+.error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    grid-column: 1 / -1;
+    color: #FF6B6B;
+    gap: 1rem;
+    text-align: center;
+}
+
 .empty-state-redesigned {
     display: flex;
     flex-direction: column;

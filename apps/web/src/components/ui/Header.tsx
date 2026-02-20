@@ -4,11 +4,11 @@ import { useAuth } from '../../context/AuthContext';
 import { useGateway } from '../../context/GatewayContext';
 import './Header.css';
 import { Button } from './Button';
-import { Menu } from 'lucide-react';
+import { Menu, LogOut } from 'lucide-react';
+import { LoginModal } from './LoginModal';
 
 const StatusIndicator: React.FC = () => {
   const { status, error } = useGateway();
-  const [showModal, setShowModal] = useState(false);
 
   const getStatusIcon = () => {
     switch (status) {
@@ -37,42 +37,59 @@ const StatusIndicator: React.FC = () => {
   };
 
   return (
-    <>
-      <button
-        className="connection-status"
-        onClick={() => setShowModal(true)}
-        title={error || getStatusText()}
-      >
-        <span className="status-icon">{getStatusIcon()}</span>
-        <span className="status-text">{getStatusText()}</span>
+    <div
+      className="connection-status no-hover"
+      title={error || getStatusText()}
+    >
+      <span className="status-icon">{getStatusIcon()}</span>
+      <span className="status-text">{getStatusText()}</span>
+    </div>
+  );
+};
+
+const UserProfile: React.FC = () => {
+  const { user, logout } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+  
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
+
+  return (
+    <div className="user-menu-container">
+      <button className="user-profile-btn" onClick={() => setIsOpen(!isOpen)}>
+        {user?.avatar ? (
+          <img src={user.avatar} alt="Profile" />
+        ) : (
+          <span>{user?.name?.charAt(0) || 'U'}</span>
+        )}
       </button>
 
-      {showModal && (
-        <div className="status-modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="status-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Connection Status</h3>
-              <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
+      {isOpen && (
+        <>
+          <div style={{position: 'fixed', top:0, left:0, right:0, bottom:0, zIndex: 10}} onClick={() => setIsOpen(false)} />
+          <div className="user-dropdown" style={{zIndex: 11}}>
+            <div className="user-info">
+              <p className="user-name">{user?.name || 'User'}</p>
+              <p className="user-email">{user?.email}</p>
             </div>
-            <div className="modal-content">
-              <div className="status-info">
-                <span className="status-icon-large">{getStatusIcon()}</span>
-                <div>
-                  <p className="status-name">{getStatusText()}</p>
-                  {error && <p className="status-error">{error}</p>}
-                </div>
-              </div>
-            </div>
+            <button className="dropdown-item" onClick={handleLogout}>
+              <LogOut size={16} />
+              Logout
+            </button>
           </div>
-        </div>
+        </>
       )}
-    </>
+    </div>
   );
 };
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   return (
     <div className="header-container">
@@ -90,23 +107,38 @@ export const Header: React.FC = () => {
           <a href="#pricing" className="nav-link">Pricing</a>
         </nav>
 
-        {/* Right: CTA */}
         <div className="header-right">
-          {isAuthenticated && <StatusIndicator />}
-          <Button
-            variant="primary"
-            size="sm"
-            className="get-started-btn"
-            onClick={() => navigate(isAuthenticated ? '/dashboard' : '/login')}
-          >
-            {isAuthenticated ? 'Dashboard' : 'Get Started'}
-          </Button>
+          {isAuthenticated ? (
+            <>
+              <StatusIndicator />
+              <Button
+                variant="primary"
+                size="sm"
+                className="get-started-btn"
+                onClick={() => navigate('/dashboard')}
+              >
+                Dashboard
+              </Button>
+              <UserProfile />
+            </>
+          ) : (
+            <Button
+              variant="primary"
+              size="sm"
+              className="get-started-btn"
+              onClick={() => setShowLoginModal(true)}
+            >
+              Get Started
+            </Button>
+          )}
           {/* Mobile Menu Toggle */}
           <button className="mobile-menu-toggle">
             <Menu size={24} color="var(--text-primary)" />
           </button>
         </div>
       </header>
+
+      {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
     </div>
   );
 };

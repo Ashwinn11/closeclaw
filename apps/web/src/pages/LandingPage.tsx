@@ -162,10 +162,10 @@ export const LandingPage: React.FC = () => {
             <Card className="bento-card card-browser" hoverable>
                <div className="visual-ephemeral">
                  <div className="orbital-ring"></div>
-                 <BrandIcons.Brave />
+                 <BrandIcons.Chromium />
                </div>
                <h3>Privacy-First Browsing</h3>
-               <p>Equipped with a secure, headless Brave instance for agent-led research with zero tracking or exposure.</p>
+               <p>Equipped with a secure, headless <span style={{ color: '#6199f6', fontWeight: 600 }}>Chromium</span> instance for agent-led research with zero tracking or exposure.</p>
             </Card>
           </div>
         </section>

@@ -1,23 +1,18 @@
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useEffect, useState } from 'react';
-import { Button } from '../components/ui/Button';
-import { NebulaBackground } from '../components/ui/NebulaBackground';
+import { type FC, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { useAuth } from '../../context/AuthContext';
+import { Button } from './Button';
 import { Loader2 } from 'lucide-react';
-import './LoginPage.css';
+import './LoginModal.css';
 
-export const LoginPage: React.FC = () => {
-  const { login, isAuthenticated, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
+interface LoginModalProps {
+  onClose: () => void;
+}
+
+export const LoginModal: FC<LoginModalProps> = ({ onClose }) => {
+  const { login } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [loggingIn, setLoggingIn] = useState(false);
-
-  // If already authenticated, redirect to dashboard
-  useEffect(() => {
-    if (isAuthenticated && !authLoading) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [isAuthenticated, authLoading, navigate]);
 
   const handleLogin = async () => {
     setLoggingIn(true);
@@ -30,19 +25,9 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  if (authLoading) {
-    return (
-      <div className="login-page">
-        <NebulaBackground />
-        <Loader2 size={32} className="spin" style={{ color: 'var(--text-secondary)', zIndex: 2 }} />
-      </div>
-    );
-  }
-
-  return (
-    <div className="login-page">
-      <NebulaBackground />
-      <div className="login-card">
+  const modalContent = (
+    <div className="login-modal-overlay" onClick={onClose}>
+      <div className="login-card" onClick={(e) => e.stopPropagation()}>
         <div className="login-logo">
           <div className="logo-icon" />
           <span>CloseClaw</span>
@@ -80,4 +65,6 @@ export const LoginPage: React.FC = () => {
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };

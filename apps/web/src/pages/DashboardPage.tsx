@@ -259,7 +259,7 @@ export const DashboardPage: React.FC = () => {
       {/* Sidebar */}
       <aside className="dashboard-sidebar">
         <div className="sidebar-header">
-          <div className="sidebar-logo">
+          <div className="sidebar-logo" onClick={() => navigate('/')}>
             <div className="logo-icon small" />
             <span>CloseClaw</span>
           </div>

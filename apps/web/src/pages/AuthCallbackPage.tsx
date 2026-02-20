@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { NebulaBackground } from '../components/ui/NebulaBackground';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/Button';
-import './LoginPage.css';
+import './AuthCallbackPage.css';
 
 export const AuthCallbackPage: React.FC = () => {
   const navigate = useNavigate();
@@ -49,8 +49,8 @@ export const AuthCallbackPage: React.FC = () => {
               <AlertCircle size={16} style={{ flexShrink: 0 }} />
               <span>{error}</span>
             </div>
-            <Button className="google-btn" onClick={() => navigate('/login', { replace: true })}>
-              ← Back to Login
+            <Button variant="secondary" onClick={() => navigate('/', { replace: true })}>
+              ← Back to Home
             </Button>
           </>
         ) : (
