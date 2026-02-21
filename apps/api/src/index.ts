@@ -14,14 +14,18 @@ const app = new Hono();
 // ─── Middleware ───────────────────────────────────────────────────────────────
 
 app.use('*', logger());
-app.use('*', cors({
-    origin: [
+const allowedOrigins = [
+    'https://closeclaw.in',
+    'https://www.closeclaw.in',
+    ...(process.env.NODE_ENV !== 'production' ? [
         'http://localhost:5173',
         'http://localhost:5174',
         'http://localhost:3000',
-        'https://closeclaw.in',
-        'https://www.closeclaw.in',
-    ],
+    ] : []),
+];
+
+app.use('*', cors({
+    origin: allowedOrigins,
     credentials: true,
 }));
 

@@ -147,16 +147,20 @@ const fetchCron = useCallback(async () => {
     setLoadingUsage(true);
     setUsageError(null);
     try {
-      const [log, credits] = await Promise.all([getUsageLog(), getCredits()]);
+      // Fetch usage log independently of credits — a missing column in the DB
+      // (e.g. pending migration) must not fall through to the Gateway fallback.
+      const log = await getUsageLog();
+      let apiCreditsLeft = 0;
+      try { const c = await getCredits(); apiCreditsLeft = c.api_credits; } catch { /* ignore */ }
       setUsageData({
         messagesThisMonth: log.totals.totalMessages,
         tokensUsed: log.totals.totalTokens,
         costThisMonth: log.totals.totalCost,
-        apiCreditsLeft: credits.api_credits,
+        apiCreditsLeft,
         byModel: log.byModel,
       });
     } catch (err: any) {
-      // Fall back to gateway-reported usage if DB tables don't exist yet
+      // Fall back to gateway-reported usage only if the usage_log table itself is unavailable
       try {
         const data = await getUsageStats();
         setUsageData(data);
@@ -297,13 +301,15 @@ const fetchCron = useCallback(async () => {
       (_event, payload: any) => {
         if (payload?.state !== 'final') return;
         // Silent refresh — no loading spinner
-        Promise.all([getUsageLog(), getCredits()])
-          .then(([log, credits]) => {
+        getUsageLog()
+          .then(async (log) => {
+            let apiCreditsLeft = 0;
+            try { const c = await getCredits(); apiCreditsLeft = c.api_credits; } catch { /* ignore */ }
             setUsageData({
               messagesThisMonth: log.totals.totalMessages,
               tokensUsed: log.totals.totalTokens,
               costThisMonth: log.totals.totalCost,
-              apiCreditsLeft: credits.api_credits,
+              apiCreditsLeft,
               byModel: log.byModel,
             });
             setUpdatedFields(new Set(['messagesThisMonth', 'tokensUsed', 'costThisMonth']));
@@ -700,11 +706,13 @@ const fetchCron = useCallback(async () => {
                   </div>
                 ) : usageData ? (
                   <>
+                    {usageData.messagesThisMonth > 0 && (
                     <Card className={`usage-card ${updatedFields.has('messagesThisMonth') ? 'updated' : ''}`}>
                       <div className="usage-icon"><Zap size={20} /></div>
                       <div className="usage-value">{usageData.messagesThisMonth.toLocaleString()}</div>
                       <div className="usage-label">Messages</div>
                     </Card>
+                    )}
                     <Card className={`usage-card ${updatedFields.has('tokensUsed') ? 'updated' : ''}`}>
                       <div className="usage-icon tokens"><BarChart3 size={20} /></div>
                       <div className="usage-value">{formatTokens(usageData.tokensUsed)}</div>

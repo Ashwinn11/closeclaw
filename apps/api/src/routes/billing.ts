@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
-import { createHmac } from 'node:crypto';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import { authMiddleware } from '../middleware/auth.js';
 import { supabase } from '../services/supabase.js';
+import { createGatewayRpcClient } from '../services/gateway-rpc.js';
 
 export const billingRoutes = new Hono();
 
@@ -164,6 +165,103 @@ billingRoutes.get('/usage-log', authMiddleware, async (c) => {
     });
 });
 
+// POST /api/billing/sync-usage
+// Calls sessions.usage on the user's gateway (ground truth) and deducts
+// the delta vs what's already logged. Safe to call repeatedly — only charges new usage since last sync.
+billingRoutes.post('/sync-usage', authMiddleware, async (c) => {
+    const userId = c.get('userId' as never) as string;
+
+    const { data: inst } = await supabase
+        .from('instances')
+        .select('id, internal_ip, gateway_port, gateway_token, last_usage_cost, last_usage_tokens')
+        .eq('user_id', userId)
+        .in('status', ['claimed', 'active'])
+        .maybeSingle();
+
+    if (!inst?.internal_ip || !inst?.gateway_token) {
+        return c.json({ ok: true, data: { synced: false, reason: 'no instance' } });
+    }
+
+    const since = new Date();
+    since.setDate(since.getDate() - 30);
+    const startDate = since.toISOString().split('T')[0];
+
+    const rpc = createGatewayRpcClient(inst.internal_ip as string, (inst.gateway_port as number) || 18789, inst.gateway_token as string);
+    let currentCost = 0;
+    let currentTokens = 0;
+    let byModel: any[] = [];
+
+    try {
+        const usage = await rpc.call('sessions.usage', { startDate }) as any;
+        currentCost = Number(usage?.totals?.totalCost ?? 0);
+        currentTokens = Number(usage?.totals?.totalTokens ?? 0);
+        byModel = usage?.aggregates?.byModel ?? [];
+    } catch {
+        return c.json({ ok: true, data: { synced: false, reason: 'gateway unreachable' } });
+    } finally {
+        rpc.disconnect();
+    }
+
+    if (currentCost < 0.000001) {
+        return c.json({ ok: true, data: { synced: false, delta: 0 } });
+    }
+
+    const lastCost = Number(inst.last_usage_cost ?? 0);
+    let delta: number;
+    if (currentCost >= lastCost) {
+        delta = currentCost - lastCost;
+    } else {
+        // Session reset
+        delta = currentCost;
+    }
+
+    await supabase
+        .from('instances')
+        .update({ last_usage_cost: currentCost, last_usage_tokens: currentTokens, last_usage_synced_at: new Date().toISOString() })
+        .eq('id', inst.id as string);
+
+    if (delta < 0.000001) {
+        return c.json({ ok: true, data: { synced: false, delta: 0 } });
+    }
+
+    await supabase.rpc('deduct_api_credits', { p_user_id: userId, p_amount: delta });
+
+    const lastTokens = Number(inst.last_usage_tokens ?? 0);
+    const deltaTokens = currentTokens >= lastTokens ? currentTokens - lastTokens : currentTokens;
+
+    if (byModel.length > 0) {
+        await supabase.from('usage_log').insert(byModel.map((m: any) => {
+            const mInput  = Number(m.totals?.input  ?? 0);
+            const mOutput = Number(m.totals?.output ?? 0);
+            const mCost   = Number(m.totals?.totalCost ?? 0);
+            const tokenShare = currentTokens > 0 ? (mInput + mOutput) / currentTokens : (1 / byModel.length);
+            const costShare  = currentCost   > 0 ? mCost / currentCost                : (1 / byModel.length);
+            const mTotal = mInput + mOutput;
+            return {
+                user_id: userId,
+                instance_id: inst.id,
+                provider: m.provider ?? 'unknown',
+                model: m.model ?? 'unknown',
+                input_tokens:  mTotal > 0 ? Math.round(tokenShare * deltaTokens * (mInput  / mTotal)) : 0,
+                output_tokens: mTotal > 0 ? Math.round(tokenShare * deltaTokens * (mOutput / mTotal)) : 0,
+                cost: costShare * delta,
+            };
+        }));
+    } else {
+        await supabase.from('usage_log').insert({
+            user_id: userId,
+            instance_id: inst.id,
+            provider: 'mixed',
+            model: null,
+            input_tokens: deltaTokens,
+            output_tokens: 0,
+            cost: delta,
+        });
+    }
+
+    return c.json({ ok: true, data: { synced: true, delta, currentCost, lastCost } });
+});
+
 // POST /api/billing/checkout — Create subscription checkout URL
 billingRoutes.post('/checkout', authMiddleware, async (c) => {
     const userId = c.get('userId' as never) as string;
@@ -210,7 +308,12 @@ billingRoutes.post('/webhook', async (c) => {
     hmac.update(rawBody);
     const digest = hmac.digest('hex');
 
-    if (!LS_WEBHOOK_SECRET || digest !== signature) {
+    const sigValid = LS_WEBHOOK_SECRET &&
+        signature.length > 0 &&
+        digest.length === signature.length &&
+        timingSafeEqual(Buffer.from(digest), Buffer.from(signature));
+
+    if (!sigValid) {
         console.error('[billing/webhook] Invalid signature');
         return c.json({ ok: false, error: 'Invalid signature' }, 401);
     }

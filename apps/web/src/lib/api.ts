@@ -44,7 +44,7 @@ export async function setupChannel(params: {
     appToken?: string;
     plan: string;
     ownerUserId: string;
-}): Promise<{ connection: ChannelConnection; message: string }> {
+}): Promise<{ connection: ChannelConnection; message: string; devMode?: boolean }> {
     return request('/api/channels/setup', {
         method: 'POST',
         body: JSON.stringify(params),
@@ -121,6 +121,17 @@ export async function getUsageStats(): Promise<{
 
     const usage: any = await gw.rpc('sessions.usage', { startDate });
 
+    // Normalize Gateway byModel shape: Gateway returns totals.input/output, dashboard reads totals.totalTokens
+    const rawByModel: any[] = usage.aggregates?.byModel || [];
+    const byModel = rawByModel.map((m: any) => ({
+        model: m.model,
+        provider: m.provider,
+        totals: {
+            totalTokens: Number(m.totals?.totalTokens ?? (m.totals?.input ?? 0) + (m.totals?.output ?? 0)),
+            totalCost: Number(m.totals?.totalCost ?? 0),
+        },
+    }));
+
     // Map raw Gateway format to dashboard format
     return {
         messagesThisMonth: usage.totals?.totalMessages || usage.aggregates?.messages?.total || 0,
@@ -128,7 +139,7 @@ export async function getUsageStats(): Promise<{
         costThisMonth: usage.totals?.totalCost || 0,
         apiCreditsLeft: 0,
         uptime: usage.totals?.uptime || 'N/A',
-        byModel: usage.aggregates?.byModel || [],
+        byModel,
     } as any;
 }
 

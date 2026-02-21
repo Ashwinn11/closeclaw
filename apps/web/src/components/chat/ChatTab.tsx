@@ -11,37 +11,82 @@ interface Message {
   timestamp: number;
 }
 
+// Sentinel strings must stay in sync with OpenClaw's buildInboundUserContextPrefix
+const INBOUND_META_SENTINELS = [
+  'Conversation info (untrusted metadata):',
+  'Sender (untrusted metadata):',
+  'Thread starter (untrusted, for context):',
+  'Replied message (untrusted, for context):',
+  'Forwarded message context (untrusted metadata):',
+  'Chat history since last reply (untrusted, for context):',
+];
+
+// Envelope channel labels from OpenClaw's chat-envelope.ts
+const ENVELOPE_CHANNELS = [
+  'WebChat', 'WhatsApp', 'Telegram', 'Signal', 'Slack', 'Discord',
+  'Google Chat', 'iMessage', 'Teams', 'Matrix', 'Zalo', 'Zalo Personal', 'BlueBubbles',
+];
+
 function cleanMessageText(text: string): { cleanText: string, sender: string | null } {
   let sender = null;
   let cleanText = text;
 
-  const convoMatch = cleanText.match(/Conversation info \(untrusted metadata\):\s*```json\s*(\{[\s\S]*?\})\s*```/);
-  if (convoMatch) {
-    try {
-      const parsed = JSON.parse(convoMatch[1]);
-      sender = parsed.sender || null;
-    } catch (e) {}
+  // ── Extract sender before stripping (mirrors OpenClaw Conversation info block) ──
+  const convoIdx = cleanText.indexOf('Conversation info (untrusted metadata):');
+  if (convoIdx !== -1) {
+    const jsonStart = cleanText.indexOf('```json', convoIdx);
+    const jsonEnd = cleanText.indexOf('\n```', jsonStart + 7);
+    if (jsonStart !== -1 && jsonEnd !== -1) {
+      try {
+        const parsed = JSON.parse(cleanText.slice(jsonStart + 7, jsonEnd).trim());
+        sender = parsed.sender || null;
+      } catch { /* ignore */ }
+    }
   }
 
-  const blocksToStrip = [
-    /Conversation info \(untrusted metadata\):\s*```json\s*\{[\s\S]*?\}\s*```\s*\n*/g,
-    /Sender \(untrusted metadata\):\s*```json\s*\{[\s\S]*?\}\s*```\s*\n*/g,
-    /Chat history since last reply \(untrusted, for context\):\s*```json\s*\[[\s\S]*?\]\s*```\s*\n*/g,
-    /Thread starter \(untrusted, for context\):\s*```json\s*\{[\s\S]*?\}\s*```\s*\n*/g,
-    /Replied message \(untrusted, for context\):\s*```json\s*\{[\s\S]*?\}\s*```\s*\n*/g,
-    /Forwarded message context \(untrusted metadata\):\s*```json\s*\{[\s\S]*?\}\s*```\s*\n*/g,
-  ];
+  // ── Strip metadata blocks: line-by-line state machine (mirrors strip-inbound-meta.ts) ──
+  if (INBOUND_META_SENTINELS.some(s => cleanText.includes(s))) {
+    const lines = cleanText.split('\n');
+    const result: string[] = [];
+    let inBlock = false;
+    let inFence = false;
 
-  blocksToStrip.forEach(regex => {
-    cleanText = cleanText.replace(regex, '');
-  });
+    for (const line of lines) {
+      if (!inBlock && INBOUND_META_SENTINELS.some(s => line.startsWith(s))) {
+        inBlock = true; inFence = false; continue;
+      }
+      if (inBlock) {
+        if (!inFence && line.trim() === '```json') { inFence = true; continue; }
+        if (inFence) {
+          if (line.trim() === '```') { inBlock = false; inFence = false; }
+          continue;
+        }
+        if (line.trim() === '') continue; // blank separator between consecutive blocks
+        inBlock = false; // unexpected non-blank line — treat as user content
+      }
+      result.push(line);
+    }
+    cleanText = result.join('\n').replace(/^\n+/, '');
+  }
 
+  // ── Strip [message_id: ...] hint lines (mirrors stripMessageIdHints) ──────────
+  if (cleanText.includes('[message_id:')) {
+    cleanText = cleanText.split('\n')
+      .filter(line => !/^\s*\[message_id:\s*[^\]]+\]\s*$/i.test(line))
+      .join('\n');
+  }
+
+  // ── Strip inline directives (mirrors directive-tags.ts) ──────────────────────
   cleanText = cleanText.replace(/\[\[\s*audio_as_voice\s*\]\]/gi, '');
   cleanText = cleanText.replace(/\[\[\s*(?:reply_to_current|reply_to\s*:\s*([^\]\n]+))\s*\]\]/gi, '');
-  cleanText = cleanText.replace(/\[\[\s*reply_to\s*[a-zA-Z0-9_\-:]+\s*\]\]/gi, '');
 
-  cleanText = cleanText.replace(/(?:^|\n)\s*\[(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)?\s*\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}[^\]]*\]\s*/i, '');
-  cleanText = cleanText.replace(/(?:^|\n)\s*\[(?:WebChat|WhatsApp|Telegram|Signal|Slack|Discord|Google Chat|iMessage|Teams|Matrix|Zalo|BlueBubbles)[^\]]*\]\s*/i, '');
+  // ── Strip envelope prefix from start of message (mirrors stripEnvelope) ──────
+  // Only strip from the very beginning, same as OpenClaw's text.slice(match[0].length)
+  cleanText = cleanText.replace(/^\[([^\]]+)\]\s*/, (match, header) => {
+    const isDate = /\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(header);
+    const isChannel = ENVELOPE_CHANNELS.some(ch => header === ch || header.startsWith(ch + ' '));
+    return (isDate || isChannel) ? '' : match;
+  });
 
   return { cleanText: cleanText.trim(), sender };
 }
@@ -57,6 +102,10 @@ export const ChatTab: React.FC = () => {
   const [copiedText, setCopiedText] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  // Dedup Gateway chat events — Gateway broadcasts every event twice:
+  // once via broadcast() to all WS clients and once via nodeSendToSession().
+  // Both copies arrive with identical runId+seq. Track seen keys to drop the duplicate.
+  const seenEventKeys = useRef(new Set<string>());
   
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -144,8 +193,13 @@ export const ChatTab: React.FC = () => {
     loadHistory();
     
     const unsubscribe = subscribe(["chat"], (_event, payload: any) => {
-       if (payload?.sessionKey !== "main" && payload?.sessionKey !== "agent:main:main") return;
-       
+       if (payload?.sessionKey !== "agent:main:main") return;
+
+       // Deduplicate: Gateway emits each event via broadcast() AND nodeSendToSession()
+       const eventKey = `${payload.runId}:${payload.seq}`;
+       if (seenEventKeys.current.has(eventKey)) return;
+       seenEventKeys.current.add(eventKey);
+
        if (payload.state === "delta") {
           const msgObj = payload.message || {};
           let rawText = '';
@@ -199,6 +253,13 @@ export const ChatTab: React.FC = () => {
              }
              return null;
           });
+          // Evict all keys for this run to keep the Set bounded
+          if (payload.runId) {
+             const prefix = `${payload.runId}:`;
+             for (const k of seenEventKeys.current) {
+                if (k.startsWith(prefix)) seenEventKeys.current.delete(k);
+             }
+          }
           setRunId(null);
           setSending(false);
        }

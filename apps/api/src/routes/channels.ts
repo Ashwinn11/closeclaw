@@ -9,6 +9,8 @@ const ipv4Agent = new Agent({ family: 4 });
 
 export const channelRoutes = new Hono();
 
+channelRoutes.use('*', authMiddleware);
+
 /**
  * In dev mode (no GCP infra): skips instance claiming and Gateway RPC,
  * saves the connection directly to DB as active.
@@ -86,9 +88,6 @@ channelRoutes.post('/verify', async (c) => {
         return c.json({ ok: false, error: (err as Error).message || 'Verification service unreachable' }, 500);
     }
 });
-
-// All other channel routes require authentication
-channelRoutes.use('*', authMiddleware);
 
 channelRoutes.post('/setup', async (c) => {
     const userId = c.get('userId' as never) as string;
@@ -290,24 +289,31 @@ channelRoutes.get('/gateway-config', async (c) => {
         ok: true,
         data: {
             models: {
+                mode: 'merge',
                 providers: {
                     'closeclaw-openai': {
-                        api: 'openai-completions',
+                        api: 'openai-responses',
                         baseUrl: `${proxyBase}/openai/v1`,
                         apiKey: instance.gateway_token,
-                        models: [],
+                        models: [
+                            { id: 'gpt-5.2-codex', name: 'Codex', input: ['text'], contextWindow: 200000, maxTokens: 32768, cost: { input: 1.75, output: 14.0, cacheRead: 0.175, cacheWrite: 0 } },
+                        ],
                     },
                     'closeclaw-anthropic': {
                         api: 'anthropic-messages',
                         baseUrl: `${proxyBase}/anthropic`,
                         apiKey: instance.gateway_token,
-                        models: [],
+                        models: [
+                            { id: 'claude-sonnet-4-6', name: 'Sonnet', input: ['text', 'image'], contextWindow: 200000, maxTokens: 64000, cost: { input: 3.0, output: 15.0, cacheRead: 0.3, cacheWrite: 3.75 } },
+                        ],
                     },
                     'closeclaw-google': {
                         api: 'google-generative-ai',
                         baseUrl: `${proxyBase}/google/v1beta`,
                         apiKey: instance.gateway_token,
-                        models: [],
+                        models: [
+                            { id: 'gemini-3-flash-preview', name: 'Gemini', input: ['text', 'image'], contextWindow: 1048576, maxTokens: 65536, cost: { input: 0.5, output: 3.0, cacheRead: 0, cacheWrite: 0 } },
+                        ],
                     },
                 },
             },

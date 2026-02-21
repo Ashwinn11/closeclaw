@@ -259,7 +259,7 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
       });
 
       // Dev mode or pending instance — no Gateway config needed yet
-      if ((result as any).devMode) {
+      if (result.devMode) {
         onClose();
         return;
       }
