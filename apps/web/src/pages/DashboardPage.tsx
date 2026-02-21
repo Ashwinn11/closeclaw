@@ -13,11 +13,11 @@ import { NebulaBackground } from '../components/ui/NebulaBackground';
 import { ChatTab } from '../components/chat/ChatTab';
 import {
   LogOut, Wifi, WifiOff, Clock, BarChart3,
-  Plus, Activity, Zap, Loader2, AlertCircle, Calendar, Trash2, Smartphone, ArrowRight, Sun, Receipt, TrendingDown, Server, MessageCircle
+  Plus, Activity, Zap, Loader2, AlertCircle, Calendar, Trash2, Smartphone, ArrowRight, Sun, Receipt, TrendingDown, Server, MessageCircle, CreditCard, Check
 } from 'lucide-react';
 import './DashboardPage.css';
 
-type Tab = 'connections' | 'chat' | 'cron' | 'usage';
+type Tab = 'connections' | 'chat' | 'cron' | 'usage' | 'billing';
 type ChannelType = 'Telegram' | 'Discord' | 'Slack';
 
 interface ChannelDef {
@@ -29,16 +29,16 @@ interface ChannelDef {
 }
 
 const channelDefs: ChannelDef[] = [
-  { name: 'Telegram', key: 'telegram', icon: BrandIcons.Telegram, color: '#2AABEE', description: 'Bot API via grammY; supports groups' },
-  { name: 'Discord', key: 'discord', icon: BrandIcons.Discord, color: '#5865F2', description: 'Servers, channels, and DMs' },
-  { name: 'Slack', key: 'slack', icon: BrandIcons.Slack, color: '#E01E5A', description: 'Bolt SDK; workspace apps' },
+  { name: 'Telegram', key: 'telegram', icon: BrandIcons.Telegram, color: '#2AABEE', description: 'Talk to your AI in any chat or group — just send a message' },
+  { name: 'Discord', key: 'discord', icon: BrandIcons.Discord, color: '#5865F2', description: 'Add your AI to any server or chat with it directly' },
+  { name: 'Slack', key: 'slack', icon: BrandIcons.Slack, color: '#E01E5A', description: 'Your AI in your workspace — ask questions, get tasks done' },
 ];
 
 const upcomingChannels = [
-  { name: 'WhatsApp', color: '#25D366', description: 'Uses Baileys; requires QR pairing', icon: BrandIcons.WhatsApp },
-  { name: 'Signal', color: '#3A76F0', description: 'Privacy-focused via signal-cli', icon: BrandIcons.Signal },
-  { name: 'iMessage', color: '#34C759', description: 'Via BlueBubbles macOS server', icon: BrandIcons.iMessage },
-  { name: 'Matrix', color: '#0DBD8B', description: 'Federated Synapse protocol', icon: BrandIcons.Matrix },
+  { name: 'WhatsApp', color: '#25D366', description: 'Your AI in the world\'s most popular messenger', icon: BrandIcons.WhatsApp },
+  { name: 'Signal', color: '#3A76F0', description: 'Private conversations with your AI', icon: BrandIcons.Signal },
+  { name: 'iMessage', color: '#34C759', description: 'Your AI in Apple Messages', icon: BrandIcons.iMessage },
+  { name: 'Matrix', color: '#0DBD8B', description: 'Open-protocol AI messaging', icon: BrandIcons.Matrix },
 ];
 
 const predefinedCrons = [
@@ -109,6 +109,15 @@ export const DashboardPage: React.FC = () => {
   const [topupSuccess, setTopupSuccess] = useState(false);
   const [toppingUp, setToppingUp] = useState<string | null>(null);
   const [channelResumeData, setChannelResumeData] = useState<{ token: string; appToken?: string; ownerUserId: string } | null>(null);
+
+  // Billing tab state
+  const [billingCredits, setBillingCredits] = useState<{ api_credits: number; plan: string } | null>(null);
+  const [billingLoading, setBillingLoading] = useState(false);
+  const [openingPortal, setOpeningPortal] = useState(false);
+  const [subscribing, setSubscribing] = useState<string | null>(null);
+
+  const PLAN_DISPLAY: Record<string, string> = { basic: 'Base', guardian: 'Guardian', fortress: 'Fortress' };
+  const PLAN_INITIAL_CREDITS: Record<string, number> = { basic: 20, guardian: 35, fortress: 55 };
 
   const fetchChannels = useCallback(async () => {
     try {
@@ -220,6 +229,39 @@ const fetchCron = useCallback(async () => {
     }
   };
 
+  const fetchBilling = useCallback(async () => {
+    setBillingLoading(true);
+    try {
+      const data = await getCredits();
+      setBillingCredits(data);
+    } catch { /* silently ignore */ } finally {
+      setBillingLoading(false);
+    }
+  }, []);
+
+  const handleManageSubscription = async () => {
+    setOpeningPortal(true);
+    try {
+      const { portalUrl } = await getBillingPortal();
+      window.open(portalUrl, '_blank');
+    } catch (err: any) {
+      showError(err.message || 'Portal unavailable', 'Billing Error');
+    } finally {
+      setOpeningPortal(false);
+    }
+  };
+
+  const handleSubscribe = async (planName: string) => {
+    setSubscribing(planName);
+    try {
+      const { checkoutUrl } = await createCheckout(planName);
+      window.location.href = checkoutUrl;
+    } catch (err: any) {
+      showError(err.message || 'Failed to create checkout', 'Billing Error');
+      setSubscribing(null);
+    }
+  };
+
   // Subscribe to cron updates via chat completion events
   // Gateway doesn't emit cron-specific events, so we silently re-fetch
   // after any chat completes (agent may have added/removed cron jobs)
@@ -323,6 +365,7 @@ const fetchCron = useCallback(async () => {
     { key: 'chat', label: 'Chat', icon: <MessageCircle size={16} /> },
     { key: 'cron', label: 'Cron', icon: <Clock size={16} /> },
     { key: 'usage', label: 'Usage', icon: <BarChart3 size={16} /> },
+    { key: 'billing', label: 'Subscription', icon: <CreditCard size={16} /> },
   ];
 
   return (
@@ -350,6 +393,23 @@ const fetchCron = useCallback(async () => {
           ))}
         </nav>
 
+        {billingCredits && (() => {
+          const left = Number(billingCredits.api_credits ?? 0);
+          const cap = Number(billingCredits.api_credits_cap ?? 0);
+          const pct = cap > 0 ? Math.min(100, Math.max(0, (left / cap) * 100)) : 0;
+          return (
+            <div className="sidebar-credits-bar">
+              <div className="scb-row">
+                <span className="scb-label">API Credits</span>
+                <span className="scb-value">${left.toFixed(2)}</span>
+              </div>
+              <div className="scb-track">
+                <div className="scb-fill" style={{ width: `${pct}%` }} />
+              </div>
+            </div>
+          );
+        })()}
+
         <div className="sidebar-footer">
           <div className="user-info">
             <div className="user-avatar">
@@ -376,10 +436,11 @@ const fetchCron = useCallback(async () => {
           <div>
             <h1>{tabs.find(t => t.key === activeTab)?.label}</h1>
             <p className="header-subtitle">
-              {activeTab === 'connections' && 'Manage your channel connections'}
-              {activeTab === 'chat' && 'Chat with your assistant'}
-              {activeTab === 'cron' && 'Schedule and manage automated tasks'}
-              {activeTab === 'usage' && 'Monitor your agent\'s performance'}
+              {activeTab === 'connections' && 'Connect the apps you use every day'}
+              {activeTab === 'chat' && 'Talk to your AI assistant directly'}
+              {activeTab === 'cron' && 'Let your AI run tasks for you, automatically'}
+              {activeTab === 'usage' && 'See how much you\'ve used and what\'s left'}
+              {activeTab === 'billing' && 'Manage your plan and top up credits'}
             </p>
           </div>
           <div className={`server-status ${gatewayStatus}`}>
@@ -518,7 +579,7 @@ const fetchCron = useCallback(async () => {
 
               <div className="pro-tip-banner">
                  <Smartphone size={16} />
-                 <span><span className="highlight">Pro tip:</span> Cron jobs deliver alerts straight to Telegram or WhatsApp — connect a channel for the best experience.</span>
+                 <span><span className="highlight">Tip:</span> Your AI sends alerts straight to your phone — connect Telegram or Discord and never miss a beat.</span>
                  <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('connections'); }} className="connect-link">Connect <ArrowRight size={12} /></a>
               </div>
 
@@ -538,8 +599,8 @@ const fetchCron = useCallback(async () => {
                   ) : cronJobs.length === 0 ? (
                     <div className="empty-state-redesigned">
                        <div className="empty-icon"><Clock size={48} strokeWidth={1} /></div>
-                       <h3>No cron jobs yet</h3>
-                       <p>Set up automated tasks — just tell your bot what to do and when</p>
+                       <h3>Nothing scheduled yet</h3>
+                       <p>Your AI can send you daily briefings, price alerts, bill reminders — set it once and let it run</p>
                        <Button className="create-cron-pill large" onClick={() => handleNewCron()}>
                           Create Cron Job
                        </Button>
@@ -711,6 +772,115 @@ const fetchCron = useCallback(async () => {
                 </div>
               </div>
               </div>
+            </div>
+          )}
+
+          {/* Billing Tab */}
+          {activeTab === 'billing' && (
+            <div className="billing-tab">
+              {billingLoading ? (
+                <div className="loading-state">
+                  <Loader2 size={24} className="spin" />
+                  <span>Loading billing info...</span>
+                </div>
+              ) : billingCredits ? (() => {
+                const plan = billingCredits.plan;
+                const isActive = ['basic', 'guardian', 'fortress'].includes(plan);
+                const planName = PLAN_DISPLAY[plan];
+                const creditsLeft = Number(billingCredits.api_credits ?? 0);
+                const creditsCap = Number(billingCredits.api_credits_cap ?? 0);
+                const creditsPct = creditsCap > 0 ? Math.min(100, Math.max(0, (creditsLeft / creditsCap) * 100)) : 0;
+                const renewsAt = billingCredits.subscription_renews_at
+                  ? new Date(billingCredits.subscription_renews_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                  : null;
+                const planData = [
+                  { name: 'Base',     tagline: 'Get started',      price: '$50',  features: ['AI on Telegram, Discord & Slack', '$20 AI credit/mo included', 'Your own always-on assistant'] },
+                  { name: 'Guardian', tagline: 'For daily use',     price: '$75',  features: ['Everything in Base', '$35 AI credit/mo included', 'Handles longer, complex tasks', 'Private — no public IP'], isPopular: true },
+                  { name: 'Fortress', tagline: 'Maximum privacy',   price: '$100', features: ['Everything in Guardian', '$55 AI credit/mo included', 'Custom server setup', 'Fully air-gapped'] },
+                ];
+                return isActive ? (
+                  <>
+                    <Card className="bt-plan-card">
+                      <div className="bt-plan-header">
+                        <div>
+                          <div className="bt-plan-label">Current Plan</div>
+                          <div className="bt-plan-name">{planName}</div>
+                        </div>
+                        <div className="bt-status-badge active">Active</div>
+                      </div>
+                      <div className="bt-credits-bar-wrap">
+                        <div className="bt-credits-bar-top">
+                          <span className="bt-credits-label">API Credits</span>
+                          <span className="bt-credits-value">${creditsLeft.toFixed(2)} remaining</span>
+                        </div>
+                        <div className="bt-bar-track">
+                          <div className="bt-bar-fill" style={{ width: `${creditsPct}%` }} />
+                        </div>
+                      </div>
+                      <div className="bt-renews">
+                        {renewsAt ? `Renews ${renewsAt}` : 'Renews monthly'}
+                      </div>
+                      <Button variant="secondary" onClick={handleManageSubscription} disabled={openingPortal}>
+                        {openingPortal
+                          ? <><Loader2 size={14} className="spin" /> Opening...</>
+                          : <><Zap size={14} /> Manage Subscription</>}
+                      </Button>
+                    </Card>
+
+                    <div className="section-label" style={{ marginTop: '2rem' }}>Top Up Credits</div>
+                    <div className="topup-grid">
+                      {[
+                        { pack: '5',  label: '$5',  credits: 5  },
+                        { pack: '10', label: '$10', credits: 10 },
+                        { pack: '25', label: '$25', credits: 25 },
+                        { pack: '50', label: '$50', credits: 50 },
+                      ].map(({ pack, label, credits }) => (
+                        <Card key={pack} className="topup-card" hoverable onClick={() => !toppingUp && handleTopup(pack)}>
+                          <div className="topup-amount">{label}</div>
+                          <div className="topup-credits">+${credits} credits</div>
+                          <Button variant="secondary" size="sm" fullWidth disabled={!!toppingUp}
+                            onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleTopup(pack); }}>
+                            {toppingUp === pack ? <><Loader2 size={13} className="spin" /> Redirecting...</> : 'Top Up'}
+                          </Button>
+                        </Card>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="bt-plans-header">
+                      <h2>Pick a plan that fits your life</h2>
+                      <p>Billed monthly · Cancel anytime</p>
+                    </div>
+                    <div className="bt-plan-grid">
+                      {planData.map((p) => (
+                        <Card key={p.name}
+                          className={`bt-plan-item${p.isPopular ? ' popular' : ''}${subscribing ? ' disabled' : ''}`}
+                          onClick={() => !subscribing && handleSubscribe(p.name)}
+                        >
+                          {p.isPopular && <div className="bt-popular-badge">Most Popular</div>}
+                          <div className="bt-item-top">
+                            <div className="bt-item-name">{p.name}</div>
+                            <div className="bt-item-tagline">{p.tagline}</div>
+                          </div>
+                          <div className="bt-item-price">{p.price}<span className="bt-period">/mo</span></div>
+                          <ul className="bt-item-features">
+                            {p.features.map((f, i) => (
+                              <li key={i}><Check size={13} style={{ color: '#27C93F', flexShrink: 0, marginTop: '1px' }} />{f}</li>
+                            ))}
+                          </ul>
+                          <Button variant={p.isPopular ? 'primary' : 'secondary'} fullWidth disabled={!!subscribing}
+                            onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleSubscribe(p.name); }}>
+                            {subscribing === p.name
+                              ? <><Loader2 size={14} className="spin" /> Redirecting...</>
+                              : 'Get Started →'}
+                          </Button>
+                        </Card>
+                      ))}
+                    </div>
+                  </>
+                );
+              })() : null}
             </div>
           )}
         </div>

@@ -1,0 +1,375 @@
+/* ─── Billing Page ─────────────────────────────────────────────────────────── */
+
+.billing-page {
+    min-height: 100vh;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    padding: 2.5rem 1.5rem 4rem;
+}
+
+.billing-content {
+    width: 100%;
+    max-width: 680px;
+    position: relative;
+    z-index: 1;
+}
+
+.billing-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: var(--text-base);
+    font-family: inherit;
+    padding: 0;
+    margin-bottom: 2.5rem;
+    transition: color 0.2s;
+}
+
+.billing-back-btn:hover {
+    color: var(--text-primary);
+}
+
+.billing-page-header {
+    margin-bottom: 2rem;
+}
+
+.billing-page-header h1 {
+    font-size: var(--text-3xl);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.25rem;
+}
+
+.billing-page-header p {
+    color: var(--text-secondary);
+    font-size: var(--text-base);
+}
+
+.billing-error {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 90, 95, 0.1);
+    border: 1px solid rgba(255, 90, 95, 0.2);
+    border-radius: 10px;
+    color: var(--accent-primary);
+    font-size: var(--text-base);
+    margin-bottom: 1.5rem;
+}
+
+.billing-loading {
+    display: flex;
+    justify-content: center;
+    padding: 4rem;
+    color: var(--text-secondary);
+}
+
+.billing-spin {
+    animation: billingSpin 1s linear infinite;
+}
+
+@keyframes billingSpin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* ─── Current Plan Card ────────────────────────────────────────────────────── */
+
+.current-plan-card {
+    padding: 2rem !important;
+    margin-bottom: 1.5rem;
+}
+
+.cpc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.75rem;
+}
+
+.cpc-label {
+    font-size: var(--text-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
+
+.cpc-name {
+    font-size: var(--text-2xl);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.plan-status-badge {
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: var(--text-sm);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+}
+
+.plan-status-badge.active {
+    background: rgba(39, 201, 63, 0.1);
+    color: #27C93F;
+    border: 1px solid rgba(39, 201, 63, 0.2);
+}
+
+.plan-status-badge.cancelled {
+    background: rgba(255, 90, 95, 0.1);
+    color: var(--accent-primary);
+    border: 1px solid rgba(255, 90, 95, 0.2);
+}
+
+/* ─── Credits Progress Bar ─────────────────────────────────────────────────── */
+
+.credits-bar-section {
+    margin-bottom: 1.25rem;
+}
+
+.credits-bar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.625rem;
+}
+
+.credits-bar-label {
+    font-size: var(--text-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.credits-bar-value {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.credits-bar-track {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 100px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.credits-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-primary), #A43BB2);
+    border-radius: 100px;
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    min-width: 4px;
+}
+
+.plan-renews-row {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.plan-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* ─── Top-up Section ───────────────────────────────────────────────────────── */
+
+.billing-topup-section {
+    margin-top: 2rem;
+}
+
+.billing-section-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--text-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.billing-topup-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+.billing-topup-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.25rem 1rem !important;
+    text-align: center;
+    cursor: pointer;
+}
+
+.topup-amount {
+    font-size: var(--text-2xl);
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.topup-credits {
+    font-size: var(--text-sm);
+    color: var(--accent-primary);
+    margin-bottom: 0.25rem;
+}
+
+/* ─── Plan Selection (unsubscribed) ─────────────────────────────────────────── */
+
+.billing-plans-header {
+    margin-bottom: 1.5rem;
+}
+
+.billing-plans-header h2 {
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.25rem;
+}
+
+.billing-plans-header p {
+    font-size: var(--text-base);
+    color: var(--text-secondary);
+}
+
+.billing-plan-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.billing-plan-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between;
+    padding: 1.5rem 1.75rem !important;
+    gap: 2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.billing-plan-row:hover {
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    transform: translateY(-1px);
+}
+
+.billing-plan-row.popular {
+    border-color: rgba(255, 77, 77, 0.3) !important;
+    background: linear-gradient(135deg, rgba(255, 90, 95, 0.06), rgba(255, 90, 95, 0.01)) !important;
+}
+
+.billing-plan-row.popular:hover {
+    border-color: rgba(255, 90, 95, 0.5) !important;
+    box-shadow: 0 8px 30px rgba(255, 90, 95, 0.08);
+}
+
+.billing-plan-row.disabled {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.plan-row-left {
+    flex: 1;
+    min-width: 0;
+}
+
+.plan-row-name {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    font-size: var(--text-lg);
+    font-weight: 700;
+}
+
+.bpr-popular-tag {
+    background: var(--accent-primary);
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.plan-row-features {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.plan-row-features li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.plan-row-features .check-icon {
+    color: #27C93F;
+    flex-shrink: 0;
+}
+
+.plan-row-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.75rem;
+    flex-shrink: 0;
+}
+
+.plan-row-price {
+    font-size: var(--text-2xl);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.plan-row-price .period {
+    font-size: var(--text-base);
+    font-weight: 400;
+    color: var(--text-secondary);
+}
+
+/* ─── Responsive ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+    .billing-topup-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .billing-plan-row {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+
+    .plan-row-right {
+        align-items: flex-start;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+    }
+}

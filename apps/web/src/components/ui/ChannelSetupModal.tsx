@@ -43,11 +43,11 @@ const channelConfig: Record<ChannelType, {
     tokenPlaceholder: '123456789:ABCdefGhIjKlMnOpQrStUvWxYz',
     instructions: [
       'Open Telegram and search for @BotFather',
-      'Tap Start, then send the command /newbot',
-      'Choose a display name (e.g. "My Assistant")',
-      'Choose a username ending in "bot" (e.g. my_assistant_bot)',
-      'BotFather will reply with your HTTP API token — copy it',
-      'Paste the token on the right →',
+      'Tap Start, then type /newbot and follow the prompts',
+      'Give your bot a display name (e.g. "My Assistant")',
+      'Give it a username ending in "bot" (e.g. my_assistant_bot)',
+      'BotFather will send you an API token — copy that long string',
+      'Paste it in the box on the right and tap Verify →',
     ],
   },
   Discord: {
@@ -59,11 +59,11 @@ const channelConfig: Record<ChannelType, {
     instructions: [
       'Go to discord.com/developers/applications',
       'Click "New Application" and give it a name',
-      'Go to the "Bot" section in the left sidebar',
-      'Click "Reset Token" and copy the new token',
-      'Scroll down and enable "Message Content Intent"',
-      'Go to "OAuth2 → URL Generator", select "bot" scope',
-      'Use the generated URL to invite the bot to your server',
+      'Open the "Bot" section in the left sidebar',
+      'Click "Reset Token" and copy the token shown',
+      'Scroll down and turn on "Message Content Intent"',
+      'Open "OAuth2 → URL Generator", check the "bot" scope',
+      'Use the generated link to add the bot to your server',
     ],
   },
   Slack: {
@@ -76,13 +76,13 @@ const channelConfig: Record<ChannelType, {
     secondTokenPlaceholder: 'xapp-your-app-token',
     instructions: [
       'Go to api.slack.com/apps and click "Create New App"',
-      'Choose "From scratch" and give it a name + workspace',
-      'Go to "Socket Mode" in the sidebar and enable it',
-      'You\'ll be prompted to create an App Token — name it and copy it (starts with xapp-)',
-      'Go to "OAuth & Permissions" and add bot scopes: chat:write, im:history, im:read',
-      'Click "Install to Workspace" and authorize',
+      'Choose "From scratch", name it, pick your workspace',
+      'Open "Socket Mode" in the sidebar and turn it on',
+      'Create an App Token when prompted — copy it (starts with xapp-)',
+      'Go to "OAuth & Permissions", add scopes: chat:write, im:history, im:read',
+      'Click "Install to Workspace" and approve',
       'Copy the "Bot User OAuth Token" (starts with xoxb-)',
-      'Paste both tokens on the right →',
+      'Paste both tokens in the boxes on the right →',
     ],
   },
 };
@@ -90,19 +90,36 @@ const channelConfig: Record<ChannelType, {
 const planData = [
   {
     name: 'Base',
+    tagline: 'Get started',
     price: '$50',
-    features: ['Isolated GCP Instance', '$20 API Credits', 'Basic Mesh Network'],
+    features: [
+      'AI on Telegram, Discord & Slack',
+      '$20 AI credit/mo included',
+      'Your own always-on assistant',
+    ],
   },
   {
     name: 'Guardian',
+    tagline: 'For daily use',
     price: '$75',
-    features: ['High-Memory VM', '$35 API Credits', 'Ghost Mesh (No Public IP)', 'Priority Recovery'],
+    features: [
+      'Everything in Base',
+      '$35 AI credit/mo included',
+      'Handles longer, complex tasks',
+      'Private — no public IP',
+    ],
     isPopular: true,
   },
   {
     name: 'Fortress',
+    tagline: 'Maximum privacy',
     price: '$100',
-    features: ['Custom Infrastructure', '$55 API Credits', 'Air-Gapped Gateway', 'White-labeled Host'],
+    features: [
+      'Everything in Guardian',
+      '$55 AI credit/mo included',
+      'Custom server setup',
+      'Fully air-gapped',
+    ],
   },
 ];
 
@@ -459,8 +476,8 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
             </div>
 
             <p className="verified-desc">
-              Your bot has been identified and is ready to be connected to a dedicated, sovereign
-              agent server. Choose a plan to deploy.
+              Your bot is verified and ready to go. Next, we just need to know which account
+              is yours so your AI knows who to listen to.
             </p>
 
             <div className="step-actions">
@@ -491,9 +508,9 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
                       </>
                     ) : (
                       <>
-                        <h4>Send a message to your bot</h4>
-                        <span className="bot-username">Open Telegram, find your bot, and send any message to it.</span>
-                        <span className="bot-id">We'll automatically detect your user ID.</span>
+                        <h4>Say hello to your bot</h4>
+                        <span className="bot-username">Open Telegram, find your new bot, and send it any message.</span>
+                        <span className="bot-id">We'll detect who you are automatically — no ID needed.</span>
                       </>
                     )}
                   </div>
@@ -520,9 +537,9 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
               <>
                 <div className="bot-card">
                   <div className="bot-details">
-                    <h4>Enter your {channel} user ID</h4>
-                    {channel === 'Discord' && <span className="bot-username">Enable Developer Mode in Settings → Advanced, then right-click your name → Copy User ID.</span>}
-                    {channel === 'Slack' && <span className="bot-username">Click your name in Slack → Profile → More → Copy member ID (starts with U).</span>}
+                    <h4>One last thing — who are you?</h4>
+                    {channel === 'Discord' && <span className="bot-username">Go to Settings → Advanced → turn on Developer Mode. Then right-click your name and tap "Copy User ID".</span>}
+                    {channel === 'Slack' && <span className="bot-username">Click your name in Slack → View profile → More (···) → Copy member ID. It starts with the letter U.</span>}
                   </div>
                 </div>
                 <div className="token-input-area">
@@ -572,6 +589,10 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
                     <span>{error}</span>
                   </div>
                 )}
+                <div className="billing-step-header">
+                  <h3>Pick a plan that fits your life</h3>
+                  <p className="billing-step-subtitle">Billed monthly · Cancel anytime</p>
+                </div>
                 <div className="plan-grid">
                   {planData.map((plan) => (
                     <div
@@ -580,15 +601,18 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
                       onClick={() => !deploying && handlePlanSelect(plan.name)}
                     >
                       {plan.isPopular && <div className="popular-badge">Most Popular</div>}
-                      <h4>{plan.name}</h4>
+                      <div className="plan-top">
+                        <h4>{plan.name}</h4>
+                        <p className="plan-tagline">{plan.tagline}</p>
+                      </div>
                       <div className="price">{plan.price}<span className="period">/mo</span></div>
                       <ul className="features">
                         {plan.features.map((f, i) => (
-                          <li key={i}><Check size={14} className="check-icon" /> {f}</li>
+                          <li key={i}><Check size={13} className="check-icon" />{f}</li>
                         ))}
                       </ul>
                       <Button variant={plan.isPopular ? 'primary' : 'secondary'} fullWidth disabled={deploying}>
-                        {deploying ? <><Loader2 size={14} className="spin" /> Redirecting...</> : 'Subscribe'}
+                        {deploying ? <><Loader2 size={14} className="spin" /> Redirecting...</> : 'Get Started →'}
                       </Button>
                     </div>
                   ))}

@@ -82,13 +82,31 @@ async function createLSCheckout(
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
+// GET /api/billing/portal — Customer self-service portal URL
+billingRoutes.get('/portal', authMiddleware, async (c) => {
+    const userId = c.get('userId' as never) as string;
+    const { data: user } = await supabase.from('users')
+        .select('ls_customer_id, plan').eq('id', userId).single();
+    if (!user?.ls_customer_id || user.plan === 'none' || user.plan === 'cancelled')
+        return c.json({ ok: false, error: 'No active subscription' }, 404);
+
+    const res = await fetch(
+        `https://api.lemonsqueezy.com/v1/customers/${user.ls_customer_id}`,
+        { headers: { Authorization: `Bearer ${LS_API_KEY}`, Accept: 'application/vnd.api+json' } }
+    );
+    const json = await res.json() as any;
+    const portalUrl = json.data?.attributes?.urls?.customer_portal;
+    if (!portalUrl) return c.json({ ok: false, error: 'Portal unavailable' }, 500);
+    return c.json({ ok: true, data: { portalUrl } });
+});
+
 // GET /api/billing/credits
 billingRoutes.get('/credits', authMiddleware, async (c) => {
     const userId = c.get('userId' as never) as string;
 
     const { data, error } = await supabase
         .from('users')
-        .select('api_credits, plan')
+        .select('api_credits, plan, api_credits_cap, subscription_renews_at')
         .eq('id', userId)
         .single();
 
@@ -99,6 +117,8 @@ billingRoutes.get('/credits', authMiddleware, async (c) => {
         data: {
             api_credits: Number(data.api_credits) || 0,
             plan: (data.plan as string) ?? 'none',
+            api_credits_cap: Number(data.api_credits_cap) || 0,
+            subscription_renews_at: (data.subscription_renews_at as string) ?? null,
         },
     });
 });
@@ -225,8 +245,10 @@ billingRoutes.post('/webhook', async (c) => {
         await supabase.from('users').update({
             plan: planCfg.planKey,
             api_credits: planCfg.credits,
+            api_credits_cap: planCfg.credits,
             ls_subscription_id: lsSubscriptionId,
             ls_customer_id: lsCustomerId,
+            subscription_renews_at: attrs.renews_at ?? null,
         }).eq('id', userId);
 
         console.log(`[billing/webhook] Subscription created: user=${userId} plan=${planCfg.planKey} credits=${planCfg.credits}`);
@@ -242,7 +264,11 @@ billingRoutes.post('/webhook', async (c) => {
 
         // Reset credits to plan level (not additive — avoids hoarding)
         await supabase.from('users')
-            .update({ api_credits: planCfg.credits })
+            .update({
+                api_credits: planCfg.credits,
+                api_credits_cap: planCfg.credits,
+                subscription_renews_at: attrs.renews_at ?? null,
+            })
             .eq('id', userId);
 
         console.log(`[billing/webhook] Subscription renewed: user=${userId} credits reset to ${planCfg.credits}`);
@@ -274,6 +300,8 @@ billingRoutes.post('/webhook', async (c) => {
         if (!packCfg) return c.json({ ok: true });
 
         await supabase.rpc('add_api_credits', { p_user_id: userId, p_amount: packCfg.credits });
+        // Raise the cap to reflect the new higher balance
+        await supabase.rpc('sync_credits_cap', { p_user_id: userId });
 
         console.log(`[billing/webhook] Credits topped up: user=${userId} +${packCfg.credits}`);
     }

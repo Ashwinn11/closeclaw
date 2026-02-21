@@ -150,7 +150,12 @@ export async function patchGatewayConfig(patch: Record<string, unknown>): Promis
 
 // ─── Billing ───────────────────────────────────────────────────────────────
 
-export async function getCredits(): Promise<{ api_credits: number; plan: string }> {
+export async function getCredits(): Promise<{
+    api_credits: number;
+    plan: string;
+    api_credits_cap: number;
+    subscription_renews_at: string | null;
+}> {
     return request('/api/billing/credits');
 }
 

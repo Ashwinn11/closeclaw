@@ -3,6 +3,7 @@ import { useAuth } from './context/AuthContext';
 import { LandingPage } from './pages/LandingPage';
 import { AuthCallbackPage } from './pages/AuthCallbackPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { BillingPage } from './pages/BillingPage';
 import { Loader2 } from 'lucide-react';
 import './App.css';
 
@@ -30,6 +31,14 @@ function App() {
         element={
           <ProtectedRoute>
             <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/billing"
+        element={
+          <ProtectedRoute>
+            <BillingPage />
           </ProtectedRoute>
         }
       />
