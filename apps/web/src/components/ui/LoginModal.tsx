@@ -35,7 +35,7 @@ export const LoginModal: FC<LoginModalProps> = ({ onClose }) => {
           <span>CloseClaw</span>
         </div>
         <h1>Welcome back</h1>
-        <p className="login-subtitle">Sign in to your sovereign agent dashboard</p>
+        <p className="login-subtitle">Sign in to manage your private AI assistant</p>
         
         {error && (
           <div className="login-error">{error}</div>
