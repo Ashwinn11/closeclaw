@@ -80,24 +80,24 @@ export const CronSetupModal: React.FC<CronSetupModalProps> = ({ onClose, onSucce
             <div className="titlebar-icon"><Clock size={16} /></div>
             <span className="titlebar-title">Cron Job</span>
             <span className="titlebar-separator">—</span>
-            <span className="titlebar-step">New Scheduled Task</span>
+            <span className="titlebar-step">Schedule a Task</span>
           </div>
         </div>
 
         <div className="modal-content">
         <div className="token-step">
           <div className="token-left">
-            <h4>Scheduling Tips</h4>
+            <h4>How it works</h4>
             <ul className="setup-instructions">
-              <li>Use <b>Standard Cron</b> syntax (e.g., <code>0 9 * * *</code> for 9am daily).</li>
-              <li><b>Timezone:</b> Tasks run in the agent's local system time (UTC by default).</li>
-              <li><b>Payload:</b> The agent will process your instruction as if you typed it in chat.</li>
-              <li><b>Target:</b> Tasks run in the <code>main</code> session context by default.</li>
+              <li>Give your task a name so you can find it later.</li>
+              <li>Pick a schedule using cron format — e.g. <code>0 9 * * *</code> means every day at 9am.</li>
+              <li>Write your instruction in plain English, just like you'd type it in chat.</li>
+              <li>Your AI will run it automatically at the time you set.</li>
             </ul>
-            
+
             <div className="cron-preview-info">
               <div className="info-icon"><AlertCircle size={14} /></div>
-              <p>Your agent must be running to execute scheduled tasks.</p>
+              <p>Your AI needs to be online for scheduled tasks to run.</p>
             </div>
           </div>
 
@@ -118,21 +118,21 @@ export const CronSetupModal: React.FC<CronSetupModalProps> = ({ onClose, onSucce
               </div>
 
               <div className="form-group">
-                <label htmlFor="cron-schedule">Schedule (Cron Expr)</label>
+                <label htmlFor="cron-schedule">When should this run?</label>
                 <input
                   id="cron-schedule"
                   type="text"
-                  placeholder="0 9 * * *"
+                  placeholder="0 9 * * * — every day at 9am"
                   value={schedule}
                   onChange={(e) => setSchedule(e.target.value)}
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="cron-text">Agent Instruction</label>
+                <label htmlFor="cron-text">What should your AI do?</label>
                 <textarea
                   id="cron-text"
-                  placeholder="What should the agent do at this time?"
+                  placeholder="e.g. Summarize today's top news and send it to me"
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                   rows={4}

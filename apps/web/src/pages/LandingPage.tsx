@@ -23,14 +23,14 @@ export const LandingPage: React.FC = () => {
         {/* Hero Section */}
         <section className="hero-section">
           <div className="hero-content">
-            <div className="sovereign-badge">Sovereign Layer 01</div>
+            <div className="sovereign-badge">Ready in 60 seconds</div>
             <h1 className="hero-title">
-              Your Agent Already Knows <br />
-              <span className="text-gradient">all your favorite apps.</span>
+              Your personal AI, <br />
+              <span className="text-gradient">on the apps you use every day.</span>
             </h1>
             <p className="hero-subtitle">
-              Connect to 50+ integrations instantly—Telegram, Slack, Notion, GitHub and more.<br />
-              Secure, private, and ready in under 60 seconds.
+              Talk to your own AI assistant on Telegram, Discord, or Slack.<br />
+              No servers. No setup. No technical knowledge needed.
             </p>
             
             <div className="channel-buttons">
@@ -67,38 +67,38 @@ export const LandingPage: React.FC = () => {
 
         {/* Comparison Section */}
         <section className="comparison-section">
-          <div className="comparison-badge">Efficiency</div>
-          <h2 className="comparison-title">Why use CloseClaw?</h2>
-          
+          <div className="comparison-badge">The difference</div>
+          <h2 className="comparison-title">Why CloseClaw?</h2>
+
           <div className="comparison-grid">
             <div className="comparison-left">
-              <h4 className="method-label">Traditional Setup</h4>
+              <h4 className="method-label">Doing it yourself</h4>
               <ul className="effort-list">
-                <li><span>Provisioning Cloud Servers</span> <span className="time">20 min</span></li>
-                <li><span>Securing Gateways &amp; Ports</span> <span className="time">15 min</span></li>
-                <li><span>Managing IP Addresses</span> <span className="time">10 min</span></li>
-                <li><span>Downtime Monitoring</span> <span className="time">10 min</span></li>
-                <li><span>Continuous Maintenance</span> <span className="time">∞</span></li>
+                <li><span>Renting and setting up cloud servers</span> <span className="time">20 min</span></li>
+                <li><span>Configuring firewalls and security</span> <span className="time">15 min</span></li>
+                <li><span>Managing IP addresses</span> <span className="time">10 min</span></li>
+                <li><span>Watching for crashes and downtime</span> <span className="time">10 min</span></li>
+                <li><span>Applying updates and patches</span> <span className="time">∞</span></li>
               </ul>
               <div className="total-effort">
-                <span className="total-label">Total Manual Work</span>
-                <span className="total-value">High Risk</span>
+                <span className="total-label">Total effort</span>
+                <span className="total-value">Never done</span>
               </div>
             </div>
 
             <div className="comparison-divider"></div>
 
             <div className="comparison-right">
-              <h4 className="method-label">The CloseClaw Way</h4>
-              <div className="instant-badge">Secured</div>
+              <h4 className="method-label">With CloseClaw</h4>
+              <div className="instant-badge">All handled</div>
               <p className="instant-desc">
-                We handle the heavy lifting. Your agent gets a dedicated, isolated server 
-                with zero public exposure. 100% private. 100% safe.
+                We take care of everything behind the scenes. Your AI runs on a dedicated
+                server that's always on, always private, and always up to date.
               </p>
               <div className="instant-features">
-                <div className="i-feature"><Check size={16} /> Isolated Sovereignty</div>
-                <div className="i-feature"><Check size={16} /> Private Mesh Network</div>
-                <div className="i-feature"><Check size={16} /> Instant Recovery</div>
+                <div className="i-feature"><Check size={16} /> Always online</div>
+                <div className="i-feature"><Check size={16} /> Completely private</div>
+                <div className="i-feature"><Check size={16} /> Auto-recovery</div>
               </div>
             </div>
           </div>
@@ -107,8 +107,8 @@ export const LandingPage: React.FC = () => {
         {/* Features Section - Simple & Secure */}
         <section id="features" className="features-section">
           <div className="section-header">
-             <h2>Enterprise Shield. Human Simple.</h2>
-             <p>The most advanced infrastructure for OpenClaw agents, hidden behind a simple interface.</p>
+             <h2>Everything handled. Nothing to set up.</h2>
+             <p>We run the infrastructure so you can focus on what matters — talking to your AI.</p>
           </div>
           
           <div className="bento-grid">
@@ -116,7 +116,7 @@ export const LandingPage: React.FC = () => {
               <div className="card-content">
                 <div className="card-header">
                   <div className="status-badge"><span className="dot green"></span>Optimized</div>
-                  <h3>Token Efficiency</h3>
+                  <h3>Lower costs, automatically</h3>
                 </div>
                 <div className="visual-cost">
                    <div className="cost-bar high">
@@ -126,10 +126,10 @@ export const LandingPage: React.FC = () => {
                    <div className="cost-bar low">
                       <span>CloseClaw</span>
                       <div className="bar-fill green"></div>
-                      <div className="savings-badge">Type 0.2x</div>
+                      <div className="savings-badge">Save 80%</div>
                    </div>
                 </div>
-                <p>Strategic context handling ensures your agent uses the minimum tokens required, cutting your AI costs by up to 80%.</p>
+                <p>We optimize how your AI thinks so you get more done for less. Most users save up to 80% compared to using AI directly.</p>
               </div>
             </Card>
 
@@ -139,15 +139,15 @@ export const LandingPage: React.FC = () => {
                  <div className="hex active"><BrandIcons.Anthropic /></div>
                  <div className="hex opacity-30"><BrandIcons.Gemini /></div>
               </div>
-              <h3>Intelligent Brains</h3>
-              <p>Automatically routes tasks between GPT-5.2-codex, Claude 4.6 sonnet, and Gemini 3 flash for the best results.</p>
+              <h3>Always uses the best AI</h3>
+              <p>Your assistant automatically picks the right AI model for each task — writing, coding, research, planning. No settings to tweak.</p>
             </Card>
 
             <Card className="bento-card card-security" hoverable>
               <div className="card-content horizontal">
                 <div className="text-content">
-                  <h3>Air-Gapped Security</h3>
-                  <p>Your agent server is isolated from the public web. It connects only via a secure, private tunnel that you control.</p>
+                  <h3>Completely private</h3>
+                  <p>Your AI runs on a server that's never exposed to the public internet. Your conversations belong to you alone.</p>
                 </div>
                 <div className="visual-shield">
                    <div className="network-nodes">
@@ -164,8 +164,8 @@ export const LandingPage: React.FC = () => {
                  <div className="orbital-ring"></div>
                  <BrandIcons.Chromium />
                </div>
-               <h3>Privacy-First Browsing</h3>
-               <p>Equipped with a secure, headless <span style={{ color: '#6199f6', fontWeight: 600 }}>Chromium</span> instance for agent-led research with zero tracking or exposure.</p>
+               <h3>Browses the web for you</h3>
+               <p>Your AI can search and read websites on your behalf — privately, with no tracking or data collection involved.</p>
             </Card>
           </div>
         </section>

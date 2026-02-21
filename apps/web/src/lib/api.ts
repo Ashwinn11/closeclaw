@@ -173,6 +173,10 @@ export async function createTopup(pack: string): Promise<{ checkoutUrl: string }
     });
 }
 
+export async function getBillingPortal(): Promise<{ portalUrl: string }> {
+    return request('/api/billing/portal');
+}
+
 export interface UsageLogRow {
     id: string;
     provider: string;
