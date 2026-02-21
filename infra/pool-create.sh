@@ -2,7 +2,7 @@
 # ============================================================================
 # CloseClaw — Pool VM provisioner
 #
-# Creates GCP VMs from the openclaw-base-image-v2 machine image,
+# Creates GCP VMs from the openclaw-base-image-v3 machine image,
 # registers them in the Supabase instances table.
 #
 # Usage:
@@ -12,7 +12,7 @@
 #   - gcloud CLI authenticated with project glowing-harmony-362803
 #   - SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY set in infra/.env
 #   - GCP Secret Manager secrets set up (API keys)
-#   - Machine image "openclaw-base-image-v2" exists in the project
+#   - Machine image "openclaw-base-image-v3" exists in the project
 #   - Service account closeclaw-gateway-sa has secretmanager.secretAccessor role
 # ============================================================================
 
@@ -29,7 +29,7 @@ fi
 
 GCP_PROJECT="${GCP_PROJECT:-glowing-harmony-362803}"
 GCP_ZONE="${GCP_ZONE:-us-central1-a}"
-MACHINE_IMAGE="${MACHINE_IMAGE:-openclaw-base-image-v2}"
+MACHINE_IMAGE="${MACHINE_IMAGE:-openclaw-base-image-v3}"
 MACHINE_TYPE="${MACHINE_TYPE:-e2-medium}"
 VM_COUNT="${1:-1}"
 SA_EMAIL="closeclaw-gateway-sa@${GCP_PROJECT}.iam.gserviceaccount.com"

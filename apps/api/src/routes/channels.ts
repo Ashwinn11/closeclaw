@@ -296,7 +296,7 @@ channelRoutes.get('/gateway-config', async (c) => {
                         baseUrl: `${proxyBase}/openai/v1`,
                         apiKey: instance.gateway_token,
                         models: [
-                            { id: 'gpt-5.2-codex', name: 'Codex', input: ['text'], contextWindow: 200000, maxTokens: 32768, cost: { input: 1.75, output: 14.0, cacheRead: 0.175, cacheWrite: 0 } },
+                            { id: 'gpt-5.2-codex', name: 'Codex', input: ['text'], contextWindow: 200000, maxTokens: 32768, cost: { input: 2.1875, output: 17.5, cacheRead: 0.21875, cacheWrite: 0 } },
                         ],
                     },
                     'closeclaw-anthropic': {
@@ -304,7 +304,7 @@ channelRoutes.get('/gateway-config', async (c) => {
                         baseUrl: `${proxyBase}/anthropic`,
                         apiKey: instance.gateway_token,
                         models: [
-                            { id: 'claude-sonnet-4-6', name: 'Sonnet', input: ['text', 'image'], contextWindow: 200000, maxTokens: 64000, cost: { input: 3.0, output: 15.0, cacheRead: 0.3, cacheWrite: 3.75 } },
+                            { id: 'claude-sonnet-4-6', name: 'Sonnet', input: ['text', 'image'], contextWindow: 200000, maxTokens: 64000, cost: { input: 3.75, output: 18.75, cacheRead: 0.375, cacheWrite: 4.6875 } },
                         ],
                     },
                     'closeclaw-google': {
@@ -312,7 +312,7 @@ channelRoutes.get('/gateway-config', async (c) => {
                         baseUrl: `${proxyBase}/google/v1beta`,
                         apiKey: instance.gateway_token,
                         models: [
-                            { id: 'gemini-3-flash-preview', name: 'Gemini', input: ['text', 'image'], contextWindow: 1048576, maxTokens: 65536, cost: { input: 0.5, output: 3.0, cacheRead: 0, cacheWrite: 0 } },
+                            { id: 'gemini-3-flash-preview', name: 'Gemini', input: ['text', 'image'], contextWindow: 1048576, maxTokens: 65536, cost: { input: 0.625, output: 3.75, cacheRead: 0, cacheWrite: 0 } },
                         ],
                     },
                 },

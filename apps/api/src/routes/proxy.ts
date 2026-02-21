@@ -59,6 +59,10 @@ function creditsExhaustedGoogle() {
     };
 }
 
+// ─── Billing markup ───────────────────────────────────────────────────────────
+
+const USAGE_FLOOR = 0.001;          // $0.001 minimum charge per request (markup is in gateway-config model costs)
+
 // ─── Auth + credits caches ────────────────────────────────────────────────────
 // gateway_token never changes — cache forever
 // api_credits has a short TTL to stay responsive to deductions
@@ -191,11 +195,14 @@ async function syncSessionsUsage(auth: InstanceAuth): Promise<void> {
 
         if (delta < 0.000001) return;
 
+        // Apply floor — markup is already baked into gateway-config model costs
+        const charged = Math.max(delta, USAGE_FLOOR);
+
         // Invalidate credits cache so next request sees updated balance
         creditsCache.delete(auth.userId);
-        await supabase.rpc('deduct_api_credits', { p_user_id: auth.userId, p_amount: delta });
+        await supabase.rpc('deduct_api_credits', { p_user_id: auth.userId, p_amount: charged });
 
-        console.log(`[proxy/sync] user=${auth.userId} delta=$${delta.toFixed(6)} current=$${currentCost.toFixed(6)} last=$${lastCost.toFixed(6)}`);
+        console.log(`[proxy/sync] user=${auth.userId} raw=$${delta.toFixed(6)} charged=$${charged.toFixed(6)} current=$${currentCost.toFixed(6)} last=$${lastCost.toFixed(6)}`);
     } catch (err) {
         console.warn('[proxy/sync] sessions.usage sync failed:', err);
     } finally {
