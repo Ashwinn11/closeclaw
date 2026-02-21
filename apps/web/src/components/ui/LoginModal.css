@@ -119,6 +119,23 @@
     color: #fff;
 }
 
+.login-terms-link {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: inherit;
+    color: rgba(255, 255, 255, 0.5);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 0.15s ease;
+}
+
+.login-terms-link:hover {
+    color: #fff;
+}
+
 @media (max-width: 480px) {
     .login-card {
         padding: 2.5rem 1.5rem;

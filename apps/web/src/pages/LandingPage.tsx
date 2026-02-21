@@ -7,12 +7,14 @@ import { IconCluster } from '../components/ui/IconCluster';
 import { Header } from '../components/ui/Header';
 import { BrandIcons } from '../components/ui/BrandIcons';
 import { ChannelSetupModal } from '../components/ui/ChannelSetupModal';
+import { InfoModal, type InfoModalType } from '../components/ui/InfoModal';
 import { Check, Terminal } from 'lucide-react';
 
 type ChannelType = 'Telegram' | 'Discord' | 'Slack';
 
 export const LandingPage: React.FC = () => {
   const [setupChannel, setSetupChannel] = useState<ChannelType | null>(null);
+  const [infoModal, setInfoModal] = useState<InfoModalType | null>(null);
 
   return (
     <div className="landing-page">
@@ -190,23 +192,24 @@ export const LandingPage: React.FC = () => {
 
               <div className="footer-links-col">
                  <h4>Product</h4>
-                 <a href="#">Features</a>
-                 <a href="#">Use Cases</a>
-                 <a href="#">Pricing</a>
+                 <a href="#features">Features</a>
+                 <a href="#features">Use Cases</a>
+                 <a href="#features">Pricing</a>
               </div>
 
               <div className="footer-links-col">
                  <h4>Resources</h4>
-                 <a href="https://docs.openclaw.ai">OpenClaw Docs</a>
+                 <a href="https://docs.openclaw.ai" target="_blank" rel="noopener noreferrer">OpenClaw Docs</a>
                  <a href="#">Discord</a>
                  <a href="#">Status</a>
               </div>
 
               <div className="footer-links-col">
                  <h4>Company</h4>
-                 <a href="#">About</a>
-                 <a href="#">Contact</a>
-                 <a href="#">Terms of Service</a>
+                 <button className="footer-link-btn" onClick={() => setInfoModal('about')}>About</button>
+                 <a href="mailto:hello@closeclaw.in">Contact</a>
+                 <button className="footer-link-btn" onClick={() => setInfoModal('tos')}>Terms of Service</button>
+                 <button className="footer-link-btn" onClick={() => setInfoModal('privacy')}>Privacy Policy</button>
               </div>
            </div>
         </footer>
@@ -217,6 +220,11 @@ export const LandingPage: React.FC = () => {
           channel={setupChannel}
           onClose={() => setSetupChannel(null)}
         />
+      )}
+
+      {/* Info Modals: About / ToS / Privacy */}
+      {infoModal && (
+        <InfoModal type={infoModal} onClose={() => setInfoModal(null)} />
       )}
     </div>
   );

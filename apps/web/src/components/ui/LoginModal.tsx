@@ -2,6 +2,7 @@ import { type FC, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from './Button';
+import { InfoModal, type InfoModalType } from './InfoModal';
 import { Loader2 } from 'lucide-react';
 import './LoginModal.css';
 
@@ -13,6 +14,7 @@ export const LoginModal: FC<LoginModalProps> = ({ onClose }) => {
   const { login } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [loggingIn, setLoggingIn] = useState(false);
+  const [infoModal, setInfoModal] = useState<InfoModalType | null>(null);
 
   const handleLogin = async () => {
     setLoggingIn(true);
@@ -60,11 +62,19 @@ export const LoginModal: FC<LoginModalProps> = ({ onClose }) => {
         </Button>
 
         <p className="login-terms">
-          By continuing, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+          By continuing, you agree to our{' '}
+          <button className="login-terms-link" onClick={() => setInfoModal('tos')}>Terms of Service</button>
+          {' '}and{' '}
+          <button className="login-terms-link" onClick={() => setInfoModal('privacy')}>Privacy Policy</button>
         </p>
       </div>
     </div>
   );
 
-  return createPortal(modalContent, document.body);
+  return (
+    <>
+      {createPortal(modalContent, document.body)}
+      {infoModal && <InfoModal type={infoModal} onClose={() => setInfoModal(null)} />}
+    </>
+  );
 };

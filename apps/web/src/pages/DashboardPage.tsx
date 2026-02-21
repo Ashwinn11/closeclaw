@@ -234,6 +234,16 @@ const fetchCron = useCallback(async () => {
     fetchBilling();
   }, [fetchBilling]);
 
+  // Always-on: refresh sidebar credits bar after every completed chat message
+  useEffect(() => {
+    if (gatewayStatus !== 'connected') return;
+    const unsubscribe = subscribe(['chat'], (_event, payload: any) => {
+      if (payload?.state !== 'final') return;
+      getCredits().then(setBillingCredits).catch(() => {});
+    });
+    return unsubscribe;
+  }, [gatewayStatus, subscribe]);
+
   const handleManageSubscription = async () => {
     setOpeningPortal(true);
     try {
@@ -388,6 +398,7 @@ const fetchCron = useCallback(async () => {
           const left = Number(billingCredits.api_credits ?? 0);
           const cap = Number(billingCredits.api_credits_cap ?? 0);
           const pct = cap > 0 ? Math.min(100, Math.max(0, (left / cap) * 100)) : 0;
+          const isCancelledSidebar = billingCredits.plan === 'cancelled';
           return (
             <div className="sidebar-credits-bar">
               <div className="scb-row">
@@ -397,6 +408,9 @@ const fetchCron = useCallback(async () => {
               <div className="scb-track">
                 <div className="scb-fill" style={{ width: `${pct}%` }} />
               </div>
+              {isCancelledSidebar && (
+                <div className="scb-cancelled-hint">Subscription ended</div>
+              )}
             </div>
           );
         })()}
@@ -781,6 +795,7 @@ const fetchCron = useCallback(async () => {
               ) : billingCredits ? (() => {
                 const plan = billingCredits.plan;
                 const isActive = ['basic', 'guardian', 'fortress'].includes(plan);
+                const isCancelled = plan === 'cancelled';
                 const planName = PLAN_DISPLAY[plan];
                 const creditsLeft = Number(billingCredits.api_credits ?? 0);
                 const creditsCap = Number(billingCredits.api_credits_cap ?? 0);
@@ -793,7 +808,7 @@ const fetchCron = useCallback(async () => {
                   { name: 'Guardian', tagline: 'For daily productivity',    price: '$75',  features: ['Everything in Base', '$35 in AI credits/mo', 'Best for heavy daily use', 'Multi-step tasks & deep research'], isPopular: true },
                   { name: 'Fortress', tagline: 'For power users',           price: '$100', features: ['Everything in Guardian', '$50 in AI credits/mo', 'Built for automation & long sessions', 'Top up credits anytime'] },
                 ];
-                return isActive ? (
+                if (isActive) return (
                   <>
                     <Card className="bt-plan-card">
                       <div className="bt-plan-header">
@@ -841,7 +856,69 @@ const fetchCron = useCallback(async () => {
                       ))}
                     </div>
                   </>
-                ) : (
+                );
+
+                if (isCancelled) return (
+                  <>
+                    <Card className="bt-plan-card">
+                      <div className="bt-plan-header">
+                        <div>
+                          <div className="bt-plan-label">Subscription</div>
+                          <div className="bt-plan-name">Cancelled</div>
+                        </div>
+                        <div className="bt-status-badge cancelled">Cancelled</div>
+                      </div>
+                      {creditsLeft > 0.001 && (
+                        <div className="bt-credits-bar-wrap">
+                          <div className="bt-credits-bar-top">
+                            <span className="bt-credits-label">Remaining Credits</span>
+                            <span className="bt-credits-value">${creditsLeft.toFixed(2)} left</span>
+                          </div>
+                          <div className="bt-bar-track">
+                            <div className="bt-bar-fill" style={{ width: `${creditsPct}%` }} />
+                          </div>
+                        </div>
+                      )}
+                      <div className="bt-cancelled-note">
+                        Your subscription has ended.{creditsLeft > 0.001 ? ' You can still use your AI until the remaining credits run out.' : ' Subscribe below to get back online.'}
+                      </div>
+                    </Card>
+
+                    <div className="bt-plans-header" style={{ marginTop: '2rem' }}>
+                      <h2>Resubscribe</h2>
+                      <p>Pick a plan to continue · Billed monthly · Cancel anytime</p>
+                    </div>
+                    <div className="bt-plan-grid">
+                      {planData.map((p) => (
+                        <Card key={p.name}
+                          className={`bt-plan-item${p.isPopular ? ' popular' : ''}${subscribing ? ' disabled' : ''}`}
+                          onClick={() => !subscribing && handleSubscribe(p.name)}
+                        >
+                          {p.isPopular && <div className="bt-popular-badge">Most Popular</div>}
+                          <div className="bt-item-top">
+                            <div className="bt-item-name">{p.name}</div>
+                            <div className="bt-item-tagline">{p.tagline}</div>
+                          </div>
+                          <div className="bt-item-price">{p.price}<span className="bt-period">/mo</span></div>
+                          <ul className="bt-item-features">
+                            {p.features.map((f, i) => (
+                              <li key={i}><Check size={13} style={{ color: '#27C93F', flexShrink: 0, marginTop: '1px' }} />{f}</li>
+                            ))}
+                          </ul>
+                          <Button variant={p.isPopular ? 'primary' : 'secondary'} fullWidth disabled={!!subscribing}
+                            onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleSubscribe(p.name); }}>
+                            {subscribing === p.name
+                              ? <><Loader2 size={14} className="spin" /> Redirecting...</>
+                              : 'Get Started →'}
+                          </Button>
+                        </Card>
+                      ))}
+                    </div>
+                  </>
+                );
+
+                // No subscription at all
+                return (
                   <>
                     <div className="bt-plans-header">
                       <h2>Pick a plan that fits your life</h2>

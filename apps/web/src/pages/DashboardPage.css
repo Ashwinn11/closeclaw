@@ -1103,6 +1103,30 @@
     border: 1px solid rgba(39, 201, 63, 0.2);
 }
 
+.bt-status-badge.cancelled {
+    background: rgba(255, 95, 86, 0.1);
+    color: #FF5F56;
+    border: 1px solid rgba(255, 95, 86, 0.2);
+}
+
+.bt-cancelled-note {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 0.75rem;
+    padding: 0.6rem 0.85rem;
+    background: rgba(255, 95, 86, 0.06);
+    border: 1px solid rgba(255, 95, 86, 0.12);
+    border-radius: 8px;
+    line-height: 1.5;
+}
+
+.scb-cancelled-hint {
+    font-size: 0.65rem;
+    color: #FF5F56;
+    margin-top: 0.35rem;
+    opacity: 0.8;
+}
+
 .bt-credits-bar-wrap {
     margin-bottom: 1.25rem;
 }
