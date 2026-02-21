@@ -13,12 +13,6 @@ const PLAN_DISPLAY: Record<string, string> = {
   fortress: 'Fortress',
 };
 
-const PLAN_INITIAL_CREDITS: Record<string, number> = {
-  basic: 20,
-  guardian: 35,
-  fortress: 55,
-};
-
 const planData = [
   {
     name: 'Base',
@@ -41,7 +35,7 @@ const planData = [
 export const BillingPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [credits, setCredits] = useState<{ api_credits: number; plan: string } | null>(null);
+  const [credits, setCredits] = useState<{ api_credits: number; plan: string; api_credits_cap: number; subscription_renews_at: string | null } | null>(null);
   const [openingPortal, setOpeningPortal] = useState(false);
   const [toppingUp, setToppingUp] = useState<string | null>(null);
   const [subscribing, setSubscribing] = useState<string | null>(null);
@@ -57,7 +51,6 @@ export const BillingPage: React.FC = () => {
   const plan = credits?.plan ?? 'none';
   const isActive = ['basic', 'guardian', 'fortress'].includes(plan);
   const planDisplayName = PLAN_DISPLAY[plan] ?? null;
-  const initialCredits = PLAN_INITIAL_CREDITS[plan] ?? 0;
   const creditsLeft = Number(credits?.api_credits ?? 0);
   const creditsCap = Number(credits?.api_credits_cap ?? 0);
   const creditsPct = creditsCap > 0

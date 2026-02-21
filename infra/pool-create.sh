@@ -63,15 +63,10 @@ create_vm() {
   local startup_script='#!/bin/bash
 set -e
 log() { echo "[closeclaw-startup] $*" | sudo tee -a /var/log/closeclaw-startup.log; }
-PROJECT=GCP_PROJECT_PLACEHOLDER
 
-# ── Fetch secrets from Secret Manager ──
-log "Fetching secrets from Secret Manager..."
-GEMINI_KEY=$(gcloud secrets versions access latest --secret=closeclaw-gemini-api-key --project=$PROJECT 2>/dev/null || true)
-OPENAI_KEY=$(gcloud secrets versions access latest --secret=closeclaw-openai-api-key --project=$PROJECT 2>/dev/null || true)
-ANTHROPIC_KEY=$(gcloud secrets versions access latest --secret=closeclaw-anthropic-api-key --project=$PROJECT 2>/dev/null || true)
-
-# ── Write .env with secrets + unique gateway token ──
+# ── Write .env with unique gateway token ──
+# API keys are NOT stored on the VM — all AI calls are proxied through
+# the CloseClaw API (closeclaw.in/api/proxy/*) using the gateway token for auth.
 USER_DIR="/home/$(ls /home/ | head -1)"
 cd "$USER_DIR/openclaw"
 cat > .env << EOF
@@ -80,11 +75,8 @@ OPENCLAW_GATEWAY_TOKEN=GATEWAY_TOKEN_PLACEHOLDER
 OPENCLAW_GATEWAY_BIND=lan
 OPENCLAW_CONFIG_DIR=$USER_DIR/.openclaw
 OPENCLAW_WORKSPACE_DIR=$USER_DIR/.openclaw/workspace
-GEMINI_API_KEY=$GEMINI_KEY
-OPENAI_API_KEY=$OPENAI_KEY
-ANTHROPIC_API_KEY=$ANTHROPIC_KEY
 EOF
-log ".env written with secrets."
+log ".env written with gateway token."
 
 # ── Start Gateway ──
 log "Starting openclaw gateway..."

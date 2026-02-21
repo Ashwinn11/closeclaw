@@ -8,7 +8,7 @@ import { Button } from '../components/ui/Button';
 import { BrandIcons } from '../components/ui/BrandIcons';
 import { ChannelSetupModal } from '../components/ui/ChannelSetupModal';
 import { CronSetupModal } from '../components/ui/CronSetupModal';
-import { listChannels, disconnectChannel, type ChannelConnection, getCronJobs, getUsageStats, getCredits, getUsageLog, createTopup, removeCronJob, patchGatewayConfig } from '../lib/api';
+import { listChannels, disconnectChannel, type ChannelConnection, getCronJobs, getUsageStats, getCredits, getUsageLog, createTopup, createCheckout, getBillingPortal, removeCronJob, patchGatewayConfig } from '../lib/api';
 import { NebulaBackground } from '../components/ui/NebulaBackground';
 import { ChatTab } from '../components/chat/ChatTab';
 import {
@@ -111,13 +111,12 @@ export const DashboardPage: React.FC = () => {
   const [channelResumeData, setChannelResumeData] = useState<{ token: string; appToken?: string; ownerUserId: string } | null>(null);
 
   // Billing tab state
-  const [billingCredits, setBillingCredits] = useState<{ api_credits: number; plan: string } | null>(null);
+  const [billingCredits, setBillingCredits] = useState<{ api_credits: number; plan: string; api_credits_cap: number; subscription_renews_at: string | null } | null>(null);
   const [billingLoading, setBillingLoading] = useState(false);
   const [openingPortal, setOpeningPortal] = useState(false);
   const [subscribing, setSubscribing] = useState<string | null>(null);
 
   const PLAN_DISPLAY: Record<string, string> = { basic: 'Base', guardian: 'Guardian', fortress: 'Fortress' };
-  const PLAN_INITIAL_CREDITS: Record<string, number> = { basic: 20, guardian: 35, fortress: 55 };
 
   const fetchChannels = useCallback(async () => {
     try {
@@ -238,6 +237,11 @@ const fetchCron = useCallback(async () => {
       setBillingLoading(false);
     }
   }, []);
+
+  // Load billing info on mount so sidebar credits bar is populated
+  useEffect(() => {
+    fetchBilling();
+  }, [fetchBilling]);
 
   const handleManageSubscription = async () => {
     setOpeningPortal(true);
@@ -745,7 +749,8 @@ const fetchCron = useCallback(async () => {
                   </>
                 ) : null}
 
-              {/* Top-up section — always visible */}
+              {/* Top-up section — only for subscribed users */}
+              {billingCredits && ['basic', 'guardian', 'fortress'].includes(billingCredits.plan) && (
               <div className="topup-section">
                 <div className="section-label" style={{ marginTop: '2rem' }}>Top Up Credits</div>
                 <div className="topup-grid">
@@ -771,6 +776,7 @@ const fetchCron = useCallback(async () => {
                   ))}
                 </div>
               </div>
+              )}
               </div>
             </div>
           )}

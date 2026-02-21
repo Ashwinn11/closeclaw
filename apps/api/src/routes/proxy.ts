@@ -48,7 +48,7 @@ function computeCost(model: string | null, inputTokens: number, outputTokens: nu
 
 // ─── Synthetic "credits exhausted" responses ─────────────────────────────────
 
-const EXHAUSTED_MSG = '⚠️ Credits exhausted. Top up at closeclaw.com/billing.';
+const EXHAUSTED_MSG = '⚠️ Your API Credits have been exhausted. Top up at closeclaw.in/billing.';
 
 function creditsExhaustedOpenAI() {
     return {
