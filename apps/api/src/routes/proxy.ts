@@ -150,13 +150,12 @@ async function syncSessionsUsage(auth: InstanceAuth): Promise<void> {
         const rpc = createGatewayRpcClient(auth.internalIp, auth.gatewayPort, auth.gatewayToken);
         let currentCost = 0;
         let currentTokens = 0;
-        let byModel: any[] = [];
 
         try {
             const usage = await rpc.call('sessions.usage', { startDate }) as any;
             currentCost = Number(usage?.totals?.totalCost ?? 0);
             currentTokens = Number(usage?.totals?.totalTokens ?? 0);
-            byModel = usage?.aggregates?.byModel ?? [];
+    
         } finally {
             rpc.disconnect();
         }
@@ -195,41 +194,6 @@ async function syncSessionsUsage(auth: InstanceAuth): Promise<void> {
         // Invalidate credits cache so next request sees updated balance
         creditsCache.delete(auth.userId);
         await supabase.rpc('deduct_api_credits', { p_user_id: auth.userId, p_amount: delta });
-
-        // Compute delta tokens (mirrors delta cost logic above)
-        const deltaTokens = currentTokens >= lastTokens ? currentTokens - lastTokens : currentTokens;
-
-        if (byModel.length > 0) {
-            // byModel contains CUMULATIVE totals — scale each model's share down to the delta window
-            // so usage_log rows are additive and don't inflate when summed.
-            await supabase.from('usage_log').insert(byModel.map((m: any) => {
-                const mInput  = Number(m.totals?.input  ?? 0);
-                const mOutput = Number(m.totals?.output ?? 0);
-                const mCost   = Number(m.totals?.totalCost ?? 0);
-                const tokenShare = currentTokens > 0 ? (mInput + mOutput) / currentTokens : (1 / byModel.length);
-                const costShare  = currentCost   > 0 ? mCost / currentCost                : (1 / byModel.length);
-                const mTotal = mInput + mOutput;
-                return {
-                    user_id: auth.userId,
-                    instance_id: auth.instanceId,
-                    provider: m.provider ?? 'unknown',
-                    model: m.model ?? 'unknown',
-                    input_tokens:  mTotal > 0 ? Math.round(tokenShare * deltaTokens * (mInput  / mTotal)) : 0,
-                    output_tokens: mTotal > 0 ? Math.round(tokenShare * deltaTokens * (mOutput / mTotal)) : 0,
-                    cost: costShare * delta,
-                };
-            }));
-        } else {
-            await supabase.from('usage_log').insert({
-                user_id: auth.userId,
-                instance_id: auth.instanceId,
-                provider: 'mixed',
-                model: null,
-                input_tokens: deltaTokens,
-                output_tokens: 0,
-                cost: delta,
-            });
-        }
 
         console.log(`[proxy/sync] user=${auth.userId} delta=$${delta.toFixed(6)} current=$${currentCost.toFixed(6)} last=$${lastCost.toFixed(6)}`);
     } catch (err) {

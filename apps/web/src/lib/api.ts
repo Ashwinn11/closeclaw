@@ -188,34 +188,6 @@ export async function getBillingPortal(): Promise<{ portalUrl: string }> {
     return request('/api/billing/portal');
 }
 
-export interface UsageLogRow {
-    id: string;
-    provider: string;
-    model: string | null;
-    input_tokens: number;
-    output_tokens: number;
-    cost: number;
-    created_at: string;
-}
-
-export interface UsageLogResponse {
-    rows: UsageLogRow[];
-    totals: {
-        totalTokens: number;
-        totalCost: number;
-        totalMessages: number;
-    };
-    byModel: Array<{
-        model: string;
-        provider: string;
-        totals: { totalTokens: number; totalCost: number };
-    }>;
-}
-
-export async function getUsageLog(): Promise<UsageLogResponse> {
-    return request('/api/billing/usage-log');
-}
-
 // ─── Auth ──────────────────────────────────────────────────────────────────
 
 export async function getMe() {

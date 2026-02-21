@@ -8,7 +8,7 @@ import { Button } from '../components/ui/Button';
 import { BrandIcons } from '../components/ui/BrandIcons';
 import { ChannelSetupModal } from '../components/ui/ChannelSetupModal';
 import { CronSetupModal } from '../components/ui/CronSetupModal';
-import { listChannels, disconnectChannel, type ChannelConnection, getCronJobs, getUsageStats, getCredits, getUsageLog, createTopup, createCheckout, getBillingPortal, removeCronJob, patchGatewayConfig } from '../lib/api';
+import { listChannels, disconnectChannel, type ChannelConnection, getCronJobs, getUsageStats, getCredits, createTopup, createCheckout, getBillingPortal, removeCronJob, patchGatewayConfig } from '../lib/api';
 import { NebulaBackground } from '../components/ui/NebulaBackground';
 import { ChatTab } from '../components/chat/ChatTab';
 import {
@@ -147,26 +147,13 @@ const fetchCron = useCallback(async () => {
     setLoadingUsage(true);
     setUsageError(null);
     try {
-      // Fetch usage log independently of credits — a missing column in the DB
-      // (e.g. pending migration) must not fall through to the Gateway fallback.
-      const log = await getUsageLog();
-      let apiCreditsLeft = 0;
-      try { const c = await getCredits(); apiCreditsLeft = c.api_credits; } catch { /* ignore */ }
-      setUsageData({
-        messagesThisMonth: log.totals.totalMessages,
-        tokensUsed: log.totals.totalTokens,
-        costThisMonth: log.totals.totalCost,
-        apiCreditsLeft,
-        byModel: log.byModel,
-      });
+      const [data, credits] = await Promise.allSettled([getUsageStats(), getCredits()]);
+      const usage = data.status === 'fulfilled' ? data.value : null;
+      const apiCreditsLeft = credits.status === 'fulfilled' ? credits.value.api_credits : 0;
+      if (!usage) throw new Error((data as PromiseRejectedResult).reason?.message || 'Failed to fetch usage');
+      setUsageData({ ...usage, apiCreditsLeft });
     } catch (err: any) {
-      // Fall back to gateway-reported usage only if the usage_log table itself is unavailable
-      try {
-        const data = await getUsageStats();
-        setUsageData(data);
-      } catch {
-        setUsageError(err.message || 'Failed to fetch usage data');
-      }
+      setUsageError(err.message || 'Failed to fetch usage data');
     } finally {
       setLoadingUsage(false);
     }
@@ -301,18 +288,12 @@ const fetchCron = useCallback(async () => {
       (_event, payload: any) => {
         if (payload?.state !== 'final') return;
         // Silent refresh — no loading spinner
-        getUsageLog()
-          .then(async (log) => {
-            let apiCreditsLeft = 0;
-            try { const c = await getCredits(); apiCreditsLeft = c.api_credits; } catch { /* ignore */ }
-            setUsageData({
-              messagesThisMonth: log.totals.totalMessages,
-              tokensUsed: log.totals.totalTokens,
-              costThisMonth: log.totals.totalCost,
-              apiCreditsLeft,
-              byModel: log.byModel,
-            });
-            setUpdatedFields(new Set(['messagesThisMonth', 'tokensUsed', 'costThisMonth']));
+        Promise.allSettled([getUsageStats(), getCredits()])
+          .then(([data, credits]) => {
+            if (data.status !== 'fulfilled') return;
+            const apiCreditsLeft = credits.status === 'fulfilled' ? credits.value.api_credits : 0;
+            setUsageData({ ...data.value, apiCreditsLeft });
+            setUpdatedFields(new Set(['tokensUsed', 'costThisMonth']));
           })
           .catch(() => {});
       }

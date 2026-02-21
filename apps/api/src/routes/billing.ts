@@ -124,47 +124,6 @@ billingRoutes.get('/credits', authMiddleware, async (c) => {
     });
 });
 
-// GET /api/billing/usage-log
-billingRoutes.get('/usage-log', authMiddleware, async (c) => {
-    const userId = c.get('userId' as never) as string;
-
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const { data, error } = await supabase
-        .from('usage_log')
-        .select('id, provider, model, input_tokens, output_tokens, cost, created_at')
-        .eq('user_id', userId)
-        .gte('created_at', thirtyDaysAgo.toISOString())
-        .order('created_at', { ascending: false })
-        .limit(500);
-
-    if (error) return c.json({ ok: false, error: 'Failed to fetch usage log' }, 500);
-
-    const rows = data ?? [];
-    const totalTokens = rows.reduce((sum, r) => sum + (r.input_tokens + r.output_tokens), 0);
-    const totalCost = rows.reduce((sum, r) => sum + Number(r.cost), 0);
-
-    const byModel: Record<string, { model: string; provider: string; totals: { totalTokens: number; totalCost: number } }> = {};
-    for (const row of rows) {
-        const key = `${row.provider}/${row.model ?? 'unknown'}`;
-        if (!byModel[key]) {
-            byModel[key] = { model: row.model ?? 'unknown', provider: row.provider, totals: { totalTokens: 0, totalCost: 0 } };
-        }
-        byModel[key].totals.totalTokens += row.input_tokens + row.output_tokens;
-        byModel[key].totals.totalCost += Number(row.cost);
-    }
-
-    return c.json({
-        ok: true,
-        data: {
-            rows,
-            totals: { totalTokens, totalCost, totalMessages: rows.length },
-            byModel: Object.values(byModel),
-        },
-    });
-});
-
 // POST /api/billing/sync-usage
 // Calls sessions.usage on the user's gateway (ground truth) and deducts
 // the delta vs what's already logged. Safe to call repeatedly — only charges new usage since last sync.
@@ -189,13 +148,12 @@ billingRoutes.post('/sync-usage', authMiddleware, async (c) => {
     const rpc = createGatewayRpcClient(inst.internal_ip as string, (inst.gateway_port as number) || 18789, inst.gateway_token as string);
     let currentCost = 0;
     let currentTokens = 0;
-    let byModel: any[] = [];
 
     try {
         const usage = await rpc.call('sessions.usage', { startDate }) as any;
         currentCost = Number(usage?.totals?.totalCost ?? 0);
         currentTokens = Number(usage?.totals?.totalTokens ?? 0);
-        byModel = usage?.aggregates?.byModel ?? [];
+
     } catch {
         return c.json({ ok: true, data: { synced: false, reason: 'gateway unreachable' } });
     } finally {
@@ -225,39 +183,6 @@ billingRoutes.post('/sync-usage', authMiddleware, async (c) => {
     }
 
     await supabase.rpc('deduct_api_credits', { p_user_id: userId, p_amount: delta });
-
-    const lastTokens = Number(inst.last_usage_tokens ?? 0);
-    const deltaTokens = currentTokens >= lastTokens ? currentTokens - lastTokens : currentTokens;
-
-    if (byModel.length > 0) {
-        await supabase.from('usage_log').insert(byModel.map((m: any) => {
-            const mInput  = Number(m.totals?.input  ?? 0);
-            const mOutput = Number(m.totals?.output ?? 0);
-            const mCost   = Number(m.totals?.totalCost ?? 0);
-            const tokenShare = currentTokens > 0 ? (mInput + mOutput) / currentTokens : (1 / byModel.length);
-            const costShare  = currentCost   > 0 ? mCost / currentCost                : (1 / byModel.length);
-            const mTotal = mInput + mOutput;
-            return {
-                user_id: userId,
-                instance_id: inst.id,
-                provider: m.provider ?? 'unknown',
-                model: m.model ?? 'unknown',
-                input_tokens:  mTotal > 0 ? Math.round(tokenShare * deltaTokens * (mInput  / mTotal)) : 0,
-                output_tokens: mTotal > 0 ? Math.round(tokenShare * deltaTokens * (mOutput / mTotal)) : 0,
-                cost: costShare * delta,
-            };
-        }));
-    } else {
-        await supabase.from('usage_log').insert({
-            user_id: userId,
-            instance_id: inst.id,
-            provider: 'mixed',
-            model: null,
-            input_tokens: deltaTokens,
-            output_tokens: 0,
-            cost: delta,
-        });
-    }
 
     return c.json({ ok: true, data: { synced: true, delta, currentCost, lastCost } });
 });
