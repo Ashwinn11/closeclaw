@@ -207,7 +207,7 @@ export const LandingPage: React.FC = () => {
               <div className="footer-links-col">
                  <h4>Company</h4>
                  <button className="footer-link-btn" onClick={() => setInfoModal('about')}>About</button>
-                 <a href="mailto:hello@closeclaw.in">Contact</a>
+                 <a href="mailto:support@closeclaw.in">Contact</a>
                  <button className="footer-link-btn" onClick={() => setInfoModal('tos')}>Terms of Service</button>
                  <button className="footer-link-btn" onClick={() => setInfoModal('privacy')}>Privacy Policy</button>
               </div>

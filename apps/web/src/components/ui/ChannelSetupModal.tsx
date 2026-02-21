@@ -25,6 +25,14 @@ interface ChannelSetupModalProps {
   resumeData?: { token: string; appToken?: string; ownerUserId: string };
 }
 
+const A = ({ href, children }: { href: string; children: React.ReactNode }) => (
+  <a href={href} target="_blank" rel="noopener noreferrer" className="setup-link">{children}</a>
+);
+
+const Warn = ({ children }: { children: React.ReactNode }) => (
+  <span className="setup-warn">{children}</span>
+);
+
 const channelConfig: Record<ChannelType, {
   icon: React.FC;
   color: string;
@@ -33,7 +41,8 @@ const channelConfig: Record<ChannelType, {
   tokenPlaceholder: string;
   secondTokenLabel?: string;
   secondTokenPlaceholder?: string;
-  instructions: string[];
+  instructions: React.ReactNode[];
+  note?: React.ReactNode;
 }> = {
   Telegram: {
     icon: BrandIcons.Telegram,
@@ -42,12 +51,10 @@ const channelConfig: Record<ChannelType, {
     tokenLabel: 'Bot Token',
     tokenPlaceholder: '123456789:ABCdefGhIjKlMnOpQrStUvWxYz',
     instructions: [
-      'Open Telegram and search for @BotFather',
-      'Tap Start, then type /newbot and follow the prompts',
-      'Give your bot a display name (e.g. "My Assistant")',
-      'Give it a username ending in "bot" (e.g. my_assistant_bot)',
-      'BotFather will send you an API token — copy that long string',
-      'Paste it in the box on the right and tap Verify →',
+      <>Open Telegram and search for <strong>@BotFather</strong> — it's the official Telegram bot.</>,
+      <>Send <strong>/newbot</strong> and follow the prompts. Give your bot a display name (e.g. "My AI") and a username ending in <strong>bot</strong> (e.g. <em>myai_bot</em>).</>,
+      <>BotFather will reply with a long <strong>API token</strong> — it looks like <code>123456789:ABC…</code>. Copy that whole string.</>,
+      <>Paste the token in the box and click <strong>Verify →</strong></>,
     ],
   },
   Discord: {
@@ -57,33 +64,33 @@ const channelConfig: Record<ChannelType, {
     tokenLabel: 'Bot Token',
     tokenPlaceholder: 'MTE5NjI4...',
     instructions: [
-      'Go to discord.com/developers/applications',
-      'Click "New Application" and give it a name',
-      'Open the "Bot" section in the left sidebar',
-      'Click "Reset Token" and copy the token shown',
-      'Scroll down and turn on "Message Content Intent"',
-      'Open "OAuth2 → URL Generator", check the "bot" scope',
-      'Use the generated link to add the bot to your server',
+      <>Go to the <A href="https://discord.com/developers/applications">Discord Developer Portal</A> and click <strong>New Application</strong>. Give it any name (e.g. "My AI").</>,
+      <>In the left sidebar, click <strong>Bot</strong>. Then click <strong>Reset Token</strong> → <strong>Yes, do it!</strong> → copy the token that appears.</>,
+      <><Warn>Critical:</Warn> Still on the Bot page, scroll down to <strong>Privileged Gateway Intents</strong> and turn on <strong>Message Content Intent</strong>. Without this, your bot won't be able to read messages. Hit <strong>Save Changes</strong>.</>,
+      <>In the left sidebar, click <strong>OAuth2</strong> → <strong>URL Generator</strong>. Under Scopes tick <strong>bot</strong>. Under Bot Permissions tick <strong>Send Messages</strong>, <strong>Read Message History</strong>, and <strong>View Channels</strong>.</>,
+      <>Copy the <strong>Generated URL</strong> at the bottom of that page, open it in a new tab, pick your server, and click <strong>Authorise</strong>. This adds the bot to your server.</>,
+      <>Paste the bot token in the box on the right and click <strong>Verify →</strong></>,
     ],
+    note: <>Don't have a server yet? <A href="https://support.discord.com/hc/en-us/articles/204849977">Create one free here</A> — it only takes a minute.</>,
   },
   Slack: {
     icon: BrandIcons.Slack,
     color: '#E01E5A',
     glow: 'rgba(224, 30, 90, 0.15)',
-    tokenLabel: 'Bot Token (xoxb-...)',
+    tokenLabel: 'Bot Token (xoxb-…)',
     tokenPlaceholder: 'xoxb-your-bot-token',
-    secondTokenLabel: 'App Token (xapp-...)',
+    secondTokenLabel: 'App Token (xapp-…)',
     secondTokenPlaceholder: 'xapp-your-app-token',
     instructions: [
-      'Go to api.slack.com/apps and click "Create New App"',
-      'Choose "From scratch", name it, pick your workspace',
-      'Open "Socket Mode" in the sidebar and turn it on',
-      'Create an App Token when prompted — copy it (starts with xapp-)',
-      'Go to "OAuth & Permissions", add scopes: chat:write, im:history, im:read',
-      'Click "Install to Workspace" and approve',
-      'Copy the "Bot User OAuth Token" (starts with xoxb-)',
-      'Paste both tokens in the boxes on the right →',
+      <>Go to <A href="https://api.slack.com/apps">api.slack.com/apps</A> and click <strong>Create New App</strong> → <strong>From scratch</strong>. Name it anything and pick your workspace.</>,
+      <>In the left sidebar click <strong>Socket Mode</strong> and toggle it <strong>On</strong>. When prompted, click <strong>Generate an app-level token</strong>, give it any name, add the <strong>connections:write</strong> scope, and click <strong>Generate</strong>. Copy the token shown — it starts with <code>xapp-</code>. This is your <strong>App Token</strong>.</>,
+      <>In the sidebar click <strong>OAuth &amp; Permissions</strong>. Scroll to <strong>Bot Token Scopes</strong> and add these scopes: <code>chat:write</code>, <code>im:history</code>, <code>im:read</code>, <code>channels:history</code>, <code>app_mentions:read</code>.</>,
+      <>In the sidebar click <strong>Event Subscriptions</strong>, toggle <strong>On</strong>, then expand <strong>Subscribe to bot events</strong> and add: <code>message.im</code> and <code>app_mention</code>. Click <strong>Save Changes</strong>.</>,
+      <>In the sidebar click <strong>App Home</strong>. Under <em>Show Tabs</em>, tick <strong>Allow users to send Slash commands and messages from the messages tab</strong>.</>,
+      <>Back in <strong>OAuth &amp; Permissions</strong>, scroll up and click <strong>Install to Workspace</strong> → <strong>Allow</strong>. Copy the <strong>Bot User OAuth Token</strong> that appears — it starts with <code>xoxb-</code>.</>,
+      <>Paste both tokens in the boxes on the right and click <strong>Verify →</strong></>,
     ],
+    note: <>Need help? The <A href="https://api.slack.com/apps">Slack App Settings</A> page has everything in one place — bookmark it.</>,
   },
 };
 
@@ -387,6 +394,9 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
                   </li>
                 ))}
               </ol>
+              {config.note && (
+                <div className="setup-note">{config.note}</div>
+              )}
             </div>
 
             <div className="token-divider" />
@@ -538,8 +548,18 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
                 <div className="bot-card">
                   <div className="bot-details">
                     <h4>One last thing — who are you?</h4>
-                    {channel === 'Discord' && <span className="bot-username">Go to Settings → Advanced → turn on Developer Mode. Then right-click your name and tap "Copy User ID".</span>}
-                    {channel === 'Slack' && <span className="bot-username">Click your name in Slack → View profile → More (···) → Copy member ID. It starts with the letter U.</span>}
+                    {channel === 'Discord' && (
+                      <span className="bot-username">
+                        Open Discord → <strong>Settings</strong> (gear icon) → <strong>Advanced</strong> → turn on <strong>Developer Mode</strong>.<br />
+                        Then close Settings, right-click your own name anywhere in Discord, and tap <strong>Copy User ID</strong>.
+                      </span>
+                    )}
+                    {channel === 'Slack' && (
+                      <span className="bot-username">
+                        In Slack, click your <strong>profile picture</strong> or name → <strong>View Profile</strong> → click the <strong>⋯ More</strong> button → <strong>Copy member ID</strong>.<br />
+                        It starts with the letter <strong>U</strong> (e.g. <code>U0AF1SHKFD0</code>).
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="token-input-area">

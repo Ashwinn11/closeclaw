@@ -1,40 +1,49 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Primary Meta -->
-    <title>CloseClaw — Your Private AI Assistant on Telegram, Discord &amp; Slack</title>
-    <meta name="description" content="Deploy your own dedicated AI assistant in 60 seconds. A private server running Claude, GPT, and Gemini — ready on Telegram, Discord, or Slack. No sharing, no setup, always on." />
-    <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#0a0a0f" />
-    <link rel="canonical" href="https://closeclaw.in" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/logo.png" />
-    <link rel="apple-touch-icon" href="/logo.png" />
+  <!-- Primary Meta -->
+  <title>CloseClaw — Your Private AI Assistant on Telegram, Discord &amp; Slack</title>
+  <meta name="description"
+    content="Deploy your own dedicated AI assistant in 60 seconds. A private server running Claude, GPT, and Gemini — ready on Telegram, Discord, or Slack. No sharing, no setup, always on." />
+  <meta name="keywords"
+    content="private AI assistant, self-hosted AI, Telegram AI bot, Discord AI bot, Slack AI bot, dedicated AI server, Claude AI, GPT bot, AI chatbot, AI assistant" />
+  <meta name="author" content="CloseClaw" />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <link rel="canonical" href="https://closeclaw.in" />
 
-    <!-- Open Graph -->
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="CloseClaw" />
-    <meta property="og:url" content="https://closeclaw.in" />
-    <meta property="og:title" content="CloseClaw — Your Private AI Assistant on Telegram, Discord &amp; Slack" />
-    <meta property="og:description" content="Deploy your own dedicated AI assistant in 60 seconds. A private server running Claude, GPT, and Gemini — ready on Telegram, Discord, or Slack. No sharing, no setup, always on." />
-    <meta property="og:image" content="https://closeclaw.in/og-image.png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:locale" content="en_US" />
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <link rel="apple-touch-icon" href="/logo.png" />
 
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@closeclaw" />
-    <meta name="twitter:title" content="CloseClaw — Your Private AI Assistant on Telegram, Discord &amp; Slack" />
-    <meta name="twitter:description" content="Deploy your own dedicated AI assistant in 60 seconds. A private server running Claude, GPT, and Gemini — ready on Telegram, Discord, or Slack." />
-    <meta name="twitter:image" content="https://closeclaw.in/og-image.png" />
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="CloseClaw" />
+  <meta property="og:url" content="https://closeclaw.in" />
+  <meta property="og:title" content="CloseClaw — Your Private AI Assistant on Telegram, Discord &amp; Slack" />
+  <meta property="og:description"
+    content="Deploy your own dedicated AI assistant in 60 seconds. A private server running Claude, GPT, and Gemini — ready on Telegram, Discord, or Slack. No sharing, no setup, always on." />
+  <meta property="og:image" content="https://closeclaw.in/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="CloseClaw — Private AI assistant on Telegram, Discord and Slack" />
+  <meta property="og:locale" content="en_US" />
 
-    <!-- JSON-LD Structured Data -->
-    <script type="application/ld+json">
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@closeclaw" />
+  <meta name="twitter:title" content="CloseClaw — Your Private AI Assistant on Telegram, Discord &amp; Slack" />
+  <meta name="twitter:description"
+    content="Deploy your own dedicated AI assistant in 60 seconds. A private server running Claude, GPT, and Gemini — ready on Telegram, Discord, or Slack." />
+  <meta name="twitter:image" content="https://closeclaw.in/og-image.png" />
+  <meta name="twitter:image:alt" content="CloseClaw — Private AI assistant on Telegram, Discord and Slack" />
+
+  <!-- JSON-LD: Software Application -->
+  <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
@@ -47,35 +56,117 @@
         {
           "@type": "Offer",
           "name": "Base Plan",
-          "price": "50.00",
-          "priceCurrency": "USD",
-          "billingIncrement": "monthly"
+          "priceSpecification": {
+            "@type": "UnitPriceSpecification",
+            "price": "50.00",
+            "priceCurrency": "USD",
+            "unitCode": "MON"
+          }
         },
         {
           "@type": "Offer",
           "name": "Guardian Plan",
-          "price": "75.00",
-          "priceCurrency": "USD",
-          "billingIncrement": "monthly"
+          "priceSpecification": {
+            "@type": "UnitPriceSpecification",
+            "price": "75.00",
+            "priceCurrency": "USD",
+            "unitCode": "MON"
+          }
         },
         {
           "@type": "Offer",
           "name": "Fortress Plan",
-          "price": "100.00",
-          "priceCurrency": "USD",
-          "billingIncrement": "monthly"
+          "priceSpecification": {
+            "@type": "UnitPriceSpecification",
+            "price": "100.00",
+            "priceCurrency": "USD",
+            "unitCode": "MON"
+          }
         }
       ],
       "publisher": {
         "@type": "Organization",
         "name": "CloseClaw",
-        "url": "https://closeclaw.in"
+        "url": "https://closeclaw.in",
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "email": "support@closeclaw.in",
+          "contactType": "customer support"
+        }
       }
     }
     </script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+
+  <!-- JSON-LD: FAQ (rich results in Google Search) -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is CloseClaw?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "CloseClaw gives you a dedicated AI assistant that runs on your own private server — always on, completely isolated, and ready on Telegram, Discord, or Slack within 60 seconds. Unlike shared AI services, your server belongs to you alone."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Which AI models does CloseClaw support?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "CloseClaw supports Claude (Anthropic), GPT (OpenAI), and Gemini (Google). Your AI automatically picks the best model for each task — writing, coding, research, and more — with no manual configuration needed."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is my data private?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Your AI runs on a dedicated virtual machine with no public IP address. It is never shared with other users, and your conversations never pass through CloseClaw's servers. Everything stays on your own private server."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How much does CloseClaw cost?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Plans start at $50/month (Base), $75/month (Guardian), and $100/month (Fortress). Each plan includes a monthly AI credit allowance ($20, $35, and $50 respectively). Active subscribers can top up credits anytime. All plans are billed monthly with no lock-in."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Which messaging apps does CloseClaw work with?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "CloseClaw currently supports Telegram, Discord, and Slack. WhatsApp, Signal, iMessage, and Matrix are coming soon."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do I need any technical knowledge to set it up?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. CloseClaw handles everything — server provisioning, security, uptime, and updates. You just connect your preferred messaging app and start chatting. There is no server to configure or maintain."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can my AI browse the web?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Your AI can open websites, read pages, and research topics on your behalf — all from your private server. Web browsing is included in all plans."
+          }
+        }
+      ]
+    }
+    </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>

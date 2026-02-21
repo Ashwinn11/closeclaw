@@ -55,7 +55,7 @@ const TOS_CONTENT = (
     <p>We may update these terms from time to time. Continued use of the Service after changes constitutes acceptance. Material changes will be communicated by email.</p>
 
     <h3>12. Contact</h3>
-    <p>Questions about these terms? Email us at <a href="mailto:hello@closeclaw.in">hello@closeclaw.in</a>.</p>
+    <p>Questions about these terms? Email us at <a href="mailto:support@closeclaw.in">support@closeclaw.in</a>.</p>
   </>
 );
 
@@ -82,7 +82,7 @@ const PRIVACY_CONTENT = (
     <p>Your AI server has no public IP address. All traffic is routed through our encrypted internal network. Access to your server requires your unique gateway token.</p>
 
     <h3>Contact</h3>
-    <p>Privacy questions or data deletion requests: <a href="mailto:hello@closeclaw.in">hello@closeclaw.in</a>.</p>
+    <p>Privacy questions or data deletion requests: <a href="mailto:support@closeclaw.in">support@closeclaw.in</a>.</p>
   </>
 );
 
@@ -105,7 +105,7 @@ const ABOUT_CONTENT = (
     <p>CloseClaw is built on top of <a href="https://docs.openclaw.ai" target="_blank" rel="noopener noreferrer">OpenClaw</a>, an open-source AI gateway that handles model routing, web browsing, and multi-channel integrations. Your assistant can use Claude, GPT, Gemini, and more — automatically picking the right model for each task.</p>
 
     <h3>Get in touch</h3>
-    <p>We're a small team that cares deeply about privacy and developer experience. Reach us at <a href="mailto:hello@closeclaw.in">hello@closeclaw.in</a> — we read every message.</p>
+    <p>We're a small team that cares deeply about privacy and developer experience. Reach us at <a href="mailto:support@closeclaw.in">support@closeclaw.in</a> — we read every message.</p>
   </>
 );
 
