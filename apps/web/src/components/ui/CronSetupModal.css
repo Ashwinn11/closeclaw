@@ -62,12 +62,13 @@
     margin: 0;
 }
 
-.token-right {
-    padding-left: 2rem !important;
+.cron-setup-modal .token-right {
+    padding-left: 2rem;
+    justify-content: flex-start;
 }
 
-.token-left {
-    padding-right: 2rem !important;
+.cron-setup-modal .token-left {
+    padding-right: 2rem;
 }
 
 .cron-form {
@@ -84,11 +85,97 @@
 }
 
 .cron-form label {
-    font-size: var(--text-base);
+    font-size: 0.65rem;
     font-weight: 600;
     color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
+}
+
+.cron-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.cron-preset-chip {
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.72rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.cron-preset-chip:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.cron-preset-chip.active {
+    border-color: var(--accent-primary);
+    background: rgba(255, 77, 77, 0.1);
+    color: var(--accent-primary);
+}
+
+.cron-feedback {
+    font-size: 0.72rem;
+    font-style: italic;
+}
+
+.cron-feedback--ok {
+    color: #27C93F;
+    opacity: 0.9;
+}
+
+.cron-feedback--error {
+    color: #FF5F56;
+}
+
+
+.cron-fields {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.cron-field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.cron-field input {
+    width: 100%;
+    text-align: center;
+    padding: 8px 4px !important;
+    border-radius: 10px !important;
+    font-size: 0.82rem !important;
+    transition: all 0.15s ease;
+}
+
+.cron-field--invalid input {
+    border-color: rgba(255, 95, 86, 0.5) !important;
+    background: rgba(255, 95, 86, 0.04) !important;
+}
+
+.cron-field-name {
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+}
+
+.cron-field-hint {
+    font-size: 0.58rem;
+    color: rgba(255, 255, 255, 0.2);
 }
 
 .cron-form input,
@@ -115,15 +202,16 @@
     resize: none;
 }
 
-.step-actions {
+.cron-setup-modal .step-actions {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    justify-content: flex-end;
+    gap: 0.75rem;
     margin-top: 1.5rem;
 }
 
-.step-actions button {
-    flex: 1;
+.cron-setup-modal .step-actions button {
+    flex: none;
 }
 
 .modal-overlay {

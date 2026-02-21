@@ -686,27 +686,33 @@ const fetchCron = useCallback(async () => {
           {/* Usage Tab */}
           {activeTab === 'usage' && (
             <div className="usage-tab">
-              <div className="section-label"><Calendar size={14} style={{ marginRight: '6px' }} /> Last 30 Days</div>
-              <div className="usage-grid">
-                {loadingUsage ? (
-                  <div className="loading-state" style={{ gridColumn: '1 / -1' }}>
-                    <Loader2 size={24} className="spin" />
-                    <span>Calculating usage...</span>
-                  </div>
-                ) : usageError ? (
-                  <div className="error-state" style={{ gridColumn: '1 / -1' }}>
-                    <AlertCircle size={24} />
-                    <span>{usageError}</span>
-                    <Button size="sm" variant="secondary" onClick={fetchUsage}>Retry</Button>
-                  </div>
-                ) : usageData ? (
-                  <>
+              {loadingUsage ? (
+                <div className="loading-state">
+                  <Loader2 size={24} className="spin" />
+                  <span>Calculating usage...</span>
+                </div>
+              ) : usageError ? (
+                <div className="error-state">
+                  <AlertCircle size={24} />
+                  <span>{usageError}</span>
+                  <Button size="sm" variant="secondary" onClick={fetchUsage}>Retry</Button>
+                </div>
+              ) : !usageData ? (
+                <div className="empty-state-redesigned">
+                  <div className="empty-icon"><BarChart3 size={32} strokeWidth={1} /></div>
+                  <h3>No usage yet</h3>
+                  <p>Once your AI starts handling messages, token usage, costs, and model breakdowns will appear here.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="section-label"><Calendar size={14} style={{ marginRight: '6px' }} /> Last 30 Days</div>
+                  <div className="usage-grid">
                     {usageData.messagesThisMonth > 0 && (
-                    <Card className={`usage-card ${updatedFields.has('messagesThisMonth') ? 'updated' : ''}`}>
-                      <div className="usage-icon"><Zap size={20} /></div>
-                      <div className="usage-value">{usageData.messagesThisMonth.toLocaleString()}</div>
-                      <div className="usage-label">Messages</div>
-                    </Card>
+                      <Card className={`usage-card ${updatedFields.has('messagesThisMonth') ? 'updated' : ''}`}>
+                        <div className="usage-icon"><Zap size={20} /></div>
+                        <div className="usage-value">{usageData.messagesThisMonth.toLocaleString()}</div>
+                        <div className="usage-label">Messages</div>
+                      </Card>
                     )}
                     <Card className={`usage-card ${updatedFields.has('tokensUsed') ? 'updated' : ''}`}>
                       <div className="usage-icon tokens"><BarChart3 size={20} /></div>
@@ -749,38 +755,38 @@ const fetchCron = useCallback(async () => {
                         </div>
                       </div>
                     )}
-                  </>
-                ) : null}
 
-              {/* Top-up section — only for subscribed users */}
-              {billingCredits && ['basic', 'guardian', 'fortress'].includes(billingCredits.plan) && (
-              <div className="topup-section">
-                <div className="section-label" style={{ marginTop: '2rem' }}>Top Up Credits</div>
-                <div className="topup-grid">
-                  {[
-                    { pack: '5',  label: '$5',  credits: 5  },
-                    { pack: '10', label: '$10', credits: 10 },
-                    { pack: '25', label: '$25', credits: 25 },
-                    { pack: '50', label: '$50', credits: 50 },
-                  ].map(({ pack, label, credits }) => (
-                    <Card key={pack} className="topup-card" hoverable onClick={() => !toppingUp && handleTopup(pack)}>
-                      <div className="topup-amount">{label}</div>
-                      <div className="topup-credits">+${credits} credits</div>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        fullWidth
-                        disabled={!!toppingUp}
-                        onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleTopup(pack); }}
-                      >
-                        {toppingUp === pack ? <><Loader2 size={13} className="spin" /> Redirecting...</> : 'Top Up'}
-                      </Button>
-                    </Card>
-                  ))}
-                </div>
-              </div>
+                    {/* Top-up section — only for subscribed users */}
+                    {billingCredits && ['basic', 'guardian', 'fortress'].includes(billingCredits.plan) && (
+                      <div className="topup-section">
+                        <div className="section-label" style={{ marginTop: '2rem' }}>Top Up Credits</div>
+                        <div className="topup-grid">
+                          {[
+                            { pack: '5',  label: '$5',  credits: 5  },
+                            { pack: '10', label: '$10', credits: 10 },
+                            { pack: '25', label: '$25', credits: 25 },
+                            { pack: '50', label: '$50', credits: 50 },
+                          ].map(({ pack, label, credits }) => (
+                            <Card key={pack} className="topup-card" hoverable onClick={() => !toppingUp && handleTopup(pack)}>
+                              <div className="topup-amount">{label}</div>
+                              <div className="topup-credits">+${credits} credits</div>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                fullWidth
+                                disabled={!!toppingUp}
+                                onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleTopup(pack); }}
+                              >
+                                {toppingUp === pack ? <><Loader2 size={13} className="spin" /> Redirecting...</> : 'Top Up'}
+                              </Button>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
-              </div>
             </div>
           )}
 

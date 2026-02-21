@@ -6,6 +6,71 @@ import { useError } from '../../context/ErrorContext';
 import { Loader2, AlertCircle, Clock, Send } from 'lucide-react';
 import './CronSetupModal.css';
 
+const PRESETS = [
+  { label: 'Daily 9am',    expr: '0 9 * * *'   },
+  { label: 'Weekdays 8am', expr: '0 8 * * 1-5' },
+  { label: 'Every Monday', expr: '0 9 * * 1'   },
+  { label: 'Every hour',   expr: '0 * * * *'   },
+  { label: 'Monthly 1st',  expr: '0 9 1 * *'   },
+];
+
+const FIELD_NAMES = ['minute', 'hour', 'day-of-month', 'month', 'weekday'];
+const FIELD_RANGES: [number, number][] = [[0,59],[0,23],[1,31],[1,12],[0,7]];
+
+function isValidField(part: string, min: number, max: number): boolean {
+  if (part === '*') return true;
+  if (/^\*\/\d+$/.test(part)) { const n = parseInt(part.slice(2)); return n > 0 && n <= max; }
+  if (/^\d+-\d+$/.test(part)) { const [a,b] = part.split('-').map(Number); return a >= min && b <= max && a <= b; }
+  if (/^\d+-\d+\/\d+$/.test(part)) { const [range,step] = part.split('/'); const [a,b] = range.split('-').map(Number); return a >= min && b <= max && parseInt(step) > 0; }
+  if (part.includes(',')) return part.split(',').every(p => { const n = parseInt(p); return !isNaN(n) && n >= min && n <= max; });
+  const n = parseInt(part);
+  return !isNaN(n) && n >= min && n <= max;
+}
+
+function validateCron(expr: string): string | null {
+  const parts = expr.trim().split(/\s+/);
+  if (parts.length !== 5) return `Expected 5 fields, got ${parts.length} (minute hour day month weekday)`;
+  for (let i = 0; i < 5; i++) {
+    if (!isValidField(parts[i], FIELD_RANGES[i][0], FIELD_RANGES[i][1]))
+      return `Invalid ${FIELD_NAMES[i]}: "${parts[i]}"`;
+  }
+  return null;
+}
+
+function describeCron(expr: string): string {
+  const parts = expr.trim().split(/\s+/);
+  if (parts.length !== 5) return '';
+  const [min, hour, dom, , dow] = parts;
+
+  const fmt = (h: string, m: string) => {
+    if (h === '*') return null;
+    const hn = parseInt(h), mn = parseInt(m === '*' ? '0' : m);
+    const period = hn >= 12 ? 'PM' : 'AM';
+    const h12 = hn % 12 || 12;
+    return mn === 0 ? `${h12}${period}` : `${h12}:${String(mn).padStart(2, '0')}${period}`;
+  };
+
+  const time = fmt(hour, min);
+  const DAY: Record<string, string> = {
+    '0': 'Sundays', '7': 'Sundays', '1': 'Mondays', '2': 'Tuesdays',
+    '3': 'Wednesdays', '4': 'Thursdays', '5': 'Fridays',
+    '6': 'Saturdays', '1-5': 'Weekdays', '0,6': 'Weekends', '6,0': 'Weekends',
+  };
+
+  if (dow === '*' && dom === '*') {
+    if (hour === '*') return 'Runs every hour';
+    return time ? `Runs every day at ${time}` : '';
+  }
+  if (dom === '*' && dow !== '*') {
+    const day = DAY[dow] ?? `day ${dow}`;
+    return time ? `Runs every ${day} at ${time}` : `Runs every ${day}`;
+  }
+  if (dom !== '*' && dow === '*') {
+    return time ? `Runs monthly on day ${dom} at ${time}` : `Runs monthly on day ${dom}`;
+  }
+  return '';
+}
+
 interface CronSetupModalProps {
   onClose: () => void;
   onSuccess: () => void;
@@ -18,18 +83,27 @@ interface CronSetupModalProps {
 
 export const CronSetupModal: React.FC<CronSetupModalProps> = ({ onClose, onSuccess, initialValues }) => {
   const [name, setName] = useState(initialValues?.name || '');
-  const [schedule, setSchedule] = useState(initialValues?.schedule || '0 9 * * *');
+  const [fields, setFields] = useState<string[]>(() => {
+    const p = (initialValues?.schedule || '0 9 * * *').trim().split(/\s+/);
+    while (p.length < 5) p.push('*');
+    return p.slice(0, 5);
+  });
   const [text, setText] = useState(initialValues?.text || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { showError } = useError();
 
+  // Derive the schedule string, substituting '*' for empty fields
+  const schedule = fields.map(f => f.trim() || '*').join(' ');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !schedule.trim() || !text.trim()) {
+    if (!name.trim() || !text.trim()) {
       setError('Please fill in all fields');
       return;
     }
+    const cronErr = validateCron(schedule);
+    if (cronErr) { setError(`Invalid schedule: ${cronErr}`); return; }
 
     setLoading(true);
     setError(null);
@@ -90,7 +164,7 @@ export const CronSetupModal: React.FC<CronSetupModalProps> = ({ onClose, onSucce
             <h4>How it works</h4>
             <ul className="setup-instructions">
               <li>Give your task a name so you can find it later.</li>
-              <li>Pick a schedule using cron format — e.g. <code>0 9 * * *</code> means every day at 9am.</li>
+              <li>Pick a schedule using the quick presets or type a custom cron expression (e.g. <code>0 9 * * *</code> = every day at 9am).</li>
               <li>Write your instruction in plain English, just like you'd type it in chat.</li>
               <li>Your AI will run it automatically at the time you set.</li>
             </ul>
@@ -118,14 +192,56 @@ export const CronSetupModal: React.FC<CronSetupModalProps> = ({ onClose, onSucce
               </div>
 
               <div className="form-group">
-                <label htmlFor="cron-schedule">When should this run?</label>
-                <input
-                  id="cron-schedule"
-                  type="text"
-                  placeholder="0 9 * * * — every day at 9am"
-                  value={schedule}
-                  onChange={(e) => setSchedule(e.target.value)}
-                />
+                <label>When should this run?</label>
+                <div className="cron-presets">
+                  {PRESETS.map((p) => (
+                    <button
+                      key={p.expr}
+                      type="button"
+                      className={`cron-preset-chip ${schedule === p.expr ? 'active' : ''}`}
+                      onClick={() => setFields(p.expr.split(' '))}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="cron-fields">
+                  {([
+                    { label: 'Minute',  placeholder: '0', index: 0, hint: '0–59'  },
+                    { label: 'Hour',    placeholder: '9', index: 1, hint: '0–23'  },
+                    { label: 'Day',     placeholder: '*', index: 2, hint: '1–31'  },
+                    { label: 'Month',   placeholder: '*', index: 3, hint: '1–12'  },
+                    { label: 'Weekday', placeholder: '*', index: 4, hint: '0=Sun' },
+                  ] as const).map(({ label, placeholder, index, hint }) => {
+                    const val = fields[index] ?? '*';
+                    const effective = val.trim() || '*';
+                    const invalid = val.trim() !== '' && !isValidField(effective, FIELD_RANGES[index][0], FIELD_RANGES[index][1]);
+                    return (
+                      <div key={label} className={`cron-field${invalid ? ' cron-field--invalid' : ''}`}>
+                        <input
+                          type="text"
+                          value={val}
+                          placeholder={placeholder}
+                          onChange={(e) => {
+                            setFields(prev => {
+                              const next = [...prev];
+                              next[index] = e.target.value;
+                              return next;
+                            });
+                          }}
+                        />
+                        <span className="cron-field-name">{label}</span>
+                        <span className="cron-field-hint">{hint}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                {schedule.trim() && (() => {
+                  const err = validateCron(schedule);
+                  if (err) return <span className="cron-feedback cron-feedback--error">{err}</span>;
+                  const desc = describeCron(schedule);
+                  if (desc) return <span className="cron-feedback cron-feedback--ok">{desc}</span>;
+                })()}
               </div>
 
               <div className="form-group">

@@ -215,6 +215,21 @@
     min-width: 0;
 }
 
+/* Makes tab content fill remaining height so empty/loading states can center */
+.dashboard-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.usage-tab {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
 .dashboard-header {
     display: flex;
     justify-content: space-between;
@@ -517,6 +532,7 @@
     align-items: center;
     justify-content: center;
     min-height: 400px;
+    flex: 1;
     grid-column: 1 / -1;
     color: var(--text-secondary);
     gap: 1rem;
@@ -528,6 +544,7 @@
     align-items: center;
     justify-content: center;
     min-height: 400px;
+    flex: 1;
     grid-column: 1 / -1;
     color: #FF6B6B;
     gap: 1rem;
@@ -542,6 +559,7 @@
     text-align: center;
     padding: 4rem 2rem;
     min-height: 400px;
+    flex: 1;
 }
 
 .empty-icon {
@@ -619,11 +637,12 @@
 .fab-container {
     position: fixed;
     bottom: 3rem;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 260px; /* sidebar width */
+    right: 0;
+    display: flex;
+    justify-content: center;
     z-index: 50;
     pointer-events: none;
-    /* Let clicks pass through if not on button */
 }
 
 .create-cron-pill {
@@ -951,6 +970,10 @@
         grid-template-columns: 1fr;
     }
 
+    .fab-container {
+        left: 0;
+    }
+
     .cron-tabs-toggle {
         width: 100%;
     }
@@ -1059,6 +1082,8 @@
 
 .billing-tab {
     max-width: 860px;
+    margin: 0 auto;
+    width: 100%;
 }
 
 .bt-plan-card {
@@ -1194,6 +1219,7 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
+    padding-top: 12px; /* clear the popular badge's top: -10px */
 }
 
 .bt-plan-item {

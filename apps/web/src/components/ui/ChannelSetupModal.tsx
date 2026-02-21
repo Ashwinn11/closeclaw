@@ -383,7 +383,8 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
 
         {/* Step 1: Token Entry — Split Layout */}
         {step === 'token' && (
-          <div className="setup-step token-step">
+          <div className="setup-step">
+          <div className="token-step">
             <div className="token-left">
               <h4>How to get your token{needsSecondToken ? 's' : ''}</h4>
               <ol>
@@ -464,6 +465,7 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
                 </div>
               </div>
             </div>
+          </div>
           </div>
         )}
 
