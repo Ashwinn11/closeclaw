@@ -19,7 +19,7 @@ interface PackConfig { variantId: string; credits: number }
 const PLANS: Record<string, PlanConfig> = {
     'Base':     { variantId: process.env.LEMONSQUEEZY_BASIC_VARIANT_ID ?? '',      credits: 20, planKey: 'basic'    },
     'Guardian': { variantId: process.env.LEMONSQUEEZY_PRO_VARIANT_ID ?? '',        credits: 35, planKey: 'guardian' },
-    'Fortress': { variantId: process.env.LEMONSQUEEZY_ENTERPRISE_VARIANT_ID ?? '', credits: 55, planKey: 'fortress' },
+    'Fortress': { variantId: process.env.LEMONSQUEEZY_ENTERPRISE_VARIANT_ID ?? '', credits: 50, planKey: 'fortress' },
 };
 
 const CREDIT_PACKS: Record<string, PackConfig> = {

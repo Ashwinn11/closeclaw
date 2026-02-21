@@ -9,6 +9,8 @@
   --text-secondary: #8E96A3;
   --accent-primary: #FF4D4D;
   --accent-glow: rgba(255, 77, 77, 0.3);
+  --accent-secondary: rgb(0, 229, 204);
+  --accent-secondary-glow: rgba(0, 229, 204, 0.3);
 
   /* Typography */
   --font-family: 'Outfit', sans-serif;

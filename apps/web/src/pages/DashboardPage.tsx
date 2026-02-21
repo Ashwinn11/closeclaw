@@ -366,7 +366,7 @@ const fetchCron = useCallback(async () => {
       <aside className="dashboard-sidebar">
         <div className="sidebar-header">
           <div className="sidebar-logo" onClick={() => navigate('/')}>
-            <div className="logo-icon small" />
+            <img src="/logo.png" alt="CloseClaw Logo" className="logo-icon small" />
             <span>CloseClaw</span>
           </div>
         </div>
@@ -789,9 +789,9 @@ const fetchCron = useCallback(async () => {
                   ? new Date(billingCredits.subscription_renews_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                   : null;
                 const planData = [
-                  { name: 'Base',     tagline: 'Get started',      price: '$50',  features: ['AI on Telegram, Discord & Slack', '$20 AI credit/mo included', 'Your own always-on assistant'] },
-                  { name: 'Guardian', tagline: 'For daily use',     price: '$75',  features: ['Everything in Base', '$35 AI credit/mo included', 'Handles longer, complex tasks', 'Private — no public IP'], isPopular: true },
-                  { name: 'Fortress', tagline: 'Maximum privacy',   price: '$100', features: ['Everything in Guardian', '$55 AI credit/mo included', 'Custom server setup', 'Fully air-gapped'] },
+                  { name: 'Base',     tagline: 'Light & always on',        price: '$50',  features: ['Dedicated AI on Telegram, Discord & Slack', '$20 in AI credits/mo', 'Your own private server, never shared'] },
+                  { name: 'Guardian', tagline: 'For daily productivity',    price: '$75',  features: ['Everything in Base', '$35 in AI credits/mo', 'Best for heavy daily use', 'Multi-step tasks & deep research'], isPopular: true },
+                  { name: 'Fortress', tagline: 'For power users',           price: '$100', features: ['Everything in Guardian', '$50 in AI credits/mo', 'Built for automation & long sessions', 'Top up credits anytime'] },
                 ];
                 return isActive ? (
                   <>

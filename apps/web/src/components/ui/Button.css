@@ -35,15 +35,17 @@
 }
 
 .btn-secondary {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(0, 229, 204, 0.05);
+    /* Teal accent */
     color: var(--text-primary);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(0, 229, 204, 0.2);
     backdrop-filter: blur(4px);
 }
 
 .btn-secondary:hover {
-    background-color: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(0, 229, 204, 0.1);
+    border-color: rgba(0, 229, 204, 0.4);
+    box-shadow: 0 4px 12px var(--accent-secondary-glow);
 }
 
 .btn-ghost {
@@ -52,8 +54,8 @@
 }
 
 .btn-ghost:hover {
-    color: var(--text-primary);
-    background-color: rgba(255, 255, 255, 0.03);
+    color: var(--accent-secondary);
+    background-color: rgba(0, 229, 204, 0.05);
 }
 
 /* Sizes */

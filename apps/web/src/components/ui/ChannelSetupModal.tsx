@@ -90,35 +90,35 @@ const channelConfig: Record<ChannelType, {
 const planData = [
   {
     name: 'Base',
-    tagline: 'Get started',
+    tagline: 'Light & always on',
     price: '$50',
     features: [
-      'AI on Telegram, Discord & Slack',
-      '$20 AI credit/mo included',
-      'Your own always-on assistant',
+      'Dedicated AI on Telegram, Discord & Slack',
+      '$20 in AI credits/mo',
+      'Your own private server, never shared',
     ],
   },
   {
     name: 'Guardian',
-    tagline: 'For daily use',
+    tagline: 'For daily productivity',
     price: '$75',
     features: [
       'Everything in Base',
-      '$35 AI credit/mo included',
-      'Handles longer, complex tasks',
-      'Private — no public IP',
+      '$35 in AI credits/mo',
+      'Best for heavy daily use',
+      'Multi-step tasks & deep research',
     ],
     isPopular: true,
   },
   {
     name: 'Fortress',
-    tagline: 'Maximum privacy',
+    tagline: 'For power users',
     price: '$100',
     features: [
       'Everything in Guardian',
-      '$55 AI credit/mo included',
-      'Custom server setup',
-      'Fully air-gapped',
+      '$50 in AI credits/mo',
+      'Built for automation & long sessions',
+      'Top up credits anytime',
     ],
   },
 ];

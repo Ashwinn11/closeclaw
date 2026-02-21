@@ -29,7 +29,7 @@ export const LoginModal: FC<LoginModalProps> = ({ onClose }) => {
     <div className="login-modal-overlay" onClick={onClose}>
       <div className="login-card" onClick={(e) => e.stopPropagation()}>
         <div className="login-logo">
-          <div className="logo-icon" />
+          <img src="/logo.png" alt="CloseClaw Logo" className="logo-icon" />
           <span>CloseClaw</span>
         </div>
         <h1>Welcome back</h1>

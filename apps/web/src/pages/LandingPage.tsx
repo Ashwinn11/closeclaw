@@ -25,12 +25,12 @@ export const LandingPage: React.FC = () => {
           <div className="hero-content">
             <div className="sovereign-badge">Ready in 60 seconds</div>
             <h1 className="hero-title">
-              Your personal AI, <br />
-              <span className="text-gradient">on the apps you use every day.</span>
+              Your own AI assistant. <br />
+              <span className="text-gradient">Private, dedicated, always on.</span>
             </h1>
             <p className="hero-subtitle">
-              Talk to your own AI assistant on Telegram, Discord, or Slack.<br />
-              No servers. No setup. No technical knowledge needed.
+              A dedicated AI running on your own private server —<br />
+              ready on Telegram, Discord, or Slack. No sharing, no setup.
             </p>
             
             <div className="channel-buttons">
@@ -72,13 +72,13 @@ export const LandingPage: React.FC = () => {
 
           <div className="comparison-grid">
             <div className="comparison-left">
-              <h4 className="method-label">Doing it yourself</h4>
+              <h4 className="method-label">Running it yourself</h4>
               <ul className="effort-list">
-                <li><span>Renting and setting up cloud servers</span> <span className="time">20 min</span></li>
-                <li><span>Configuring firewalls and security</span> <span className="time">15 min</span></li>
-                <li><span>Managing IP addresses</span> <span className="time">10 min</span></li>
-                <li><span>Watching for crashes and downtime</span> <span className="time">10 min</span></li>
-                <li><span>Applying updates and patches</span> <span className="time">∞</span></li>
+                <li><span>Renting and configuring a cloud server</span> <span className="time">20 min</span></li>
+                <li><span>Setting up firewalls and security</span> <span className="time">15 min</span></li>
+                <li><span>Wiring up Telegram, Discord, Slack</span> <span className="time">30 min</span></li>
+                <li><span>Fixing it when it goes down at 2am</span> <span className="time">???</span></li>
+                <li><span>Keeping everything up to date</span> <span className="time">∞</span></li>
               </ul>
               <div className="total-effort">
                 <span className="total-label">Total effort</span>
@@ -92,13 +92,13 @@ export const LandingPage: React.FC = () => {
               <h4 className="method-label">With CloseClaw</h4>
               <div className="instant-badge">All handled</div>
               <p className="instant-desc">
-                We take care of everything behind the scenes. Your AI runs on a dedicated
-                server that's always on, always private, and always up to date.
+                Your AI gets its own private server. We handle everything —
+                setup, uptime, updates, and security. You just talk to it.
               </p>
               <div className="instant-features">
                 <div className="i-feature"><Check size={16} /> Always online</div>
                 <div className="i-feature"><Check size={16} /> Completely private</div>
-                <div className="i-feature"><Check size={16} /> Auto-recovery</div>
+                <div className="i-feature"><Check size={16} /> Zero maintenance</div>
               </div>
             </div>
           </div>
@@ -107,16 +107,16 @@ export const LandingPage: React.FC = () => {
         {/* Features Section - Simple & Secure */}
         <section id="features" className="features-section">
           <div className="section-header">
-             <h2>Everything handled. Nothing to set up.</h2>
-             <p>We run the infrastructure so you can focus on what matters — talking to your AI.</p>
+             <h2>Your AI. Your server. Your rules.</h2>
+             <p>We handle the hard parts so you get a private, always-on AI without any of the maintenance.</p>
           </div>
-          
+
           <div className="bento-grid">
             <Card className="bento-card card-cost" hoverable>
               <div className="card-content">
                 <div className="card-header">
                   <div className="status-badge"><span className="dot green"></span>Optimized</div>
-                  <h3>Lower costs, automatically</h3>
+                  <h3>Costs less than you think</h3>
                 </div>
                 <div className="visual-cost">
                    <div className="cost-bar high">
@@ -129,7 +129,7 @@ export const LandingPage: React.FC = () => {
                       <div className="savings-badge">Save 80%</div>
                    </div>
                 </div>
-                <p>We optimize how your AI thinks so you get more done for less. Most users save up to 80% compared to using AI directly.</p>
+                <p>Smart model routing picks the fastest, cheapest AI for each task. Most users spend a fraction of what they'd pay going direct.</p>
               </div>
             </Card>
 
@@ -139,15 +139,15 @@ export const LandingPage: React.FC = () => {
                  <div className="hex active"><BrandIcons.Anthropic /></div>
                  <div className="hex opacity-30"><BrandIcons.Gemini /></div>
               </div>
-              <h3>Always uses the best AI</h3>
-              <p>Your assistant automatically picks the right AI model for each task — writing, coding, research, planning. No settings to tweak.</p>
+              <h3>Picks the right AI automatically</h3>
+              <p>GPT, Claude, Gemini — your assistant chooses the best model for each job. Writing, coding, research, planning. No settings needed.</p>
             </Card>
 
             <Card className="bento-card card-security" hoverable>
               <div className="card-content horizontal">
                 <div className="text-content">
-                  <h3>Completely private</h3>
-                  <p>Your AI runs on a server that's never exposed to the public internet. Your conversations belong to you alone.</p>
+                  <h3>Isolated and private by design</h3>
+                  <p>Your AI runs on a dedicated server with no public IP. It's never shared with other users. Your conversations stay yours.</p>
                 </div>
                 <div className="visual-shield">
                    <div className="network-nodes">
@@ -158,14 +158,14 @@ export const LandingPage: React.FC = () => {
                 </div>
               </div>
             </Card>
-            
+
             <Card className="bento-card card-browser" hoverable>
                <div className="visual-ephemeral">
                  <div className="orbital-ring"></div>
                  <BrandIcons.Chromium />
                </div>
                <h3>Browses the web for you</h3>
-               <p>Your AI can search and read websites on your behalf — privately, with no tracking or data collection involved.</p>
+               <p>Your AI can open websites, read pages, and research topics on your behalf — all from your private server, no tracking involved.</p>
             </Card>
           </div>
         </section>
@@ -179,7 +179,7 @@ export const LandingPage: React.FC = () => {
            <div className="glass-footer">
               <div className="footer-brand-col">
                  <div className="footer-logo">
-                    <div className="logo-icon small"></div>
+                    <img src="/logo.png" alt="CloseClaw Logo" className="logo-icon small" />
                     CloseClaw
                  </div>
                  <div className="powered-badge">
@@ -197,7 +197,7 @@ export const LandingPage: React.FC = () => {
 
               <div className="footer-links-col">
                  <h4>Resources</h4>
-                 <a href="#">OpenClaw Docs</a>
+                 <a href="https://docs.openclaw.ai">OpenClaw Docs</a>
                  <a href="#">Discord</a>
                  <a href="#">Status</a>
               </div>

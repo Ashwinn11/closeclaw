@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useGateway } from '../../context/GatewayContext';
 import './Header.css';
 import { Button } from './Button';
-import { Menu, LogOut } from 'lucide-react';
+import { Menu, LogOut, X } from 'lucide-react';
 import { LoginModal } from './LoginModal';
 
 const StatusIndicator: React.FC = () => {
@@ -90,13 +90,14 @@ export const Header: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div className="header-container">
       <header className="glass-header">
         {/* Left: Logo */}
         <div className="header-left">
-          <div className="logo-icon"></div>
+          <img src="/logo.png" alt="CloseClaw Logo" className="logo-icon" />
           <span className="logo-text">CloseClaw</span>
         </div>
 
@@ -132,11 +133,29 @@ export const Header: React.FC = () => {
             </Button>
           )}
           {/* Mobile Menu Toggle */}
-          <button className="mobile-menu-toggle">
-            <Menu size={24} color="var(--text-primary)" />
+          <button className="mobile-menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <X size={24} color="var(--text-primary)" /> : <Menu size={24} color="var(--text-primary)" />}
           </button>
         </div>
       </header>
+
+      {mobileMenuOpen && (
+        <div className="mobile-menu-dropdown">
+          <a href="#features" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Features</a>
+          <a href="#how-it-works" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>How it Works</a>
+          <a href="#pricing" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
+          {!isAuthenticated && (
+            <Button
+              variant="primary"
+              size="sm"
+              className="mobile-get-started-btn"
+              onClick={() => { setMobileMenuOpen(false); setShowLoginModal(true); }}
+            >
+              Get Started
+            </Button>
+          )}
+        </div>
+      )}
 
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
     </div>

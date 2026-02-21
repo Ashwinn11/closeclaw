@@ -54,12 +54,9 @@
 }
 
 .logo-icon {
-    width: 28px;
-    height: 28px;
-    background: linear-gradient(135deg, #FF4D4D, #FF8A8E);
-    border-radius: 8px;
-    /* Squircle */
-    box-shadow: 0 0 10px rgba(255, 90, 95, 0.4);
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
 }
 
 .logo-text {
@@ -149,6 +146,7 @@
     justify-content: center;
     z-index: 2000;
     backdrop-filter: blur(4px);
+    cursor: pointer;
 }
 
 .status-modal {
@@ -159,6 +157,7 @@
     max-width: 400px;
     width: 90%;
     animation: slideIn 0.2s ease-out;
+    cursor: default;
 }
 
 @keyframes slideIn {
@@ -274,6 +273,45 @@
 
     .glass-header {
         padding: 0 1rem;
+    }
+
+    .mobile-menu-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 1rem;
+        right: 1rem;
+        margin-top: 1rem;
+        background: rgba(15, 15, 20, 0.95);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        pointer-events: auto;
+        animation: fadeIn 0.2s ease-out;
+    }
+
+    .mobile-nav-link {
+        padding: 1rem;
+        color: var(--text-primary);
+        text-decoration: none;
+        font-size: 1.1rem;
+        font-weight: 500;
+        border-radius: 8px;
+        transition: background 0.2s ease;
+    }
+
+    .mobile-nav-link:active {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .mobile-get-started-btn {
+        margin-top: 0.5rem;
+        width: 100%;
     }
 }
 

@@ -13,6 +13,8 @@
     z-index: 9999;
     animation: fadeIn 0.2s ease-out forwards;
     pointer-events: auto;
+    cursor: pointer;
+    /* Enable outside clicking on iOS safari */
 }
 
 .login-card {
@@ -31,6 +33,7 @@
         0 40px 100px rgba(0, 0, 0, 0.5),
         inset 0 1px 0 rgba(255, 255, 255, 0.04);
     animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    cursor: default;
 }
 
 .login-logo {
@@ -42,11 +45,9 @@
 }
 
 .login-logo .logo-icon {
-    width: 36px;
-    height: 36px;
-    background: linear-gradient(135deg, var(--accent-primary), #A43BB2);
-    border-radius: 10px;
-    box-shadow: 0 0 20px rgba(255, 77, 77, 0.3);
+    width: 130px;
+    height: 130px;
+    object-fit: contain;
 }
 
 .login-logo span {
@@ -116,4 +117,11 @@
 
 .login-terms a:hover {
     color: #fff;
+}
+
+@media (max-width: 480px) {
+    .login-card {
+        padding: 2.5rem 1.5rem;
+        max-width: 90vw;
+    }
 }
