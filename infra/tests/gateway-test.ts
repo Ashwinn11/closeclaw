@@ -1,8 +1,8 @@
 /**
  * Gateway RPC Test Tool
- * 
+ *
  * Unified script for testing Gateway connectivity, config, and channels.
- * 
+ *
  * Usage:
  *   npx tsx infra/tests/gateway-test.ts health        — check health
  *   npx tsx infra/tests/gateway-test.ts config        — dump config
@@ -11,26 +11,35 @@
  *   npx tsx infra/tests/gateway-test.ts add-discord    — add Discord channel
  *   npx tsx infra/tests/gateway-test.ts add-slack      — add Slack channel
  *   npx tsx infra/tests/gateway-test.ts full           — run all checks
+ *
+ * Set these env vars before running (copy infra/.env and fill in values):
+ *   GATEWAY_IP, GATEWAY_PORT, GATEWAY_TOKEN
+ *   TELEGRAM_BOT_TOKEN, DISCORD_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_BOT_TOKEN
  */
 
 import WebSocket from 'ws';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 
-const GATEWAY_IP = '100.87.246.102';
-const GATEWAY_PORT = 18789;
-const GATEWAY_TOKEN = 'REDACTED_GATEWAY_TOKEN';
+const GATEWAY_IP    = process.env.GATEWAY_IP    ?? '';
+const GATEWAY_PORT  = Number(process.env.GATEWAY_PORT ?? 18789);
+const GATEWAY_TOKEN = process.env.GATEWAY_TOKEN ?? '';
+
+if (!GATEWAY_IP || !GATEWAY_TOKEN) {
+    console.error('Missing required env vars: GATEWAY_IP, GATEWAY_TOKEN');
+    process.exit(1);
+}
 
 const CHANNEL_TOKENS = {
     telegram: {
-        botToken: 'REDACTED_TELEGRAM_TOKEN',
+        botToken: process.env.TELEGRAM_BOT_TOKEN ?? '',
     },
     discord: {
-        token: 'REDACTED_DISCORD_TOKEN',
+        token: process.env.DISCORD_BOT_TOKEN ?? '',
     },
     slack: {
-        appToken: 'REDACTED_SLACK_APP_TOKEN',
-        botToken: 'REDACTED_SLACK_BOT_TOKEN',
+        appToken: process.env.SLACK_APP_TOKEN ?? '',
+        botToken: process.env.SLACK_BOT_TOKEN ?? '',
     },
 };
 
@@ -155,7 +164,7 @@ async function addChannel(channelName: string, channelConfig: Record<string, unk
     }
 
     // Patch
-    const patch = await gw.rpc('config.patch', {
+    await gw.rpc('config.patch', {
         raw: JSON.stringify({
             channels: {
                 [channelName]: {
