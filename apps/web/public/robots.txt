@@ -1,0 +1,26 @@
+User-agent: *
+Allow: /
+
+# Specifically allow AI bots (often blocked by default frameworks) per geo skills
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+Sitemap: https://closeclaw.in/sitemap.xml
