@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { LandingPage } from './pages/LandingPage';
+import { SolutionPage } from './pages/SolutionPage';
 import { AuthCallbackPage } from './pages/AuthCallbackPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { BillingPage } from './pages/BillingPage';
@@ -25,6 +26,7 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/solutions/:id" element={<SolutionPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
       <Route
         path="/dashboard"

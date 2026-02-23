@@ -1,0 +1,38 @@
+[
+  {
+    "id": "legal-privacy-london",
+    "industry": "Legal",
+    "location": "London",
+    "title": "Private AI for Legal Firms in London",
+    "description": "Secure, dedicated AI instances for London-based law firms. GDPR compliant, no public IP, and zero data training.",
+    "keywords": ["private AI legal London", "dedicated GPT law firm UK", "GDPR AI legal"],
+    "hero_title": "Privileged & Confidential AI for London Law Firms",
+    "hero_subtitle": "Deploy a dedicated, private AI assistant on your own London-based server. Maintain solicitor-client privilege with zero data leaks.",
+    "pain_point": "Standard AI services risk client confidentiality and data sovereignty.",
+    "solution": "CloseClaw provides an isolated environment where your data never leaves your private server."
+  },
+  {
+    "id": "healthcare-privacy-berlin",
+    "industry": "Healthcare",
+    "location": "Berlin",
+    "title": "GDPR-Compliant AI for Healthcare in Berlin",
+    "description": "Dedicated AI assistants for Berlin medical researchers and providers. Full data sovereignty and privacy-first architecture.",
+    "keywords": ["private AI healthcare Berlin", "GDPR AI medical Germany", "dedicated Claude healthcare"],
+    "hero_title": "Safe & Secure AI for Berlin Medical Teams",
+    "hero_subtitle": "A private AI instance that respects patient confidentiality and German data protection laws.",
+    "pain_point": "Privacy risks in healthcare data often prevent AI adoption.",
+    "solution": "Our isolated, dedicated servers ensure patient data stays protected and under your control."
+  },
+  {
+    "id": "fintech-security-singapore",
+    "industry": "Fintech",
+    "location": "Singapore",
+    "title": "Secure AI for Fintech in Singapore",
+    "description": "Dedicated AI servers for Singapore fintech startups. MAS-compliant architecture with full isolation.",
+    "keywords": ["private AI fintech Singapore", "secure AI banking Asia", "dedicated GPT fintech"],
+    "hero_title": "Enterprise-Grade AI Security for Singapore Fintech",
+    "hero_subtitle": "High-performance, private AI instances deployed in Singapore GCP regions for ultra-low latency and maximum security.",
+    "pain_point": "Financial data security is the top barrier to using LLMs.",
+    "solution": "CloseClaw's 'no-public-IP' architecture provides the security required by modern fintech institutions."
+  }
+]
