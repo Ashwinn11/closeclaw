@@ -24,6 +24,10 @@ export const LandingPage: React.FC = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   const handleGetStarted = async (planName: string = 'Guardian') => {
+    // If user buys directly from pricing, clear any half-finished channel setups
+    // to ensure they land cleanly on the dashboard.
+    localStorage.removeItem('cc_pending_setup');
+
     if (isAuthenticated) {
       try {
         const { checkoutUrl } = await createCheckout(planName);

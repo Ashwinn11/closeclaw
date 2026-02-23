@@ -473,7 +473,7 @@ const fetchCron = useCallback(async () => {
         {subscriptionSuccess && (
           <div className="billing-banner success">
             <Check size={15} />
-            <span>Welcome to CloseClaw! Your subscription is active. Click "Connect" on a channel below to link your AI.</span>
+            <span>Success! Your subscription is active. You can now connect your AI to any channel below.</span>
             <button className="banner-close" onClick={() => setSubscriptionSuccess(false)}>×</button>
           </div>
         )}

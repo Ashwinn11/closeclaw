@@ -90,17 +90,15 @@ const REFUND_CONTENT = (
   <>
     <p className="info-modal-updated">Last updated: February 2026</p>
 
-    <h3>Subscription Refunds</h3>
-    <p>We offer a 14-day "no questions asked" refund policy for new subscriptions. If you are not satisfied with CloseClaw within the first 14 days of your initial purchase, contact us for a full refund. After 14 days, subscriptions are non-refundable, but you can cancel at any time to prevent future charges.</p>
+    <h3>Subscription Policy</h3>
+    <p>Due to the immediate cost of provisioning dedicated cloud infrastructure (GCP) and the upfront allocation of AI credits, all CloseClaw subscriptions are non-refundable. Once a subscription is started, your private server is provisioned and resources are reserved for your exclusive use.</p>
+    <p>You may cancel your subscription at any time through the dashboard. Upon cancellation, your server and AI assistant will remain active until the end of your current billing period, after which your infrastructure will be decommissioned.</p>
 
     <h3>AI Credit Top-ups</h3>
-    <p>One-time credit top-up packs ($5, $10, $25, $50) are non-refundable as they are provisioned and made available for use immediately upon purchase.</p>
+    <p>One-time credit top-up packs ($5 to $100) are non-refundable as they are provisioned and made available for use immediately upon purchase.</p>
 
-    <h3>Abuse and Termination</h3>
-    <p>Refunds will not be issued for accounts terminated due to violations of our Acceptable Use policy (e.g., automated attacks, illegal content generation).</p>
-
-    <h3>How to Request a Refund</h3>
-    <p>To request a refund, please email <a href="mailto:support@closeclaw.in">support@closeclaw.in</a> with your account email and the transaction ID. We process all requests within 3-5 business days.</p>
+    <h3>Technical Issues</h3>
+    <p>If you experience a persistent technical issue that prevents the use of the service, please reach out to <a href="mailto:support@closeclaw.in">support@closeclaw.in</a>. We handle these cases individually and may offer a pro-rated refund or account credit if we are unable to resolve the infrastructure issue within 48 hours.</p>
   </>
 );
 
