@@ -374,13 +374,24 @@
         display: none;
     }
 
+    .pp-wrapper {
+        margin: 0 auto;
+        max-width: 100%;
+    }
+
     .pp-stats {
         position: static;
         flex-direction: row;
         margin-top: 20px;
+        justify-content: center;
+        flex-wrap: wrap;
     }
 
     .pp-floating-terminal {
         display: none;
+    }
+
+    .pp-chat {
+        height: 320px;
     }
 }

@@ -6,80 +6,94 @@ import { createGatewayRpcClient } from '../services/gateway-rpc.js';
 
 export const billingRoutes = new Hono();
 
-// ─── LemonSqueezy config ──────────────────────────────────────────────────────
+// ─── Dodo Payments config ──────────────────────────────────────────────────────
 
-const LS_API_KEY = process.env.LEMONSQUEEZY_API_KEY ?? '';
-const LS_WEBHOOK_SECRET = process.env.LEMONSQUEEZY_WEBHOOK_SECRET ?? '';
-const LS_STORE_ID = process.env.LEMONSQUEEZY_STORE_ID ?? '';
+const DODO_API_KEY = process.env.DODO_API_KEY ?? '';
+const DODO_WEBHOOK_SECRET = process.env.DODO_WEBHOOK_SECRET ?? '';
+const DODO_BASE_URL = process.env.DODO_BASE_URL ?? 'https://live.dodopayments.com';
 const APP_URL = process.env.APP_URL ?? 'http://localhost:5173';
 
-interface PlanConfig { variantId: string; credits: number; planKey: string }
-interface PackConfig { variantId: string; credits: number }
+interface PlanConfig { productId: string; credits: number; planKey: string }
+interface PackConfig { productId: string; credits: number }
 
 const PLANS: Record<string, PlanConfig> = {
-    'Base': { variantId: process.env.LEMONSQUEEZY_BASIC_VARIANT_ID ?? '', credits: 20, planKey: 'basic' },
-    'Guardian': { variantId: process.env.LEMONSQUEEZY_PRO_VARIANT_ID ?? '', credits: 35, planKey: 'guardian' },
-    'Fortress': { variantId: process.env.LEMONSQUEEZY_ENTERPRISE_VARIANT_ID ?? '', credits: 50, planKey: 'fortress' },
+    'Base':     { productId: process.env.DODO_BASIC_PRODUCT_ID ?? '',      credits: 20, planKey: 'basic' },
+    'Guardian': { productId: process.env.DODO_GUARDIAN_PRODUCT_ID ?? '',   credits: 35, planKey: 'guardian' },
+    'Fortress': { productId: process.env.DODO_FORTRESS_PRODUCT_ID ?? '',   credits: 50, planKey: 'fortress' },
 };
 
 const CREDIT_PACKS: Record<string, PackConfig> = {
-    '5': { variantId: process.env.LEMONSQUEEZY_CREDIT_5_VARIANT_ID ?? '', credits: 5 },
-    '10': { variantId: process.env.LEMONSQUEEZY_CREDIT_10_VARIANT_ID ?? '', credits: 10 },
-    '25': { variantId: process.env.LEMONSQUEEZY_CREDIT_25_VARIANT_ID ?? '', credits: 25 },
-    '50': { variantId: process.env.LEMONSQUEEZY_CREDIT_50_VARIANT_ID ?? '', credits: 50 },
-    '100': { variantId: process.env.LEMONSQUEEZY_CREDIT_100_VARIANT_ID ?? '', credits: 100 },
+    '5':   { productId: process.env.DODO_CREDIT_5_PRODUCT_ID ?? '',   credits: 5 },
+    '10':  { productId: process.env.DODO_CREDIT_10_PRODUCT_ID ?? '',  credits: 10 },
+    '25':  { productId: process.env.DODO_CREDIT_25_PRODUCT_ID ?? '',  credits: 25 },
+    '50':  { productId: process.env.DODO_CREDIT_50_PRODUCT_ID ?? '',  credits: 50 },
+    '100': { productId: process.env.DODO_CREDIT_100_PRODUCT_ID ?? '', credits: 100 },
 };
 
-function getVariantPlan(variantId: string): PlanConfig | null {
-    return Object.values(PLANS).find(p => p.variantId === variantId) ?? null;
+function getProductPlan(productId: string): PlanConfig | null {
+    return Object.values(PLANS).find(p => p.productId === productId) ?? null;
 }
 
-function getVariantPack(variantId: string): PackConfig | null {
-    return Object.values(CREDIT_PACKS).find(p => p.variantId === variantId) ?? null;
+function getProductPack(productId: string): PackConfig | null {
+    return Object.values(CREDIT_PACKS).find(p => p.productId === productId) ?? null;
 }
 
-// ─── LemonSqueezy API helper ──────────────────────────────────────────────────
+// ─── Dodo Payments API helpers ─────────────────────────────────────────────────
 
-async function createLSCheckout(
-    variantId: string,
+async function createDodoCheckout(
+    productId: string,
     userId: string,
     userEmail: string,
-    redirectUrl: string,
+    returnUrl: string,
 ): Promise<string> {
-    const res = await fetch('https://api.lemonsqueezy.com/v1/checkouts', {
+    const res = await fetch(`${DODO_BASE_URL}/checkouts`, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${LS_API_KEY}`,
-            'Content-Type': 'application/vnd.api+json',
-            'Accept': 'application/vnd.api+json',
+            'Authorization': `Bearer ${DODO_API_KEY}`,
+            'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            data: {
-                type: 'checkouts',
-                attributes: {
-                    checkout_data: {
-                        email: userEmail,
-                        custom: { user_id: userId },
-                    },
-                    product_options: {
-                        redirect_url: redirectUrl,
-                    },
-                },
-                relationships: {
-                    store: { data: { type: 'stores', id: String(LS_STORE_ID) } },
-                    variant: { data: { type: 'variants', id: String(variantId) } },
-                },
-            },
+            product_cart: [{ product_id: productId, quantity: 1 }],
+            customer: { email: userEmail },
+            metadata: { user_id: userId },
+            return_url: returnUrl,
         }),
     });
 
     if (!res.ok) {
         const err = await res.text();
-        throw new Error(`LemonSqueezy error (${res.status}): ${err}`);
+        throw new Error(`Dodo Payments error (${res.status}): ${err}`);
     }
 
     const json = await res.json() as any;
-    return json.data.attributes.url as string;
+    return json.checkout_url as string;
+}
+
+// Standard Webhooks signature verification (https://www.standardwebhooks.com)
+function verifyDodoWebhook(rawBody: string, webhookId: string, webhookTimestamp: string, webhookSignature: string): boolean {
+    if (!DODO_WEBHOOK_SECRET || !webhookId || !webhookTimestamp || !webhookSignature) return false;
+
+    const signedContent = `${webhookId}.${webhookTimestamp}.${rawBody}`;
+    // Secret may be prefixed with "whsec_" — strip it before base64-decoding
+    const secretB64 = DODO_WEBHOOK_SECRET.startsWith('whsec_')
+        ? DODO_WEBHOOK_SECRET.slice(6)
+        : DODO_WEBHOOK_SECRET;
+    const secretBytes = Buffer.from(secretB64, 'base64');
+
+    const hmac = createHmac('sha256', secretBytes);
+    hmac.update(signedContent);
+    const digest = hmac.digest('base64');
+
+    // Header may contain multiple signatures: "v1,sig1 v1,sig2"
+    return webhookSignature.split(' ').some(s => {
+        const [, sig] = s.split(',');
+        if (!sig) return false;
+        try {
+            return timingSafeEqual(Buffer.from(digest), Buffer.from(sig));
+        } catch {
+            return false;
+        }
+    });
 }
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
@@ -88,16 +102,16 @@ async function createLSCheckout(
 billingRoutes.get('/portal', authMiddleware, async (c) => {
     const userId = c.get('userId' as never) as string;
     const { data: user } = await supabase.from('users')
-        .select('ls_customer_id, plan').eq('id', userId).single();
-    if (!user?.ls_customer_id || user.plan === 'none' || user.plan === 'cancelled')
+        .select('dodo_customer_id, plan').eq('id', userId).single();
+    if (!user?.dodo_customer_id || user.plan === 'none' || user.plan === 'cancelled')
         return c.json({ ok: false, error: 'No active subscription' }, 404);
 
     const res = await fetch(
-        `https://api.lemonsqueezy.com/v1/customers/${user.ls_customer_id}`,
-        { headers: { Authorization: `Bearer ${LS_API_KEY}`, Accept: 'application/vnd.api+json' } }
+        `${DODO_BASE_URL}/customers/${user.dodo_customer_id}/customer-portal/session`,
+        { method: 'POST', headers: { Authorization: `Bearer ${DODO_API_KEY}` } }
     );
     const json = await res.json() as any;
-    const portalUrl = json.data?.attributes?.urls?.customer_portal;
+    const portalUrl = json.link;
     if (!portalUrl) return c.json({ ok: false, error: 'Portal unavailable' }, 500);
     return c.json({ ok: true, data: { portalUrl } });
 });
@@ -199,7 +213,7 @@ billingRoutes.post('/checkout', authMiddleware, async (c) => {
 
     try {
         const redirectUrl = `${APP_URL}/dashboard?cc_setup=resume`;
-        const checkoutUrl = await createLSCheckout(plan.variantId, userId, userEmail, redirectUrl);
+        const checkoutUrl = await createDodoCheckout(plan.productId, userId, userEmail, redirectUrl);
         return c.json({ ok: true, data: { checkoutUrl } });
     } catch (err: any) {
         return c.json({ ok: false, error: err.message || 'Failed to create checkout' }, 500);
@@ -217,29 +231,21 @@ billingRoutes.post('/topup', authMiddleware, async (c) => {
 
     try {
         const redirectUrl = `${APP_URL}/dashboard?cc_topup=success`;
-        const checkoutUrl = await createLSCheckout(creditPack.variantId, userId, userEmail, redirectUrl);
+        const checkoutUrl = await createDodoCheckout(creditPack.productId, userId, userEmail, redirectUrl);
         return c.json({ ok: true, data: { checkoutUrl } });
     } catch (err: any) {
         return c.json({ ok: false, error: err.message || 'Failed to create checkout' }, 500);
     }
 });
 
-// POST /api/billing/webhook — LemonSqueezy webhook (no auth — verified by HMAC)
+// POST /api/billing/webhook — Dodo Payments webhook (no auth — verified by Standard Webhooks HMAC)
 billingRoutes.post('/webhook', async (c) => {
-    const signature = c.req.header('x-signature') ?? '';
+    const webhookId        = c.req.header('webhook-id') ?? '';
+    const webhookTimestamp = c.req.header('webhook-timestamp') ?? '';
+    const webhookSignature = c.req.header('webhook-signature') ?? '';
     const rawBody = await c.req.text();
 
-    // Verify HMAC-SHA256
-    const hmac = createHmac('sha256', LS_WEBHOOK_SECRET);
-    hmac.update(rawBody);
-    const digest = hmac.digest('hex');
-
-    const sigValid = LS_WEBHOOK_SECRET &&
-        signature.length > 0 &&
-        digest.length === signature.length &&
-        timingSafeEqual(Buffer.from(digest), Buffer.from(signature));
-
-    if (!sigValid) {
+    if (!verifyDodoWebhook(rawBody, webhookId, webhookTimestamp, webhookSignature)) {
         console.error('[billing/webhook] Invalid signature');
         return c.json({ ok: false, error: 'Invalid signature' }, 401);
     }
@@ -251,44 +257,44 @@ billingRoutes.post('/webhook', async (c) => {
         return c.json({ ok: false, error: 'Invalid JSON' }, 400);
     }
 
-    const eventName = event.meta?.event_name as string;
-    const userId = event.meta?.custom_data?.user_id as string | undefined;
-    const attrs = event.data?.attributes ?? {};
+    const eventType = event.type as string;
+    const data = event.data ?? {};
+    const userId = data.metadata?.user_id as string | undefined;
 
-    console.log(`[billing/webhook] ${eventName} user=${userId ?? 'unknown'}`);
+    console.log(`[billing/webhook] ${eventType} user=${userId ?? 'unknown'}`);
 
-    // ── New subscription purchased ──────────────────────────────────────────
-    if (eventName === 'subscription_created') {
+    // ── New subscription activated ──────────────────────────────────────────
+    if (eventType === 'subscription.active') {
         if (!userId) return c.json({ ok: true });
 
-        const variantId = String(attrs.variant_id ?? '');
-        const planCfg = getVariantPlan(variantId);
+        const productId = String(data.product_id ?? '');
+        const planCfg = getProductPlan(productId);
         if (!planCfg) {
-            console.warn(`[billing/webhook] Unknown variant ${variantId}`);
+            console.warn(`[billing/webhook] Unknown product ${productId}`);
             return c.json({ ok: true });
         }
 
-        const lsSubscriptionId = String(event.data?.id ?? '');
-        const lsCustomerId = String(attrs.customer_id ?? '');
+        const subscriptionId = String(data.subscription_id ?? '');
+        const customerId = String(data.customer?.customer_id ?? '');
 
         await supabase.from('users').update({
             plan: planCfg.planKey,
             api_credits: planCfg.credits,
             api_credits_cap: planCfg.credits,
-            ls_subscription_id: lsSubscriptionId,
-            ls_customer_id: lsCustomerId,
-            subscription_renews_at: attrs.renews_at ?? null,
+            dodo_subscription_id: subscriptionId,
+            dodo_customer_id: customerId,
+            subscription_renews_at: data.next_billing_date ?? null,
         }).eq('id', userId);
 
-        console.log(`[billing/webhook] Subscription created: user=${userId} plan=${planCfg.planKey} credits=${planCfg.credits}`);
+        console.log(`[billing/webhook] Subscription activated: user=${userId} plan=${planCfg.planKey} credits=${planCfg.credits}`);
     }
 
     // ── Subscription renewed (monthly billing cycle) ────────────────────────
-    if (eventName === 'subscription_payment_success') {
+    if (eventType === 'subscription.renewed') {
         if (!userId) return c.json({ ok: true });
 
-        const variantId = String(attrs.variant_id ?? '');
-        const planCfg = getVariantPlan(variantId);
+        const productId = String(data.product_id ?? '');
+        const planCfg = getProductPlan(productId);
         if (!planCfg) return c.json({ ok: true });
 
         // Reset credits to plan level (not additive — avoids hoarding)
@@ -296,7 +302,7 @@ billingRoutes.post('/webhook', async (c) => {
             .update({
                 api_credits: planCfg.credits,
                 api_credits_cap: planCfg.credits,
-                subscription_renews_at: attrs.renews_at ?? null,
+                subscription_renews_at: data.next_billing_date ?? null,
             })
             .eq('id', userId);
 
@@ -304,7 +310,7 @@ billingRoutes.post('/webhook', async (c) => {
     }
 
     // ── Subscription cancelled ──────────────────────────────────────────────
-    if (eventName === 'subscription_cancelled') {
+    if (eventType === 'subscription.cancelled') {
         if (!userId) return c.json({ ok: true });
 
         // Keep remaining credits; just update plan status
@@ -315,17 +321,14 @@ billingRoutes.post('/webhook', async (c) => {
         console.log(`[billing/webhook] Subscription cancelled: user=${userId}`);
     }
 
-    // ── Order created (credit top-ups are one-time orders) ──────────────────
-    if (eventName === 'order_created') {
+    // ── One-time payment succeeded (credit top-ups) ─────────────────────────
+    if (eventType === 'payment.succeeded') {
         if (!userId) return c.json({ ok: true });
 
-        const status = attrs.status as string;
-        if (status !== 'paid') return c.json({ ok: true });
+        const productId = String(data.product_cart?.[0]?.product_id ?? '');
+        const packCfg = getProductPack(productId);
 
-        const variantId = String(attrs.first_order_item?.variant_id ?? '');
-        const packCfg = getVariantPack(variantId);
-
-        // Skip if not a credit pack (e.g. the initial subscription order also fires this)
+        // Skip if not a recognised credit pack
         if (!packCfg) return c.json({ ok: true });
 
         await supabase.rpc('add_api_credits', { p_user_id: userId, p_amount: packCfg.credits });

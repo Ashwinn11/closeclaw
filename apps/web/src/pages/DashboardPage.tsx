@@ -183,7 +183,7 @@ const fetchCron = useCallback(async () => {
     fetchChannels();
   }, [fetchChannels]);
 
-  // Handle return from LemonSqueezy checkout
+  // Handle return from Dodo Payments checkout
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
 

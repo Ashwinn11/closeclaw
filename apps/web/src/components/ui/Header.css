@@ -54,8 +54,8 @@
 }
 
 .logo-icon {
-    width: 100px;
-    height: 100px;
+    width: 40px;
+    height: 40px;
     object-fit: contain;
 }
 
@@ -264,7 +264,10 @@
 
     .get-started-btn {
         display: none;
-        /* Optional: hide CTA on super small screens or keep */
+    }
+
+    .connection-status {
+        display: none;
     }
 
     .mobile-menu-toggle {
@@ -272,7 +275,8 @@
     }
 
     .glass-header {
-        padding: 0 1rem;
+        padding: 0 1.25rem;
+        height: 60px;
     }
 
     .mobile-menu-dropdown {

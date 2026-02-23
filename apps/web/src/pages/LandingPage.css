@@ -3,6 +3,7 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
     background: radial-gradient(circle at top right, rgba(0, 229, 204, 0.05), transparent 40%),
         radial-gradient(circle at bottom left, rgba(255, 77, 77, 0.05), transparent 40%);
 }
@@ -907,11 +908,19 @@
     .hero-section {
         flex-direction: column-reverse;
         text-align: center;
-        padding-top: 1rem;
+        padding-top: 7rem;
+        padding-bottom: 2rem;
+        min-height: unset;
+        gap: 1.5rem;
+    }
+
+    .hero-visual {
+        justify-content: center;
+        width: 100%;
     }
 
     .hero-content {
-        margin-top: 3rem;
+        margin-top: 1rem;
     }
 
     .channel-buttons {
