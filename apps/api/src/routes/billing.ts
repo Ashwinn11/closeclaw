@@ -17,16 +17,17 @@ interface PlanConfig { variantId: string; credits: number; planKey: string }
 interface PackConfig { variantId: string; credits: number }
 
 const PLANS: Record<string, PlanConfig> = {
-    'Base':     { variantId: process.env.LEMONSQUEEZY_BASIC_VARIANT_ID ?? '',      credits: 20, planKey: 'basic'    },
-    'Guardian': { variantId: process.env.LEMONSQUEEZY_PRO_VARIANT_ID ?? '',        credits: 35, planKey: 'guardian' },
+    'Base': { variantId: process.env.LEMONSQUEEZY_BASIC_VARIANT_ID ?? '', credits: 20, planKey: 'basic' },
+    'Guardian': { variantId: process.env.LEMONSQUEEZY_PRO_VARIANT_ID ?? '', credits: 35, planKey: 'guardian' },
     'Fortress': { variantId: process.env.LEMONSQUEEZY_ENTERPRISE_VARIANT_ID ?? '', credits: 50, planKey: 'fortress' },
 };
 
 const CREDIT_PACKS: Record<string, PackConfig> = {
-    '5':  { variantId: process.env.LEMONSQUEEZY_CREDIT_5_VARIANT_ID ?? '',  credits: 5  },
+    '5': { variantId: process.env.LEMONSQUEEZY_CREDIT_5_VARIANT_ID ?? '', credits: 5 },
     '10': { variantId: process.env.LEMONSQUEEZY_CREDIT_10_VARIANT_ID ?? '', credits: 10 },
     '25': { variantId: process.env.LEMONSQUEEZY_CREDIT_25_VARIANT_ID ?? '', credits: 25 },
     '50': { variantId: process.env.LEMONSQUEEZY_CREDIT_50_VARIANT_ID ?? '', credits: 50 },
+    '100': { variantId: process.env.LEMONSQUEEZY_CREDIT_100_VARIANT_ID ?? '', credits: 100 },
 };
 
 function getVariantPlan(variantId: string): PlanConfig | null {
@@ -65,8 +66,8 @@ async function createLSCheckout(
                     },
                 },
                 relationships: {
-                    store:   { data: { type: 'stores',   id: String(LS_STORE_ID) } },
-                    variant: { data: { type: 'variants', id: String(variantId)   } },
+                    store: { data: { type: 'stores', id: String(LS_STORE_ID) } },
+                    variant: { data: { type: 'variants', id: String(variantId) } },
                 },
             },
         }),

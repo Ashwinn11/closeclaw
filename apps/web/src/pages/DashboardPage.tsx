@@ -107,6 +107,7 @@ export const DashboardPage: React.FC = () => {
 
   // Billing return state
   const [topupSuccess, setTopupSuccess] = useState(false);
+  const [subscriptionSuccess, setSubscriptionSuccess] = useState(false);
   const [toppingUp, setToppingUp] = useState<string | null>(null);
   const [channelResumeData, setChannelResumeData] = useState<{ token: string; appToken?: string; ownerUserId: string } | null>(null);
 
@@ -196,6 +197,7 @@ const fetchCron = useCallback(async () => {
 
     if (params.get('cc_setup') === 'resume') {
       window.history.replaceState({}, '', '/dashboard');
+      setSubscriptionSuccess(true);
       const raw = localStorage.getItem('cc_pending_setup');
       if (!raw) return;
       localStorage.removeItem('cc_pending_setup');
@@ -465,6 +467,14 @@ const fetchCron = useCallback(async () => {
             <Zap size={15} />
             <span>Credits topped up! Your balance has been updated.</span>
             <button className="banner-close" onClick={() => setTopupSuccess(false)}>×</button>
+          </div>
+        )}
+
+        {subscriptionSuccess && (
+          <div className="billing-banner success">
+            <Check size={15} />
+            <span>Welcome to CloseClaw! Your subscription is active. Click "Connect" on a channel below to link your AI.</span>
+            <button className="banner-close" onClick={() => setSubscriptionSuccess(false)}>×</button>
           </div>
         )}
 
@@ -762,10 +772,11 @@ const fetchCron = useCallback(async () => {
                         <div className="section-label" style={{ marginTop: '2rem' }}>Top Up Credits</div>
                         <div className="topup-grid">
                           {[
-                            { pack: '5',  label: '$5',  credits: 5  },
-                            { pack: '10', label: '$10', credits: 10 },
-                            { pack: '25', label: '$25', credits: 25 },
-                            { pack: '50', label: '$50', credits: 50 },
+                            { pack: '5',   label: '$5',   credits: 5   },
+                            { pack: '10',  label: '$10',  credits: 10  },
+                            { pack: '25',  label: '$25',  credits: 25  },
+                            { pack: '50',  label: '$50',  credits: 50  },
+                            { pack: '100', label: '$100', credits: 100 },
                           ].map(({ pack, label, credits }) => (
                             <Card key={pack} className="topup-card" hoverable onClick={() => !toppingUp && handleTopup(pack)}>
                               <div className="topup-amount">{label}</div>

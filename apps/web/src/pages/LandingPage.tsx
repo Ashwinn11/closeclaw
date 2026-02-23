@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { createCheckout } from '../lib/api';
 import './LandingPage.css';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -8,13 +11,31 @@ import { Header } from '../components/ui/Header';
 import { BrandIcons } from '../components/ui/BrandIcons';
 import { ChannelSetupModal } from '../components/ui/ChannelSetupModal';
 import { InfoModal, type InfoModalType } from '../components/ui/InfoModal';
+import { LoginModal } from '../components/ui/LoginModal';
 import { Check, Terminal } from 'lucide-react';
 
 type ChannelType = 'Telegram' | 'Discord' | 'Slack';
 
 export const LandingPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [setupChannel, setSetupChannel] = useState<ChannelType | null>(null);
   const [infoModal, setInfoModal] = useState<InfoModalType | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  const handleGetStarted = async (planName: string = 'Guardian') => {
+    if (isAuthenticated) {
+      try {
+        const { checkoutUrl } = await createCheckout(planName);
+        window.location.href = checkoutUrl;
+      } catch (err) {
+        console.error('Failed to create checkout:', err);
+        navigate('/billing'); // Fallback to billing page if checkout creation fails
+      }
+    } else {
+      setShowLoginModal(true);
+    }
+  };
 
   return (
     <div className="landing-page">
@@ -172,8 +193,79 @@ export const LandingPage: React.FC = () => {
           </div>
         </section>
 
+        {/* Pricing Section */}
+        <section id="pricing" className="pricing-section">
+          <div className="section-header">
+            <h2>Simple, transparent pricing</h2>
+            <p>Choose the scale that fits your workflow. Billed monthly, cancel anytime.</p>
+          </div>
 
+          <div className="pricing-grid">
+            <Card className="pricing-card" hoverable>
+              <div className="pc-content">
+                <div className="pc-header">
+                  <h3>Base</h3>
+                  <div className="pc-price">$50<span>/mo</span></div>
+                  <p className="pc-tagline">Light & always on</p>
+                </div>
+                <ul className="pc-features">
+                  <li><Check size={16} /> Dedicated AI on Telegram, Discord & Slack</li>
+                  <li><Check size={16} /> $20 in AI credits/mo included</li>
+                  <li><Check size={16} /> Your own private server, never shared</li>
+                  <li><Check size={16} /> 99.9% Uptime SLA</li>
+                </ul>
+                <Button className="pc-btn" variant="secondary" onClick={() => handleGetStarted('Base')}>Get Started</Button>
+              </div>
+            </Card>
 
+            <Card className="pricing-card popular" hoverable>
+              <div className="popular-badge">Most Popular</div>
+              <div className="pc-content">
+                <div className="pc-header">
+                  <h3>Guardian</h3>
+                  <div className="pc-price">$75<span>/mo</span></div>
+                  <p className="pc-tagline">For daily productivity</p>
+                </div>
+                <ul className="pc-features">
+                  <li><Check size={16} /> <strong>Everything in Base</strong></li>
+                  <li><Check size={16} /> $35 in AI credits/mo included</li>
+                  <li><Check size={16} /> Best for heavy daily use</li>
+                  <li><Check size={16} /> Multi-step tasks & deep research</li>
+                </ul>
+                <Button className="pc-btn" variant="primary" onClick={() => handleGetStarted('Guardian')}>Get Started</Button>
+              </div>
+            </Card>
+
+            <Card className="pricing-card" hoverable>
+              <div className="pc-content">
+                <div className="pc-header">
+                  <h3>Fortress</h3>
+                  <div className="pc-price">$100<span>/mo</span></div>
+                  <p className="pc-tagline">For power users</p>
+                </div>
+                <ul className="pc-features">
+                  <li><Check size={16} /> <strong>Everything in Guardian</strong></li>
+                  <li><Check size={16} /> $50 in AI credits/mo included</li>
+                  <li><Check size={16} /> Built for automation & long sessions</li>
+                  <li><Check size={16} /> Priority infrastructure scaling</li>
+                </ul>
+                <Button className="pc-btn" variant="secondary" onClick={() => handleGetStarted('Fortress')}>Get Started</Button>
+              </div>
+            </Card>
+          </div>
+
+          <div className="topup-intro">
+            <h3>Need more? Top up credits anytime.</h3>
+            <p>If you run through your monthly allowance, you can add more credits instantly.</p>
+            <div className="topup-packs">
+              <div className="topup-pack"><span>$5 Pack</span></div>
+              <div className="topup-pack"><span>$10 Pack</span></div>
+              <div className="topup-pack"><span>$25 Pack</span></div>
+              <div className="topup-pack"><span>$50 Pack</span></div>
+              <div className="topup-pack"><span>$100 Pack</span></div>
+            </div>
+          </div>
+        </section>
       </main>
 
         {/* Unified Glass Footer */}
@@ -188,13 +280,14 @@ export const LandingPage: React.FC = () => {
                    <Terminal size={12} /> Powered by OpenClaw
                  </div>
                  <div className="copyright">© 2026 CloseClaw</div>
+                 <Button className="footer-get-started" size="sm" onClick={() => handleGetStarted()}>Get Started Now</Button>
               </div>
 
               <div className="footer-links-col">
                  <h4>Product</h4>
                  <a href="#features">Features</a>
                  <a href="#features">Use Cases</a>
-                 <a href="#features">Pricing</a>
+                 <a href="#pricing">Pricing</a>
               </div>
 
               <div className="footer-links-col">
@@ -210,6 +303,7 @@ export const LandingPage: React.FC = () => {
                  <a href="mailto:support@closeclaw.in">Contact</a>
                  <button className="footer-link-btn" onClick={() => setInfoModal('tos')}>Terms of Service</button>
                  <button className="footer-link-btn" onClick={() => setInfoModal('privacy')}>Privacy Policy</button>
+                 <button className="footer-link-btn" onClick={() => setInfoModal('refund')}>Refund Policy</button>
               </div>
            </div>
         </footer>
@@ -225,6 +319,10 @@ export const LandingPage: React.FC = () => {
       {/* Info Modals: About / ToS / Privacy */}
       {infoModal && (
         <InfoModal type={infoModal} onClose={() => setInfoModal(null)} />
+      )}
+
+      {showLoginModal && (
+        <LoginModal onClose={() => setShowLoginModal(false)} />
       )}
     </div>
   );

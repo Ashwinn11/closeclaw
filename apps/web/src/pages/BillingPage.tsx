@@ -175,10 +175,11 @@ export const BillingPage: React.FC = () => {
               </div>
               <div className="billing-topup-grid">
                 {[
-                  { pack: '5',  label: '$5',  amount: 5  },
-                  { pack: '10', label: '$10', amount: 10 },
-                  { pack: '25', label: '$25', amount: 25 },
-                  { pack: '50', label: '$50', amount: 50 },
+                  { pack: '5',   label: '$5',   amount: 5   },
+                  { pack: '10',  label: '$10',  amount: 10  },
+                  { pack: '25',  label: '$25',  amount: 25  },
+                  { pack: '50',  label: '$50',  amount: 50  },
+                  { pack: '100', label: '$100', amount: 100 },
                 ].map(({ pack, label, amount }) => (
                   <Card
                     key={pack}

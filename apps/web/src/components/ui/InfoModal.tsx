@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import './InfoModal.css';
 
-export type InfoModalType = 'tos' | 'about' | 'privacy';
+export type InfoModalType = 'tos' | 'about' | 'privacy' | 'refund';
 
 interface InfoModalProps {
   type: InfoModalType;
@@ -86,6 +86,24 @@ const PRIVACY_CONTENT = (
   </>
 );
 
+const REFUND_CONTENT = (
+  <>
+    <p className="info-modal-updated">Last updated: February 2026</p>
+
+    <h3>Subscription Refunds</h3>
+    <p>We offer a 14-day "no questions asked" refund policy for new subscriptions. If you are not satisfied with CloseClaw within the first 14 days of your initial purchase, contact us for a full refund. After 14 days, subscriptions are non-refundable, but you can cancel at any time to prevent future charges.</p>
+
+    <h3>AI Credit Top-ups</h3>
+    <p>One-time credit top-up packs ($5, $10, $25, $50) are non-refundable as they are provisioned and made available for use immediately upon purchase.</p>
+
+    <h3>Abuse and Termination</h3>
+    <p>Refunds will not be issued for accounts terminated due to violations of our Acceptable Use policy (e.g., automated attacks, illegal content generation).</p>
+
+    <h3>How to Request a Refund</h3>
+    <p>To request a refund, please email <a href="mailto:support@closeclaw.in">support@closeclaw.in</a> with your account email and the transaction ID. We process all requests within 3-5 business days.</p>
+  </>
+);
+
 const ABOUT_CONTENT = (
   <>
     <div className="info-modal-about-hero">
@@ -112,6 +130,7 @@ const ABOUT_CONTENT = (
 const MODAL_CONFIG: Record<InfoModalType, { title: string; content: React.ReactNode }> = {
   tos:     { title: 'Terms of Service', content: TOS_CONTENT },
   privacy: { title: 'Privacy Policy',   content: PRIVACY_CONTENT },
+  refund:  { title: 'Refund Policy',    content: REFUND_CONTENT },
   about:   { title: 'About CloseClaw',  content: ABOUT_CONTENT },
 };
 
