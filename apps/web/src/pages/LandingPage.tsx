@@ -6,12 +6,12 @@ import './LandingPage.css';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { NebulaBackground } from '../components/ui/NebulaBackground';
-import { IconCluster } from '../components/ui/IconCluster';
 import { Header } from '../components/ui/Header';
 import { BrandIcons } from '../components/ui/BrandIcons';
 import { ChannelSetupModal } from '../components/ui/ChannelSetupModal';
 import { InfoModal, type InfoModalType } from '../components/ui/InfoModal';
 import { LoginModal } from '../components/ui/LoginModal';
+import { ProductPreview } from '../components/ui/ProductPreview';
 import { Check, Terminal } from 'lucide-react';
 
 type ChannelType = 'Telegram' | 'Discord' | 'Slack';
@@ -50,14 +50,12 @@ export const LandingPage: React.FC = () => {
         {/* Hero Section */}
         <section className="hero-section">
           <div className="hero-content">
-            <div className="sovereign-badge">Deployed in 60 seconds</div>
+            <div className="sovereign-badge">OpenClaw ready in 60s</div>
             <h1 className="hero-title">
-              Managed OpenClaw Hosting. <br />
-              <span className="text-gradient">Your dedicated AI infrastructure.</span>
+              Private OpenClaw <span className="text-gradient">Hosting.</span>
             </h1>
             <p className="hero-subtitle">
-              The simplest way to deploy your own powerful OpenClaw agent on a private server —<br />
-              ready on Telegram, Discord, or Slack. Complete control, zero technical overhead.
+    No public IPs, no setup, no maintenance. Just your agent, ready on Telegram, Discord, or Slack.
             </p>
             
             <div className="channel-buttons">
@@ -88,7 +86,25 @@ export const LandingPage: React.FC = () => {
           </div>
 
           <div className="hero-visual">
-            <IconCluster />
+            <ProductPreview />
+          </div>
+        </section>
+
+        {/* Trust/Metric Bar */}
+        <section className="trust-bar">
+          <div className="trust-item">
+            <span className="trust-val">60s</span>
+            <span className="trust-label">Provisioning</span>
+          </div>
+          <div className="trust-divider"></div>
+          <div className="trust-item">
+            <span className="trust-val">99.9%</span>
+            <span className="trust-label">Server Uptime</span>
+          </div>
+          <div className="trust-divider"></div>
+          <div className="trust-item">
+            <span className="trust-val">100%</span>
+            <span className="trust-label">Private VMs</span>
           </div>
         </section>
 
@@ -134,8 +150,8 @@ export const LandingPage: React.FC = () => {
         {/* Features Section - Simple & Secure */}
         <section id="features" className="features-section">
           <div className="section-header">
-             <h2>Your Agent. Your instance. Your rules.</h2>
-             <p>We handle the infrastructure so you get a robust, always-on OpenClaw agent without any of the maintenance.</p>
+             <h2>Standard OpenClaw. Better Infra.</h2>
+             <p>We don't touch the OpenClaw source. We just handle the VMs, security isolation, and 99.9% uptime so you don't have to.</p>
           </div>
 
           <div className="bento-grid">
@@ -167,7 +183,7 @@ export const LandingPage: React.FC = () => {
                  <div className="hex opacity-30"><BrandIcons.Gemini /></div>
               </div>
               <h3>Picks the right model automatically</h3>
-              <p>GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro — OpenClaw analyzes intent and dynamically routes prompts, reducing token latency by up to 40%. Perfect for writing, coding, or complex research pipelines. No settings needed.</p>
+              <p>GPT-5.2-Codex, Claude 4.6 Sonnet, Gemini 3 Flash Preview — OpenClaw analyzes intent and dynamically routes prompts, reducing token latency by up to 40%.</p>
             </Card>
 
             <Card className="bento-card card-security" hoverable>
@@ -191,8 +207,8 @@ export const LandingPage: React.FC = () => {
                  <div className="orbital-ring"></div>
                  <BrandIcons.Chromium />
                </div>
-               <h3>Browses the web for you</h3>
-               <p>OpenClaw utilizes headless browser infrastructure to open websites, scrape pages, and synthesize research up to 5x faster than manual browsing — all from your private server, ensuring zero third-party tracking.</p>
+               <h3>100% Open Source Core</h3>
+               <p>CloseClaw runs the official OpenClaw core. You get all the features—headless browsing, reasoning, and multi-tool use—pre-installed on your private server.</p>
             </Card>
           </div>
         </section>

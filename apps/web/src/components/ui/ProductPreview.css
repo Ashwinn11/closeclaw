@@ -1,0 +1,386 @@
+.pp-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    margin: 0 0 0 auto;
+    perspective: 1000px;
+}
+
+.pp-chat {
+    background: rgba(18, 18, 22, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 0;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+    animation: pp-float 6s ease-in-out infinite;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 480px;
+}
+
+.pp-chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.pp-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pp-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.pp-action-icon {
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.pp-action-icon:hover {
+    color: #fff;
+}
+
+.pp-bot-avatar {
+    width: 32px;
+    height: 32px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.8rem;
+}
+
+.pp-bot-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.pp-bot-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.pp-bot-status {
+    font-size: 0.7rem;
+    color: var(--accent-primary);
+}
+
+.pp-chat-body {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.pp-message {
+    max-width: 85%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+    line-height: 1.5;
+    position: relative;
+}
+
+.pp-message.user {
+    background: #3390ec;
+    align-self: flex-end;
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+
+.pp-message.bot {
+    background: #212121;
+    align-self: flex-start;
+    color: #fff;
+    border-bottom-left-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.pp-time {
+    display: block;
+    font-size: 0.65rem;
+    opacity: 0.5;
+    text-align: right;
+    margin-top: 4px;
+}
+
+.user .pp-time {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.pp-chat-footer {
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.pp-footer-icon {
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+}
+
+.pp-input-sim {
+    flex: 1;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.pp-send-btn {
+    color: #3390ec;
+    cursor: pointer;
+}
+
+.pp-action {
+    font-size: 0.75rem;
+    color: var(--accent-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    opacity: 0.8;
+}
+
+.bot ul {
+    margin: 10px 0;
+    padding-left: 18px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.pp-source {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 10px;
+}
+
+/* Stats Cards */
+.pp-stats {
+    position: absolute;
+    right: -60px;
+    top: 40%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 10;
+}
+
+.pp-stat-card {
+    background: rgba(18, 18, 22, 0.8);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px 18px;
+    border-radius: 14px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    animation: pp-float-alt 8s ease-in-out infinite;
+}
+
+.pp-stat-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pp-pulse {
+    width: 8px;
+    height: 8px;
+    background: #00ff88;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #00ff88;
+}
+
+.pp-stat-val {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.pp-stat-sub {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.pp-stat-card.secondary {
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, rgba(120, 80, 255, 0.1), rgba(0, 0, 0, 0));
+}
+
+.pp-icon-shield {
+    color: var(--accent-primary);
+}
+
+.pp-floating-terminal {
+    position: absolute;
+    left: -40px;
+    bottom: 10px;
+    background: #000;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.7rem;
+    color: #00ff88;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    z-index: 5;
+}
+
+@keyframes pp-float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes pp-float-alt {
+
+    0%,
+    100% {
+        transform: translateY(0) translateX(0);
+    }
+
+    50% {
+        transform: translateY(10px) translateX(5px);
+    }
+}
+
+/* Orbiting Icons */
+.pp-orbit {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 580px;
+    height: 580px;
+    margin-left: -290px;
+    margin-top: -290px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-radius: 50%;
+    animation: orbit-rotate 40s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.orbit-icon {
+    position: absolute;
+    width: 36px;
+    height: 36px;
+    background: rgba(18, 18, 22, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 8px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    animation: orbit-counter-rotate 40s linear infinite;
+}
+
+.icon-1 {
+    top: 0;
+    left: 50%;
+    margin-left: -18px;
+    margin-top: -18px;
+}
+
+.icon-2 {
+    top: 25%;
+    left: 93.3%;
+    margin-left: -18px;
+    margin-top: -18px;
+}
+
+.icon-3 {
+    top: 75%;
+    left: 93.3%;
+    margin-left: -18px;
+    margin-top: -18px;
+}
+
+.icon-4 {
+    top: 100%;
+    left: 50%;
+    margin-left: -18px;
+    margin-top: -18px;
+}
+
+.icon-5 {
+    top: 75%;
+    left: 6.7%;
+    margin-left: -18px;
+    margin-top: -18px;
+}
+
+.icon-6 {
+    top: 25%;
+    left: 6.7%;
+    margin-left: -18px;
+    margin-top: -18px;
+}
+
+@keyframes orbit-rotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes orbit-counter-rotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(-360deg);
+    }
+}
+
+@media (max-width: 900px) {
+    .pp-orbit {
+        display: none;
+    }
+
+    .pp-stats {
+        position: static;
+        flex-direction: row;
+        margin-top: 20px;
+    }
+
+    .pp-floating-terminal {
+        display: none;
+    }
+}
