@@ -877,6 +877,46 @@
     color: rgba(255, 255, 255, 0.3);
 }
 
+/* Global Availability Card Visuals */
+.card-global {
+    grid-column: span 1;
+    padding: 2rem !important;
+    background: radial-gradient(circle at top left, rgba(255, 77, 77, 0.1), transparent 70%);
+}
+
+.visual-global {
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin-bottom: auto;
+    padding-top: 1rem;
+}
+
+.globe-icon {
+    color: rgba(255, 255, 255, 0.2);
+    animation: rotate 20s linear infinite;
+}
+
+.region-dots {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+}
+
+.region-dots .dot {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: var(--accent-secondary);
+    box-shadow: 0 0 10px var(--accent-secondary-glow);
+}
+
+.region-dots .dot.us { top: 20%; left: 10%; }
+.region-dots .dot.eu { top: 15%; right: 25%; }
+.region-dots .dot.as { bottom: 30%; right: 10%; }
+
 @media (max-width: 900px) {
     .bento-grid {
         grid-template-columns: 1fr;
@@ -886,7 +926,8 @@
     .card-cost,
     .card-routing,
     .card-security,
-    .card-browser {
+    .card-browser,
+    .card-global {
         grid-column: span 1;
     }
 
