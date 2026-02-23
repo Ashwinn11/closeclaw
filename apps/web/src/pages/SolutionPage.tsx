@@ -5,7 +5,7 @@ import { Header } from '../components/ui/Header';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { BrandIcons } from '../components/ui/BrandIcons';
-import { Terminal, Check, Shield, Zap, Globe } from 'lucide-react';
+import { Terminal, Check, Shield, Zap, Lock } from 'lucide-react';
 import './LandingPage.css'; // Reuse existing styles
 import { useState } from 'react';
 import { ChannelSetupModal } from '../components/ui/ChannelSetupModal';
@@ -28,9 +28,9 @@ export const SolutionPage: React.FC = () => {
       <Header />
 
       <main className="content-wrapper">
-        <section className="hero-section">
+        <article className="hero-section">
           <div className="hero-content">
-            <div className="sovereign-badge">{solution.industry} Solutions</div>
+            <div className="sovereign-badge">{solution.industry} AI Solutions</div>
             <h1 className="hero-title">
               {solution.hero_title}
             </h1>
@@ -38,7 +38,7 @@ export const SolutionPage: React.FC = () => {
               {solution.hero_subtitle}
             </p>
             
-            <div className="channel-buttons">
+            <nav className="channel-buttons">
               <Button className="channel-btn telegram" onClick={() => setSetupChannel('Telegram')}>
                 <div className="btn-icon"><BrandIcons.Telegram /></div>
                 <span>Telegram</span>
@@ -47,31 +47,33 @@ export const SolutionPage: React.FC = () => {
                 <div className="btn-icon"><BrandIcons.Discord /></div>
                 <span>Discord</span>
               </Button>
-            </div>
+            </nav>
           </div>
-        </section>
+        </article>
 
         <section className="features-section">
-          <div className="section-header">
-             <h2>Why {solution.industry} professionals choose CloseClaw in {solution.location}</h2>
+          <header className="section-header">
+             <h2>Why {solution.industry} teams trust CloseClaw</h2>
              <p>{solution.pain_point} {solution.solution}</p>
-          </div>
+          </header>
 
           <div className="bento-grid">
             <Card className="bento-card" hoverable>
-              <Shield size={24} className="icon-accent" />
-              <h3>Data Sovereignty</h3>
-              <p>Your AI instance is pinned to {solution.location} regions, ensuring data never crosses borders unnecessarily.</p>
+              <article>
+                <Shield size={24} className="icon-accent" />
+                <h3>Isolated Infrastructure</h3>
+                <p>Your AI instance runs on a dedicated server with no public IP address. It's completely isolated from other users.</p>
+              </article>
+            </Card>
+            <Card className="bento-card" hoverable>
+              <Lock size={24} className="icon-accent" />
+              <h3>Zero Data Training</h3>
+              <p>We use enterprise APIs that guarantee your data is never used to train future AI models. What you say stays on your server.</p>
             </Card>
             <Card className="bento-card" hoverable>
               <Zap size={24} className="icon-accent" />
-              <h3>Ultra-Low Latency</h3>
-              <p>Deployed on GCP edge nodes in {solution.location} for the fastest response times in the industry.</p>
-            </Card>
-            <Card className="bento-card" hoverable>
-              <Globe size={24} className="icon-accent" />
-              <h3>{solution.industry} Compliance</h3>
-              <p>Built-in architectural safeguards to meet the rigorous privacy standards of the {solution.industry} sector.</p>
+              <h3>Instant Deployment</h3>
+              <p>Get a private, production-ready AI server for your {solution.industry} workflows in less than 60 seconds.</p>
             </Card>
           </div>
         </section>
@@ -84,10 +86,13 @@ export const SolutionPage: React.FC = () => {
                     <img src="/logo.png" alt="CloseClaw Logo" className="logo-icon small" />
                     CloseClaw
                  </div>
+                 <div className="powered-badge">
+                   <Terminal size={12} /> Powered by OpenClaw
+                 </div>
                  <div className="copyright">© 2026 CloseClaw</div>
               </div>
               <div className="footer-links-col">
-                 <h4>Company</h4>
+                 <h4>Legal</h4>
                  <button className="footer-link-btn" onClick={() => setInfoModal('tos')}>Terms of Service</button>
                  <button className="footer-link-btn" onClick={() => setInfoModal('privacy')}>Privacy Policy</button>
               </div>

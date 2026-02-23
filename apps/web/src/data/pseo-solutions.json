@@ -4,35 +4,35 @@
     "industry": "Legal",
     "location": "London",
     "title": "Private AI for Legal Firms in London",
-    "description": "Secure, dedicated AI instances for London-based law firms. GDPR compliant, no public IP, and zero data training.",
-    "keywords": ["private AI legal London", "dedicated GPT law firm UK", "GDPR AI legal"],
-    "hero_title": "Privileged & Confidential AI for London Law Firms",
-    "hero_subtitle": "Deploy a dedicated, private AI assistant on your own London-based server. Maintain solicitor-client privilege with zero data leaks.",
-    "pain_point": "Standard AI services risk client confidentiality and data sovereignty.",
-    "solution": "CloseClaw provides an isolated environment where your data never leaves your private server."
+    "description": "Secure, dedicated AI instances for London-based law firms. Zero data training, no public IP, and absolute client confidentiality.",
+    "keywords": ["private AI legal London", "dedicated GPT law firm UK", "secure AI legal"],
+    "hero_title": "Privileged & Confidential AI for London Law Professionals",
+    "hero_subtitle": "Deploy a dedicated, private AI server in 60 seconds. Maintain absolute privilege with an assistant that never shares or trains on your data.",
+    "pain_point": "Standard AI services compromise solicitor-client privilege and data sovereignty.",
+    "solution": "CloseClaw provides a 100% isolated environment where your legal research and case notes stay on your own private server."
   },
   {
     "id": "healthcare-privacy-berlin",
     "industry": "Healthcare",
     "location": "Berlin",
-    "title": "GDPR-Compliant AI for Healthcare in Berlin",
-    "description": "Dedicated AI assistants for Berlin medical researchers and providers. Full data sovereignty and privacy-first architecture.",
-    "keywords": ["private AI healthcare Berlin", "GDPR AI medical Germany", "dedicated Claude healthcare"],
-    "hero_title": "Safe & Secure AI for Berlin Medical Teams",
-    "hero_subtitle": "A private AI instance that respects patient confidentiality and German data protection laws.",
-    "pain_point": "Privacy risks in healthcare data often prevent AI adoption.",
-    "solution": "Our isolated, dedicated servers ensure patient data stays protected and under your control."
+    "title": "Private AI for Healthcare Teams in Berlin",
+    "description": "Dedicated AI assistants for Berlin medical researchers. Full data sovereignty and privacy-first architecture on your own server.",
+    "keywords": ["private AI healthcare Berlin", "secure AI medical Germany", "dedicated Claude healthcare"],
+    "hero_title": "Secure AI for Berlin's Medical & Research Teams",
+    "hero_subtitle": "A private AI instance that keeps patient data isolated. Built for research teams who need AI power without the data-harvesting risks.",
+    "pain_point": "Data sharing risks in standard LLMs prevent medical professionals from using AI safely.",
+    "solution": "Our dedicated-server architecture ensures patient data remains under your exclusive control at all times."
   },
   {
     "id": "fintech-security-singapore",
     "industry": "Fintech",
     "location": "Singapore",
-    "title": "Secure AI for Fintech in Singapore",
-    "description": "Dedicated AI servers for Singapore fintech startups. MAS-compliant architecture with full isolation.",
+    "title": "Secure AI for Fintech Teams in Singapore",
+    "description": "Dedicated AI servers for Singapore fintech startups. No public IP, full isolation, and enterprise-grade security.",
     "keywords": ["private AI fintech Singapore", "secure AI banking Asia", "dedicated GPT fintech"],
-    "hero_title": "Enterprise-Grade AI Security for Singapore Fintech",
-    "hero_subtitle": "High-performance, private AI instances deployed in Singapore GCP regions for ultra-low latency and maximum security.",
-    "pain_point": "Financial data security is the top barrier to using LLMs.",
-    "solution": "CloseClaw's 'no-public-IP' architecture provides the security required by modern fintech institutions."
+    "hero_title": "Enterprise AI Security for Singapore Fintech",
+    "hero_subtitle": "High-performance, private AI instances with zero public exposure. Perfect for handling sensitive financial data securely.",
+    "pain_point": "Publicly accessible AI tools are a major security vulnerability for financial data.",
+    "solution": "CloseClaw's 'no-public-IP' architecture provides the deep isolation required by modern fintech institutions."
   }
 ]
