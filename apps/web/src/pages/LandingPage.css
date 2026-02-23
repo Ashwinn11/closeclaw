@@ -36,11 +36,9 @@
     justify-content: space-between;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 8rem 2rem 4rem 2rem;
-    /* Adjusted top padding for fixed header */
+    padding: 6rem 2rem;
     width: 100%;
-    min-height: 90vh;
-    /* Make hero take up most of first screen */
+    min-height: auto;
 }
 
 .hero-content {
@@ -158,11 +156,29 @@
 }
 
 .hero-visual {
-    flex: 1.2;
+    flex: 1;
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
     align-items: center;
-    padding-right: 2rem;
+    position: relative;
+    max-width: 50%;
+}
+
+.icon-cluster {
+    max-width: 100%;
+    transform-origin: center right;
+}
+
+@media (max-width: 1200px) {
+    .icon-cluster {
+        transform: scale(0.8);
+    }
+}
+
+@media (max-width: 1000px) {
+    .icon-cluster {
+        transform: scale(0.7);
+    }
 }
 
 .modal-overlay {
@@ -207,7 +223,7 @@
 
 /* Comparison Section */
 .comparison-section {
-    padding: 8rem 2rem;
+    padding: 4rem 2rem;
     max-width: 1000px;
     margin: 0 auto;
     width: 100%;
@@ -741,7 +757,7 @@
 
 /* Beautiful Glass Footer (Ampere Style) */
 .footer-container {
-    padding: 8rem 2rem 4rem 2rem;
+    padding: 4rem 2rem;
     width: 100%;
     display: flex;
     justify-content: center;
