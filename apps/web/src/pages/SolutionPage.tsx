@@ -5,7 +5,7 @@ import { Header } from '../components/ui/Header';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { BrandIcons } from '../components/ui/BrandIcons';
-import { Terminal, Check, Shield, Zap, Lock } from 'lucide-react';
+import { Terminal, Shield, Zap, Lock } from 'lucide-react';
 import './LandingPage.css'; // Reuse existing styles
 import { useState } from 'react';
 import { ChannelSetupModal } from '../components/ui/ChannelSetupModal';

@@ -25,14 +25,14 @@ export const LandingPage: React.FC = () => {
         {/* Hero Section */}
         <section className="hero-section">
           <div className="hero-content">
-            <div className=\"sovereign-badge\">Ready in 60 seconds</div>
-            <h1 className=\"hero-title\">
+            <div className="sovereign-badge">Deployed in 60 seconds</div>
+            <h1 className="hero-title">
               Managed OpenClaw Hosting. <br />
-              <span className=\"text-gradient\">Your private AI Agent, always on.</span>
+              <span className="text-gradient">Your dedicated AI infrastructure.</span>
             </h1>
-            <p className=\"hero-subtitle\">
-              The simplest way to deploy your own OpenClaw instance on a private server —<br />
-              ready on Telegram, Discord, or Slack. No sharing, no setup, no technical overhead.
+            <p className="hero-subtitle">
+              The simplest way to deploy your own powerful OpenClaw agent on a private server —<br />
+              ready on Telegram, Discord, or Slack. Complete control, zero technical overhead.
             </p>
             
             <div className="channel-buttons">
@@ -94,8 +94,8 @@ export const LandingPage: React.FC = () => {
               <h4 className="method-label">With CloseClaw</h4>
               <div className="instant-badge">All handled</div>
               <p className="instant-desc">
-                Your AI gets its own private server instantly. According to our hosting benchmarks, we save teams an average of 4.5 hours per week in server management. We handle everything —
-                setup, 99.9% uptime guarantees, updates, and military-grade security isolation. You just talk to it.
+                Your OpenClaw instance gets its own private server instantly. According to our hosting benchmarks, we save teams an average of 4.5 hours per week in server management. We handle everything —
+                setup, 99.9% uptime guarantees, updates, and military-grade security isolation. You just talk to your agent.
               </p>
               <div className="instant-features">
                 <div className="i-feature"><Check size={16} /> 99.9% Uptime SLA</div>
@@ -109,8 +109,8 @@ export const LandingPage: React.FC = () => {
         {/* Features Section - Simple & Secure */}
         <section id="features" className="features-section">
           <div className="section-header">
-             <h2>Your AI. Your server. Your rules.</h2>
-             <p>We handle the hard parts so you get a private, always-on AI without any of the maintenance.</p>
+             <h2>Your Agent. Your instance. Your rules.</h2>
+             <p>We handle the infrastructure so you get a robust, always-on OpenClaw agent without any of the maintenance.</p>
           </div>
 
           <div className="bento-grid">
@@ -141,15 +141,15 @@ export const LandingPage: React.FC = () => {
                  <div className="hex active"><BrandIcons.Anthropic /></div>
                  <div className="hex opacity-30"><BrandIcons.Gemini /></div>
               </div>
-              <h3>Picks the right AI automatically</h3>
-              <p>GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro — your assistant analyzes intent and dynamically routes prompts, reducing token latency by up to 40%. Perfect for writing, coding, or complex research pipelines. No settings needed.</p>
+              <h3>Picks the right model automatically</h3>
+              <p>GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro — OpenClaw analyzes intent and dynamically routes prompts, reducing token latency by up to 40%. Perfect for writing, coding, or complex research pipelines. No settings needed.</p>
             </Card>
 
             <Card className="bento-card card-security" hoverable>
               <div className="card-content horizontal">
                 <div className="text-content">
                   <h3>Isolated and private by design</h3>
-                  <p>Security experts note that dedicated VMs are the only way to ensure 100% network isolation. Your AI runs on a dedicated server with no public IP, meaning zero data sharing with other tenants. Your conversations are cryptographically secure.</p>
+                  <p>Security experts note that dedicated VMs are the only way to ensure 100% network isolation. Your instance runs on a dedicated server with no public IP, meaning zero data sharing with other tenants. Your conversations are cryptographically secure.</p>
                 </div>
                 <div className="visual-shield">
                    <div className="network-nodes">
@@ -167,7 +167,7 @@ export const LandingPage: React.FC = () => {
                  <BrandIcons.Chromium />
                </div>
                <h3>Browses the web for you</h3>
-               <p>Your AI utilizes headless browser infrastructure to open websites, scrape pages, and synthesize research up to 5x faster than manual browsing — all from your private server, ensuring zero third-party tracking.</p>
+               <p>OpenClaw utilizes headless browser infrastructure to open websites, scrape pages, and synthesize research up to 5x faster than manual browsing — all from your private server, ensuring zero third-party tracking.</p>
             </Card>
           </div>
         </section>
