@@ -25,14 +25,14 @@ export const LandingPage: React.FC = () => {
         {/* Hero Section */}
         <section className="hero-section">
           <div className="hero-content">
-            <div className="sovereign-badge">Ready in 60 seconds</div>
-            <h1 className="hero-title">
-              Your own AI assistant. <br />
-              <span className="text-gradient">Private, dedicated, always on.</span>
+            <div className=\"sovereign-badge\">Ready in 60 seconds</div>
+            <h1 className=\"hero-title\">
+              Managed OpenClaw Hosting. <br />
+              <span className=\"text-gradient\">Your private AI Agent, always on.</span>
             </h1>
-            <p className="hero-subtitle">
-              A dedicated AI running on your own private server —<br />
-              ready on Telegram, Discord, or Slack. No sharing, no setup.
+            <p className=\"hero-subtitle\">
+              The simplest way to deploy your own OpenClaw instance on a private server —<br />
+              ready on Telegram, Discord, or Slack. No sharing, no setup, no technical overhead.
             </p>
             
             <div className="channel-buttons">
