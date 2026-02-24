@@ -857,10 +857,11 @@ const fetchCron = useCallback(async () => {
                     <div className="section-label" style={{ marginTop: '2rem' }}>Top Up Credits</div>
                     <div className="topup-grid">
                       {[
-                        { pack: '5',  label: '$5',  credits: 5  },
-                        { pack: '10', label: '$10', credits: 10 },
-                        { pack: '25', label: '$25', credits: 25 },
-                        { pack: '50', label: '$50', credits: 50 },
+                        { pack: '5',   label: '$5',   credits: 5   },
+                        { pack: '10',  label: '$10',  credits: 10  },
+                        { pack: '25',  label: '$25',  credits: 25  },
+                        { pack: '50',  label: '$50',  credits: 50  },
+                        { pack: '100', label: '$100', credits: 100 },
                       ].map(({ pack, label, credits }) => (
                         <Card key={pack} className="topup-card" hoverable onClick={() => !toppingUp && handleTopup(pack)}>
                           <div className="topup-amount">{label}</div>
