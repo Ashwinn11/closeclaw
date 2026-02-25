@@ -7,6 +7,7 @@ import './App.css';
 
 // Lazy-load non-critical routes to split the monolithic JS bundle
 const SolutionPage = lazy(() => import('./pages/SolutionPage').then(m => ({ default: m.SolutionPage })));
+const VsSelfHostingPage = lazy(() => import('./pages/VsSelfHostingPage').then(m => ({ default: m.VsSelfHostingPage })));
 const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage').then(m => ({ default: m.AuthCallbackPage })));
 const DashboardPage = lazy(() => import('./pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
 const BillingPage = lazy(() => import('./pages/BillingPage').then(m => ({ default: m.BillingPage })));
@@ -33,6 +34,7 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/solutions/:id" element={<SolutionPage />} />
+        <Route path="/vs-self-hosting" element={<VsSelfHostingPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route
           path="/dashboard"

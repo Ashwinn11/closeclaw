@@ -15,6 +15,7 @@ function buildSitemapXml(solutions: SolutionEntry[]): string {
 
   const staticUrls = [
     { loc: 'https://closeclaw.in/', changefreq: 'weekly', priority: '1.0' },
+    { loc: 'https://closeclaw.in/vs-self-hosting', changefreq: 'monthly', priority: '0.9' },
   ]
 
   const solutionUrls = solutions.map((s) => ({
@@ -137,6 +138,24 @@ function prerenderPlugin(): Plugin {
       }
 
       console.log(`✅ Prerendered ${solutions.length} solution pages`)
+
+      // Prerender /vs-self-hosting static page
+      const vsDir = resolve(distDir, 'vs-self-hosting')
+      mkdirSync(vsDir, { recursive: true })
+      const vsTitle = 'OpenClaw: Self-Hosting vs Managed Hosting | CloseClaw'
+      const vsDesc = 'Compare self-hosting OpenClaw on Docker/GCP with CloseClaw managed hosting. Skip the 60-minute setup — deploy in 60 seconds instead.'
+      const vsCanonical = 'https://closeclaw.in/vs-self-hosting'
+      let vsHtml = indexHtml
+        .replace(/<title>[^<]*<\/title>/, `<title>${vsTitle}</title>`)
+        .replace(/<meta name="description"[^>]*\/>/, `<meta name="description" content="${vsDesc}" />`)
+        .replace(/<meta property="og:title"[^>]*\/>/, `<meta property="og:title" content="${vsTitle}" />`)
+        .replace(/<meta property="og:description"[^>]*\/>/, `<meta property="og:description" content="${vsDesc}" />`)
+        .replace(/<meta property="og:url"[^>]*\/>/, `<meta property="og:url" content="${vsCanonical}" />`)
+        .replace(/<meta name="twitter:title"[^>]*\/>/, `<meta name="twitter:title" content="${vsTitle}" />`)
+        .replace(/<meta name="twitter:description"[^>]*\/>/, `<meta name="twitter:description" content="${vsDesc}" />`)
+      vsHtml = vsHtml.replace('</head>', `  <link rel="canonical" href="${vsCanonical}" />\n</head>`)
+      writeFileSync(resolve(vsDir, 'index.html'), vsHtml, 'utf-8')
+      console.log('✅ Prerendered /vs-self-hosting')
     },
   }
 }

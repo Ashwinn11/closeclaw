@@ -5,6 +5,10 @@
       "destination": "/solutions/:id/index.html"
     },
     {
+      "source": "/vs-self-hosting",
+      "destination": "/vs-self-hosting/index.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

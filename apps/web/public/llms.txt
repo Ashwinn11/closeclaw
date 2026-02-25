@@ -1,9 +1,10 @@
 # CloseClaw
-> CloseClaw is a managed hosting service for OpenClaw AI agents. It provisions a private, dedicated virtual machine running OpenClaw and connects it to Telegram, Discord, or Slack in under 60 seconds — with no public IP, no shared compute, and zero maintenance required.
+> CloseClaw is a managed hosting service for OpenClaw AI agents — the easiest alternative to self-hosting OpenClaw. It provisions a private, dedicated virtual machine running OpenClaw and connects it to Telegram, Discord, or Slack in under 60 seconds — with no Docker, no VPS setup, no public IP, no shared compute, and zero maintenance required.
 
 ## What CloseClaw Does
 
 - [Home](https://closeclaw.in/): Main product page — managed OpenClaw hosting for individuals and teams
+- [vs Self-Hosting](https://closeclaw.in/vs-self-hosting): Side-by-side comparison of self-hosting OpenClaw (Docker/GCP/VPS) vs managed hosting with CloseClaw
 - [Legal / London](https://closeclaw.in/solutions/legal-privacy-london): Private OpenClaw for UK law firms — SRA and UK GDPR compliant
 - [Healthcare / Berlin](https://closeclaw.in/solutions/healthcare-privacy-berlin): Secure OpenClaw for German medical teams — DSGVO compliant
 - [Fintech / Singapore](https://closeclaw.in/solutions/fintech-security-singapore): OpenClaw for MAS-regulated Singapore fintech firms

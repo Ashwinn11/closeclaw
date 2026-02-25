@@ -1,0 +1,202 @@
+/* ═══════════════════════════════════════════════════════
+   VsSelfHostingPage.css — Styles for /vs-self-hosting
+   Complements LandingPage.css + SolutionPage.css
+   ═══════════════════════════════════════════════════════ */
+
+/* ─── Hero override ─── */
+.vs-hero {
+  min-height: auto;
+  padding-bottom: 2rem;
+}
+
+.vs-hero .hero-content {
+  max-width: 700px;
+}
+
+/* ─── "What you skip" grid ─── */
+.vs-skip-section {
+  padding: 4rem 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.vs-skip-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.vs-skip-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem !important;
+  position: relative;
+}
+
+.vs-skip-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.vs-skip-card p {
+  font-size: 0.88rem;
+  color: var(--text-secondary, #ccc);
+  line-height: 1.4;
+  margin: 0;
+  flex: 1;
+}
+
+.vs-skip-x {
+  color: #f87171;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+/* ─── "What you keep" ─── */
+.vs-keep-section {
+  padding: 4rem 2rem;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.vs-keep-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.vs-keep-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  font-size: 0.95rem;
+  color: var(--text-primary, #fff);
+  transition: border-color 0.2s ease;
+}
+
+.vs-keep-item:hover {
+  border-color: rgba(52, 211, 153, 0.3);
+}
+
+.vs-keep-check {
+  color: #34d399;
+  flex-shrink: 0;
+}
+
+/* ─── Cost comparison ─── */
+.vs-cost-section {
+  padding: 4rem 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.vs-cost-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.vs-cost-card {
+  padding: 2.5rem 2rem !important;
+  text-align: center;
+}
+
+.vs-cost-card h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 1rem 0 0.5rem;
+}
+
+.vs-cost-icon {
+  margin: 0 auto;
+}
+
+.vs-cost-icon.muted {
+  color: var(--text-muted, #666);
+}
+
+.vs-cost-icon.accent {
+  color: var(--accent-primary, #ff5a5f);
+}
+
+.vs-cost-price {
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0.5rem 0;
+}
+
+.vs-cost-price span {
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--text-secondary, #aaa);
+}
+
+.vs-cost-note {
+  font-size: 0.82rem;
+  color: var(--text-muted, #666);
+  margin-bottom: 1.5rem;
+}
+
+.vs-cost-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+}
+
+.vs-cost-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary, #ccc);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.vs-cost-list li:last-child {
+  border-bottom: none;
+}
+
+.vs-cost-list li svg {
+  flex-shrink: 0;
+}
+
+.vs-cost-card .vs-cost-list li svg {
+  color: #f87171;
+}
+
+.vs-cost-card.featured {
+  border-color: rgba(255, 90, 95, 0.3) !important;
+  background: linear-gradient(145deg, rgba(255, 90, 95, 0.05) 0%, rgba(0, 229, 204, 0.03) 100%) !important;
+}
+
+.vs-cost-card.featured .vs-cost-list li svg {
+  color: #34d399;
+}
+
+.vs-cta-btn {
+  margin-top: 1.5rem;
+  width: 100%;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .vs-skip-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .vs-cost-grid {
+    grid-template-columns: 1fr;
+  }
+}
