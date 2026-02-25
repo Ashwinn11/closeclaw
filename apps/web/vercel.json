@@ -1,8 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/solutions/:path",
-      "destination": "/solutions/:path/index.html"
+      "source": "/solutions/:slug",
+      "destination": "/solutions/:slug/index.html"
     },
     {
       "source": "/vs-self-hosting",
@@ -15,7 +15,7 @@
   ],
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/:path*",
       "headers": [
         {
           "key": "X-Content-Type-Options",
@@ -40,20 +40,11 @@
       ]
     },
     {
-      "source": "/assets/(.*)",
+      "source": "/assets/:path*",
       "headers": [
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/(.*\\.(png|jpg|jpeg|webp|svg|ico|woff|woff2))",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=86400, stale-while-revalidate=604800"
         }
       ]
     }
