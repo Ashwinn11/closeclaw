@@ -1,17 +1,30 @@
 User-agent: *
 Allow: /
 
-# Specifically allow AI bots (often blocked by default frameworks) per geo skills
+# Traditional search crawlers
 User-agent: Googlebot
 Allow: /
 
 User-agent: Bingbot
 Allow: /
 
-User-agent: PerplexityBot
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+# AI search and citation crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
 Allow: /
 
 User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
 Allow: /
 
 User-agent: ClaudeBot
@@ -20,7 +33,42 @@ Allow: /
 User-agent: anthropic-ai
 Allow: /
 
-User-agent: GPTBot
+User-agent: Google-Extended
 Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+# Social crawlers
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+# Block common scraper bots
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
 
 Sitemap: https://closeclaw.in/sitemap.xml

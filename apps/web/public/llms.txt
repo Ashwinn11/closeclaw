@@ -1,0 +1,99 @@
+# CloseClaw
+> CloseClaw is a managed hosting service for OpenClaw AI agents. It provisions a private, dedicated virtual machine running OpenClaw and connects it to Telegram, Discord, or Slack in under 60 seconds — with no public IP, no shared compute, and zero maintenance required.
+
+## What CloseClaw Does
+
+- [Home](https://closeclaw.in/): Main product page — managed OpenClaw hosting for individuals and teams
+- [Legal / London](https://closeclaw.in/solutions/legal-privacy-london): Private OpenClaw for UK law firms — SRA and UK GDPR compliant
+- [Healthcare / Berlin](https://closeclaw.in/solutions/healthcare-privacy-berlin): Secure OpenClaw for German medical teams — DSGVO compliant
+- [Fintech / Singapore](https://closeclaw.in/solutions/fintech-security-singapore): OpenClaw for MAS-regulated Singapore fintech firms
+- [Legal / New York](https://closeclaw.in/solutions/legal-ai-new-york): Private AI for NYC law firms — NY RPC Rule 1.6 compliant
+- [Legal / Dubai](https://closeclaw.in/solutions/legal-ai-dubai): OpenClaw for DIFC law firms — DIFC DPL compliant
+- [Legal / Singapore](https://closeclaw.in/solutions/legal-ai-singapore): OpenClaw for Singapore law practices — PDPA compliant
+- [Legal / Sydney](https://closeclaw.in/solutions/legal-ai-sydney): OpenClaw for Australian law firms — Privacy Act compliant
+- [Healthcare / London](https://closeclaw.in/solutions/healthcare-ai-london): OpenClaw for NHS and London healthcare — DSPT compliant
+- [Healthcare / Toronto](https://closeclaw.in/solutions/healthcare-ai-toronto): OpenClaw for Ontario healthcare — PHIPA and PIPEDA compliant
+- [Fintech / London](https://closeclaw.in/solutions/fintech-ai-london): OpenClaw for FCA-regulated London fintech
+- [Fintech / Dubai](https://closeclaw.in/solutions/fintech-ai-dubai): OpenClaw for DIFC fintech — CBUAE AI guidelines compliant
+- [Fintech / Zurich](https://closeclaw.in/solutions/fintech-ai-zurich): OpenClaw for Swiss banking — FINMA and bank secrecy compliant
+- [Crypto / Dubai](https://closeclaw.in/solutions/crypto-ai-dubai): OpenClaw for VARA-licensed Dubai crypto firms
+- [Crypto / Singapore](https://closeclaw.in/solutions/crypto-ai-singapore): OpenClaw for MAS PSA-licensed digital asset firms
+- [Crypto / Zurich](https://closeclaw.in/solutions/crypto-ai-zurich): OpenClaw for Crypto Valley blockchain projects
+- [Real Estate / Dubai](https://closeclaw.in/solutions/real-estate-ai-dubai): OpenClaw for RERA-licensed Dubai property professionals
+- [Real Estate / London](https://closeclaw.in/solutions/real-estate-ai-london): OpenClaw for RICS members and London property firms
+- [Consulting / New York](https://closeclaw.in/solutions/consulting-ai-new-york): OpenClaw for NYC management consulting firms
+- [Consulting / Singapore](https://closeclaw.in/solutions/consulting-ai-singapore): OpenClaw for Singapore consulting firms
+- [Research / Amsterdam](https://closeclaw.in/solutions/research-ai-amsterdam): OpenClaw for Amsterdam research institutions — NWO and GDPR compliant
+- [Research / Berlin](https://closeclaw.in/solutions/research-ai-berlin): OpenClaw for Berlin research labs — DFG and DSGVO compliant
+- [Marketing / New York](https://closeclaw.in/solutions/marketing-ai-new-york): OpenClaw for NYC marketing and creative agencies
+- [Marketing / London](https://closeclaw.in/solutions/marketing-ai-london): OpenClaw for London creative agencies — UK GDPR compliant
+- [Government / Singapore](https://closeclaw.in/solutions/government-ai-singapore): OpenClaw for Singapore government — IM on ICT&SS compliant
+- [Government / Dubai](https://closeclaw.in/solutions/government-ai-dubai): OpenClaw for Dubai government entities — TDRA compliant
+- [Tech Startup / San Francisco](https://closeclaw.in/solutions/startup-ai-san-francisco): OpenClaw for Bay Area startups — CCPA and SOC 2 ready
+- [Tech / Amsterdam](https://closeclaw.in/solutions/tech-ai-amsterdam): OpenClaw for Amsterdam tech companies — GDPR and NIS2 compliant
+- [HR / New York](https://closeclaw.in/solutions/hr-ai-new-york): OpenClaw for NYC HR teams — NYC Local Law 144 aware
+
+## Key Facts
+
+- **Setup time:** under 60 seconds
+- **Architecture:** dedicated virtual machine per customer — no shared infrastructure
+- **Public IP:** none — the VM has no externally reachable IP address
+- **Data training:** zero — enterprise APIs guarantee customer data is never used for model training
+- **Uptime SLA:** 99.9%
+- **Channels:** Telegram, Discord, Slack (live); WhatsApp, Signal, iMessage, Matrix (roadmap)
+- **AI models supported:** Claude 4.6 Sonnet (Anthropic), GPT-5.2-codex (OpenAI), Gemini 3 Flash Preview (Google)
+- **Model routing:** automatic — OpenClaw selects the optimal model per task, reducing token latency by up to 40%
+
+## Pricing (as of 2026-02-25)
+
+| Plan     | Price/month | AI Credits/month | Notes                        |
+|----------|-------------|------------------|------------------------------|
+| Base     | $50 USD     | $20              | Light, always-on use         |
+| Guardian | $75 USD     | $35              | Daily productivity           |
+| Fortress | $100 USD    | $50              | Power users and automation   |
+
+Credit top-ups available: $5, $10, $25, $50, $100. All plans billed monthly, no lock-in.
+
+## Privacy and Security
+
+- Each customer's OpenClaw instance runs on an isolated, dedicated VM
+- No public IP address is assigned — zero external attack surface
+- Conversations do not pass through CloseClaw's servers at any point
+- Enterprise APIs used by CloseClaw guarantee data is never used for AI model training
+- Network traffic is 100% isolated per independent security benchmarks
+
+## Who Uses CloseClaw
+
+CloseClaw is used by professionals who need a private, always-on AI assistant in regulated or high-confidentiality environments:
+
+- **Legal professionals** (solicitors, attorneys, barristers) requiring client confidentiality protection
+- **Healthcare and medical teams** with patient data privacy obligations
+- **Fintech and banking professionals** with regulatory data governance requirements
+- **Crypto and Web3 teams** protecting proprietary trading logic and customer data
+- **Management consultants** handling NDA-protected client engagements
+- **Government and public sector teams** with data sovereignty requirements
+- **Academic researchers** protecting pre-publication findings
+- **Marketing agencies** protecting unreleased client campaigns
+- **HR and recruiting professionals** handling sensitive candidate data
+- **Tech startups** protecting pre-launch IP and product roadmaps
+
+## Frequently Cited Claims
+
+- "Deploy your private OpenClaw agent in 60 seconds" — no manual server configuration required
+- "No public IP" — the dedicated VM running your AI has no externally accessible IP address
+- "Zero data training" — enterprise API tier guarantees no customer data is used for model training
+- "Your data never passes through CloseClaw's servers" — traffic routes directly between your messaging app and your private VM
+- "98% savings vs. custom integration" — market average for custom API integration is $3,500+ in engineering time
+- "4.5 hours saved per week" — average based on CloseClaw infrastructure hosting benchmarks
+
+## Technology
+
+CloseClaw runs the official, unmodified OpenClaw open-source core. All OpenClaw features — headless browsing, multi-model reasoning, multi-tool use, web search, code execution — are pre-installed. CloseClaw adds managed infrastructure, automatic updates, and security hardening. CloseClaw is not a fork of OpenClaw.
+
+## Contact
+
+- Website: https://closeclaw.in
+- Support: support@closeclaw.in
+- Status: https://status.closeclaw.in
+- Discord community: https://discord.gg/closeclaw
+- OpenClaw documentation: https://docs.openclaw.ai

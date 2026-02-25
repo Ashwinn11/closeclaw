@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Primary Meta -->
+  <!-- Primary Meta (per-page overrides injected by react-helmet-async) -->
   <title>CloseClaw — Managed OpenClaw Hosting | Dedicated AI Agents</title>
   <meta name="description"
     content="The easiest way to run OpenClaw. Deploy your private, dedicated OpenClaw Agent in 60 seconds on Telegram, Discord, or Slack. High-performance, zero maintenance, completely private." />
@@ -15,16 +15,27 @@
   <link rel="author" href="https://closeclaw.in" />
   <meta name="robots" content="index, follow" />
   <meta name="theme-color" content="#0a0a0f" />
-  <link rel="canonical" href="https://closeclaw.in" />
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="/logo.png" />
   <link rel="apple-touch-icon" href="/logo.png" />
 
+  <!-- Google Fonts — non-render-blocking -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" as="style"
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
+    media="print" onload="this.media='all'" />
+  <noscript>
+    <link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" />
+  </noscript>
+
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="CloseClaw" />
-  <meta property="og:url" content="https://closeclaw.in" />
+  <meta property="og:url" content="https://closeclaw.in/" />
   <meta property="og:title" content="CloseClaw — Your Private AI Assistant on Telegram, Discord &amp; Slack" />
   <meta property="og:description"
     content="Deploy your own dedicated AI assistant in 60 seconds. A private server running Claude, GPT, and Gemini — ready on Telegram, Discord, or Slack. No sharing, no setup, always on." />
@@ -43,66 +54,131 @@
   <meta name="twitter:image" content="https://closeclaw.in/og-image.png" />
   <meta name="twitter:image:alt" content="CloseClaw — Private AI assistant on Telegram, Discord and Slack" />
 
-  <!-- JSON-LD: Software Application -->
+  <!-- JSON-LD: Organization (Knowledge Graph entity anchor) -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "@id": "https://closeclaw.in/#organization",
+      "name": "CloseClaw",
+      "url": "https://closeclaw.in/",
+      "logo": {
+        "@type": "ImageObject",
+        "@id": "https://closeclaw.in/#logo",
+        "url": "https://closeclaw.in/logo.png",
+        "width": 512,
+        "height": 512,
+        "caption": "CloseClaw Logo"
+      },
+      "description": "CloseClaw provides managed OpenClaw hosting — private, dedicated AI agents on Telegram, Discord, and Slack, deployed in under 60 seconds.",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "support@closeclaw.in",
+        "contactType": "customer support",
+        "availableLanguage": "English"
+      },
+      "sameAs": [
+        "https://twitter.com/closeclaw",
+        "https://discord.gg/closeclaw"
+      ]
+    }
+  </script>
+
+  <!-- JSON-LD: WebSite (Sitelinks Searchbox signal) -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "@id": "https://closeclaw.in/#website",
+      "name": "CloseClaw",
+      "url": "https://closeclaw.in/",
+      "description": "Managed OpenClaw hosting for private, dedicated AI agents on Telegram, Discord, and Slack.",
+      "publisher": { "@id": "https://closeclaw.in/#organization" },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://closeclaw.in/solutions/{search_term_string}"
+        },
+        "query-input": {
+          "@type": "PropertyValueSpecification",
+          "valueRequired": true,
+          "valueName": "search_term_string"
+        }
+      }
+    }
+  </script>
+
+  <!-- JSON-LD: SoftwareApplication -->
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
+      "@id": "https://closeclaw.in/#software",
       "name": "CloseClaw",
-      "url": "https://closeclaw.in",
+      "url": "https://closeclaw.in/",
       "description": "Deploy your own dedicated AI assistant in 60 seconds. A private server running Claude, GPT, and Gemini — ready on Telegram, Discord, or Slack.",
-      "applicationCategory": "AIApplication",
+      "applicationCategory": "BusinessApplication",
       "operatingSystem": "Web",
       "aggregateRating": {
         "@type": "AggregateRating",
-        "ratingValue": "4.9",
-        "ratingCount": "245"
+        "ratingValue": 4.9,
+        "ratingCount": 245
       },
       "offers": [
         {
           "@type": "Offer",
           "name": "Base Plan",
-          "price": "50.00",
-          "priceCurrency": "USD"
+          "price": 50.00,
+          "priceCurrency": "USD",
+          "url": "https://closeclaw.in/#pricing",
+          "priceValidUntil": "2027-12-31",
+          "availability": "https://schema.org/InStock"
         },
         {
           "@type": "Offer",
           "name": "Guardian Plan",
-          "price": "75.00",
-          "priceCurrency": "USD"
+          "price": 75.00,
+          "priceCurrency": "USD",
+          "url": "https://closeclaw.in/#pricing",
+          "priceValidUntil": "2027-12-31",
+          "availability": "https://schema.org/InStock"
         },
         {
           "@type": "Offer",
           "name": "Fortress Plan",
-          "price": "100.00",
-          "priceCurrency": "USD"
+          "price": 100.00,
+          "priceCurrency": "USD",
+          "url": "https://closeclaw.in/#pricing",
+          "priceValidUntil": "2027-12-31",
+          "availability": "https://schema.org/InStock"
         }
       ],
-      "publisher": {
-        "@type": "Organization",
-        "name": "CloseClaw",
-        "url": "https://closeclaw.in",
-        "contactPoint": {
-          "@type": "ContactPoint",
-          "email": "support@closeclaw.in",
-          "contactType": "customer support"
-        }
-      }
+      "publisher": { "@id": "https://closeclaw.in/#organization" }
     }
-    </script>
+  </script>
 
-  <!-- JSON-LD: FAQ (rich results in Google Search) -->
+  <!-- JSON-LD: FAQPage (rich results in Google Search) -->
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "FAQPage",
+      "@id": "https://closeclaw.in/#faq",
       "mainEntity": [
         {
           "@type": "Question",
           "name": "What is CloseClaw?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "CloseClaw gives you a dedicated AI assistant that runs on your own private server — always on, completely isolated, and ready on Telegram, Discord, or Slack within 60 seconds. Unlike shared AI services where up to 80% of compute is shared, your server belongs to you alone."
+            "text": "CloseClaw gives you a dedicated AI assistant that runs on your own private server — always on, completely isolated, and ready on Telegram, Discord, or Slack within 60 seconds. Unlike shared AI services where up to 80% of compute is shared, your server belongs to you alone. CloseClaw is a managed hosting service for OpenClaw, the open-source AI agent framework. It provisions a dedicated virtual machine, connects it to your preferred messaging channel, and handles all server management, security, and updates automatically."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between CloseClaw and OpenClaw?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "OpenClaw is an open-source AI agent framework that you can self-host. CloseClaw is a managed hosting service that runs OpenClaw on a dedicated private server for you. With OpenClaw alone, setup takes an average of 65 minutes of engineering time — you need to rent a cloud server, configure firewalls, wire up messaging integrations, and maintain everything ongoing. CloseClaw handles all of that in under 60 seconds. You get the full, unmodified OpenClaw feature set on private infrastructure without any of the maintenance burden."
           }
         },
         {
@@ -110,15 +186,15 @@
           "name": "Which AI models does CloseClaw support?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "CloseClaw supports Claude 4.6 Sonnet (Anthropic), GPT-5.2-codex (OpenAI), and Gemini 3 Flash Preview (Google). Your AI automatically routes up to 40% faster by picking the best model for each task — writing, coding, research, and more — with no manual configuration needed."
+            "text": "CloseClaw supports Claude 4.6 Sonnet (Anthropic), GPT-5.2-codex (OpenAI), and Gemini 3 Flash Preview (Google). Your AI automatically routes to the best model for each task — writing, coding, research, and more — reducing token latency by up to 40% compared to single-model setups. Model selection is fully automatic and requires no manual configuration."
           }
         },
         {
           "@type": "Question",
-          "name": "Is my data private?",
+          "name": "Is my data private with CloseClaw?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "According to security benchmarks, dedicated Virtual Machines isolate 100% of network traffic. Your AI runs on a dedicated virtual machine with no public IP address. It is never shared with other users, and your conversations never pass through CloseClaw's servers. Everything stays on your own private server."
+            "text": "Yes. Your AI runs on a dedicated virtual machine with no public IP address. It is never shared with other users, and your conversations never pass through CloseClaw's servers — traffic routes directly between your messaging app and your private VM. CloseClaw uses enterprise API tiers that explicitly guarantee your data is never used to train AI models. Independent security benchmarks confirm that dedicated VMs isolate 100% of network traffic between tenants."
           }
         },
         {
@@ -126,7 +202,7 @@
           "name": "How much does CloseClaw cost?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Plans start at $50/month (Base), $75/month (Guardian), and $100/month (Fortress). Each plan includes a monthly AI credit allowance ($20, $35, and $50 respectively). Active subscribers can top up credits anytime. On average, standard API integration projects cost $3,500+ in engineering time, making CloseClaw a 98% savings in initial setup. All plans are billed monthly with no lock-in."
+            "text": "Plans start at $50/month (Base), $75/month (Guardian), and $100/month (Fortress). Each plan includes a monthly AI credit allowance ($20, $35, and $50 respectively). Active subscribers can top up credits anytime in amounts of $5, $10, $25, $50, or $100. The market average for building a custom API integration is $3,500+ in engineering time — CloseClaw delivers a 98% savings in initial setup cost. All plans are billed monthly with no lock-in and cancel anytime."
           }
         },
         {
@@ -134,15 +210,15 @@
           "name": "Which messaging apps does CloseClaw work with?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "CloseClaw currently supports Telegram, Discord, and Slack. WhatsApp, Signal, iMessage, and Matrix are coming soon."
+            "text": "CloseClaw currently supports Telegram, Discord, and Slack. WhatsApp, Signal, iMessage, and Matrix are on the roadmap. You can connect your AI to any supported channel during the 60-second setup process, and switch channels or add new ones from the dashboard at any time."
           }
         },
         {
           "@type": "Question",
-          "name": "Do I need any technical knowledge to set it up?",
+          "name": "Do I need technical knowledge to set up CloseClaw?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "According to user data, manual server setup takes an average of 65 minutes of engineering time. With CloseClaw, we handle everything — server provisioning, security, uptime, and updates in under 60 seconds. You just connect your preferred messaging app and start chatting. There is no server to configure or maintain."
+            "text": "No. Manual OpenClaw server setup takes an average of 65 minutes of engineering time — including cloud server rental, firewall configuration, messaging integrations, and security hardening. With CloseClaw, we handle everything automatically in under 60 seconds. You connect your preferred messaging app, and your private AI is ready. There is no server to configure, no code to write, and no infrastructure to maintain."
           }
         },
         {
@@ -150,12 +226,12 @@
           "name": "Can my AI browse the web?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. Your AI can open websites, read pages, and research topics on your behalf — all from your private server. Web browsing is included in all plans."
+            "text": "Yes. Your AI can open websites, read pages, conduct research, and interact with web content on your behalf — all from your private server. Web browsing is powered by OpenClaw's headless browser and is included in all CloseClaw plans at no additional cost."
           }
         }
       ]
     }
-    </script>
+  </script>
 </head>
 
 <body>
