@@ -182,23 +182,27 @@ export const SolutionPage: React.FC = () => {
              <p>Enterprise-grade infrastructure designed for regulated industries that demand absolute data isolation.</p>
           </header>
 
-          <div className="bento-grid">
-            <Card className="bento-card" hoverable>
+          <div className="solution-features-grid">
+            <Card className="solution-feature-card" hoverable>
               <article>
-                <Shield size={24} className="icon-accent" />
+                <Shield size={28} className="icon-accent" />
                 <h3>Isolated Infrastructure</h3>
                 <p>Your AI instance runs on a dedicated server with no public IP address. It's completely isolated from other users — satisfying the strictest data sovereignty requirements in {solution.location}.</p>
               </article>
             </Card>
-            <Card className="bento-card" hoverable>
-              <Lock size={24} className="icon-accent" />
-              <h3>Zero Data Training</h3>
-              <p>We use enterprise APIs that guarantee your data is never used to train future AI models. What you say stays on your server — critical for {solution.industry} professionals handling confidential information.</p>
+            <Card className="solution-feature-card" hoverable>
+              <article>
+                <Lock size={28} className="icon-accent" />
+                <h3>Zero Data Training</h3>
+                <p>We use enterprise APIs that guarantee your data is never used to train future AI models. What you say stays on your server — critical for {solution.industry} professionals handling confidential information.</p>
+              </article>
             </Card>
-            <Card className="bento-card" hoverable>
-              <Zap size={24} className="icon-accent" />
-              <h3>Instant Deployment</h3>
-              <p>Get a private, production-ready AI server for your {solution.industry} workflows in {solution.location} in less than 60 seconds. No engineering team needed.</p>
+            <Card className="solution-feature-card" hoverable>
+              <article>
+                <Zap size={28} className="icon-accent" />
+                <h3>Instant Deployment</h3>
+                <p>Get a private, production-ready AI server for your {solution.industry} workflows in {solution.location} in less than 60 seconds. No engineering team needed.</p>
+              </article>
             </Card>
           </div>
         </section>

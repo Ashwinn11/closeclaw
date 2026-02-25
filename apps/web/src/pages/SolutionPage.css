@@ -3,6 +3,51 @@
    These complement LandingPage.css which is also imported
    ═══════════════════════════════════════════════════════ */
 
+/* ─── Features Grid ─── */
+.solution-features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.solution-feature-card {
+  padding: 0 !important;
+}
+
+.solution-feature-card article {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+}
+
+.solution-feature-card h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.solution-feature-card p {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--text-secondary, #ccc);
+  margin: 0;
+}
+
+.solution-feature-card .icon-accent {
+  color: var(--accent-primary, #ff5a5f);
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .solution-features-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ─── Stats Bar ─── */
 .solution-stats-bar {
   display: flex;
