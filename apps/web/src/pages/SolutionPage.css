@@ -167,6 +167,23 @@
 .solution-faq-section .section-header h2 {
   font-size: 1.35rem;
   font-weight: 600;
+  /* Reset LandingPage.css overrides that break flex alignment */
+  margin: 0;
+  background: none;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+  -webkit-text-fill-color: var(--text-primary, #fff);
+  color: var(--text-primary, #fff);
+  line-height: 1.3;
+}
+
+/* Ensure lucide icons in inline section headers sit vertically centered */
+.solution-compliance-section .section-header svg,
+.solution-local-section .section-header svg,
+.solution-workflow-section .section-header svg,
+.solution-faq-section .section-header svg {
+  flex-shrink: 0;
+  display: block;
 }
 
 .compliance-content,
