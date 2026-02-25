@@ -1,15 +1,15 @@
 {
   "rewrites": [
     {
-      "source": "/solutions/:id",
-      "destination": "/solutions/:id/index.html"
+      "source": "/solutions/:path",
+      "destination": "/solutions/:path/index.html"
     },
     {
       "source": "/vs-self-hosting",
       "destination": "/vs-self-hosting/index.html"
     },
     {
-      "source": "/(.*)",
+      "source": "/:path*",
       "destination": "/index.html"
     }
   ],
