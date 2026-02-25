@@ -6,6 +6,7 @@ import { Header } from '../components/ui/Header';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { BrandIcons } from '../components/ui/BrandIcons';
+import { ProductPreview } from '../components/ui/ProductPreview';
 import {
   Terminal, Shield, Zap, Lock, Scale,
   MapPin, BarChart3, BookOpen, MessageCircle, ChevronDown,
@@ -89,7 +90,15 @@ export const SolutionPage: React.FC = () => {
                 <div className="btn-icon"><BrandIcons.Discord /></div>
                 <span>Discord</span>
               </Button>
+              <Button className="channel-btn slack" onClick={() => setSetupChannel('Slack')}>
+                <div className="btn-icon"><BrandIcons.Slack /></div>
+                <span>Slack</span>
+              </Button>
             </nav>
+          </div>
+
+          <div className="hero-visual">
+            <ProductPreview />
           </div>
         </article>
 
