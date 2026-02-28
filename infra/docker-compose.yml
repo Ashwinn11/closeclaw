@@ -4,12 +4,11 @@
 # This template is deployed to ~/openclaw/docker-compose.yml on each VM
 # by pool-create.sh. It overrides the upstream openclaw docker-compose with:
 #   - network_mode: host  (required for device pairing auto-approval)
-#   - API key env vars    (read from VM's .env file)
+#   - proxy-only runtime  (VM does not hold provider API keys)
 #
 # The VM's .env must contain:
 #   OPENCLAW_IMAGE, OPENCLAW_GATEWAY_TOKEN, OPENCLAW_GATEWAY_BIND,
-#   OPENCLAW_CONFIG_DIR, OPENCLAW_WORKSPACE_DIR,
-#   GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY
+#   OPENCLAW_CONFIG_DIR, OPENCLAW_WORKSPACE_DIR
 # ============================================================================
 
 services:
@@ -20,9 +19,6 @@ services:
       HOME: /home/node
       TERM: xterm-256color
       OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN}
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     volumes:
       - ${OPENCLAW_CONFIG_DIR}:/home/node/.openclaw
       - ${OPENCLAW_WORKSPACE_DIR}:/home/node/.openclaw/workspace
@@ -46,9 +42,6 @@ services:
       HOME: /home/node
       TERM: xterm-256color
       OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN}
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       BROWSER: echo
     volumes:
       - ${OPENCLAW_CONFIG_DIR}:/home/node/.openclaw

@@ -2,7 +2,7 @@
 # ============================================================================
 # CloseClaw — Pool VM provisioner
 #
-# Creates GCP VMs from the openclaw-base-image-v3 machine image,
+# Creates GCP VMs from the openclaw-base-image-v4 machine image,
 # registers them in the Supabase instances table.
 #
 # Usage:
@@ -11,9 +11,8 @@
 # Prerequisites:
 #   - gcloud CLI authenticated with project glowing-harmony-362803
 #   - SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY set in infra/.env
-#   - GCP Secret Manager secrets set up (API keys)
-#   - Machine image "openclaw-base-image-v3" exists in the project
-#   - Service account closeclaw-gateway-sa has secretmanager.secretAccessor role
+#   - Machine image "openclaw-base-image-v4" exists in the project
+#   - Service account closeclaw-gateway-sa exists for VM identity/logging
 # ============================================================================
 
 set -euo pipefail
@@ -29,7 +28,7 @@ fi
 
 GCP_PROJECT="${GCP_PROJECT:-glowing-harmony-362803}"
 GCP_ZONE="${GCP_ZONE:-us-central1-a}"
-MACHINE_IMAGE="${MACHINE_IMAGE:-openclaw-base-image-v3}"
+MACHINE_IMAGE="${MACHINE_IMAGE:-openclaw-base-image-v4}"
 MACHINE_TYPE="${MACHINE_TYPE:-e2-medium}"
 VM_COUNT="${1:-1}"
 SA_EMAIL="closeclaw-gateway-sa@${GCP_PROJECT}.iam.gserviceaccount.com"
@@ -57,9 +56,8 @@ create_vm() {
   echo "  Creating VM: ${vm_name} (${MACHINE_TYPE}, ${GCP_ZONE})"
 
   # Startup script runs on first boot:
-  # 1. Fetches all API keys from Secret Manager → writes to .env
-  # 2. Sets unique gateway token
-  # 3. Starts docker compose
+  # 1. Writes proxy-only .env with unique gateway token
+  # 2. Starts docker compose
   local startup_script='#!/bin/bash
 set -e
 log() { echo "[closeclaw-startup] $*" | sudo tee -a /var/log/closeclaw-startup.log; }
