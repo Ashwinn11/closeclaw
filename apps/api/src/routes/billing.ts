@@ -6,113 +6,153 @@ import { createGatewayRpcClient } from '../services/gateway-rpc.js';
 
 export const billingRoutes = new Hono();
 
-// ─── Dodo Payments config ──────────────────────────────────────────────────────
+// ─── Razorpay config ───────────────────────────────────────────────────────────
 
-const DODO_API_KEY = process.env.DODO_API_KEY ?? '';
-const DODO_WEBHOOK_SECRET = process.env.DODO_WEBHOOK_SECRET ?? '';
-const DODO_BASE_URL = process.env.DODO_BASE_URL ?? 'https://live.dodopayments.com';
+const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID ?? '';
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET ?? '';
+const RAZORPAY_WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET ?? '';
 const APP_URL = process.env.APP_URL ?? 'http://localhost:5173';
 
-interface PlanConfig { productId: string; credits: number; planKey: string }
-interface PackConfig { productId: string; credits: number }
+const RAZORPAY_BASE_URL = 'https://api.razorpay.com/v1';
+
+// Basic auth header for Razorpay REST API
+function razorpayAuthHeader(): string {
+    return 'Basic ' + Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString('base64');
+}
+
+interface PlanConfig { planId: string; credits: number; planKey: string }
+interface PackConfig { amount: number; credits: number }   // amount in paise (INR) or smallest currency unit
 
 const PLANS: Record<string, PlanConfig> = {
-    'Base':     { productId: process.env.DODO_BASIC_PRODUCT_ID ?? '',      credits: 20, planKey: 'basic' },
-    'Guardian': { productId: process.env.DODO_GUARDIAN_PRODUCT_ID ?? '',   credits: 35, planKey: 'guardian' },
-    'Fortress': { productId: process.env.DODO_FORTRESS_PRODUCT_ID ?? '',   credits: 50, planKey: 'fortress' },
+    'Base': { planId: process.env.RAZORPAY_BASIC_PLAN_ID ?? '', credits: 20, planKey: 'basic' },
+    'Guardian': { planId: process.env.RAZORPAY_GUARDIAN_PLAN_ID ?? '', credits: 35, planKey: 'guardian' },
+    'Fortress': { planId: process.env.RAZORPAY_FORTRESS_PLAN_ID ?? '', credits: 50, planKey: 'fortress' },
 };
 
+// Credit pack amounts — stored in USD cents (Razorpay supports USD for international)
+// If billing in INR, convert accordingly in your Razorpay dashboard plans.
 const CREDIT_PACKS: Record<string, PackConfig> = {
-    '5':   { productId: process.env.DODO_CREDIT_5_PRODUCT_ID ?? '',   credits: 5 },
-    '10':  { productId: process.env.DODO_CREDIT_10_PRODUCT_ID ?? '',  credits: 10 },
-    '25':  { productId: process.env.DODO_CREDIT_25_PRODUCT_ID ?? '',  credits: 25 },
-    '50':  { productId: process.env.DODO_CREDIT_50_PRODUCT_ID ?? '',  credits: 50 },
-    '100': { productId: process.env.DODO_CREDIT_100_PRODUCT_ID ?? '', credits: 100 },
+    '5': { amount: 500, credits: 5 },
+    '10': { amount: 1000, credits: 10 },
+    '25': { amount: 2500, credits: 25 },
+    '50': { amount: 5000, credits: 50 },
+    '100': { amount: 10000, credits: 100 },
 };
 
-function getProductPlan(productId: string): PlanConfig | null {
-    return Object.values(PLANS).find(p => p.productId === productId) ?? null;
+function getPlanByPlanId(planId: string): PlanConfig | null {
+    return Object.values(PLANS).find(p => p.planId === planId) ?? null;
 }
 
-function getProductPack(productId: string): PackConfig | null {
-    return Object.values(CREDIT_PACKS).find(p => p.productId === productId) ?? null;
-}
 
-// ─── Dodo Payments API helpers ─────────────────────────────────────────────────
+// ─── Razorpay API helpers ──────────────────────────────────────────────────────
 
-async function createDodoCheckout(
-    productId: string,
+/**
+ * Create a Razorpay Subscription checkout link.
+ * Returns a short_url that redirects the customer to Razorpay's hosted checkout.
+ */
+async function createRazorpaySubscription(
+    planId: string,
     userId: string,
     userEmail: string,
-    returnUrl: string,
 ): Promise<string> {
-    const res = await fetch(`${DODO_BASE_URL}/checkouts`, {
+    // 1. Create subscription
+    const subRes = await fetch(`${RAZORPAY_BASE_URL}/subscriptions`, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${DODO_API_KEY}`,
+            'Authorization': razorpayAuthHeader(),
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            product_cart: [{ product_id: productId, quantity: 1 }],
+            plan_id: planId,
+            total_count: 120,         // 120 months = 10 years (effectively "until cancelled")
+            quantity: 1,
+            customer_notify: 1,
+            notes: { user_id: userId, user_email: userEmail },
+            // Notify Razorpay to send emails
+            notify_info: { notify_phone: '', notify_email: userEmail },
+        }),
+    });
+
+    if (!subRes.ok) {
+        const err = await subRes.text();
+        throw new Error(`Razorpay subscription error (${subRes.status}): ${err}`);
+    }
+
+    const sub = await subRes.json() as any;
+
+    // 2. Return hosted checkout short_url
+    const checkoutUrl = `https://rzp.io/l/${sub.short_url ?? sub.id}`;
+    // Razorpay returns short_url directly on the subscription object
+    return sub.short_url ?? checkoutUrl;
+}
+
+/**
+ * Create a Razorpay Payment Link for one-time credit top-ups.
+ */
+async function createRazorpayPaymentLink(
+    amount: number,   // in smallest currency unit (paise for INR, cents for USD)
+    currency: string,
+    userId: string,
+    userEmail: string,
+    credits: number,
+): Promise<string> {
+    const res = await fetch(`${RAZORPAY_BASE_URL}/payment_links`, {
+        method: 'POST',
+        headers: {
+            'Authorization': razorpayAuthHeader(),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            amount,
+            currency,
+            description: `CloseClaw Credit Top-up — ${credits} credits`,
             customer: { email: userEmail },
-            metadata: { user_id: userId },
-            return_url: returnUrl,
+            notes: { user_id: userId, credits: String(credits), type: 'topup' },
+            callback_url: `${APP_URL}/dashboard?cc_topup=success`,
+            callback_method: 'get',
         }),
     });
 
     if (!res.ok) {
         const err = await res.text();
-        throw new Error(`Dodo Payments error (${res.status}): ${err}`);
+        throw new Error(`Razorpay payment link error (${res.status}): ${err}`);
     }
 
     const json = await res.json() as any;
-    return json.checkout_url as string;
+    return json.short_url as string;
 }
 
-// Standard Webhooks signature verification (https://www.standardwebhooks.com)
-function verifyDodoWebhook(rawBody: string, webhookId: string, webhookTimestamp: string, webhookSignature: string): boolean {
-    if (!DODO_WEBHOOK_SECRET || !webhookId || !webhookTimestamp || !webhookSignature) return false;
-
-    const signedContent = `${webhookId}.${webhookTimestamp}.${rawBody}`;
-    // Secret may be prefixed with "whsec_" — strip it before base64-decoding
-    const secretB64 = DODO_WEBHOOK_SECRET.startsWith('whsec_')
-        ? DODO_WEBHOOK_SECRET.slice(6)
-        : DODO_WEBHOOK_SECRET;
-    const secretBytes = Buffer.from(secretB64, 'base64');
-
-    const hmac = createHmac('sha256', secretBytes);
-    hmac.update(signedContent);
-    const digest = hmac.digest('base64');
-
-    // Header may contain multiple signatures: "v1,sig1 v1,sig2"
-    return webhookSignature.split(' ').some(s => {
-        const [, sig] = s.split(',');
-        if (!sig) return false;
-        try {
-            return timingSafeEqual(Buffer.from(digest), Buffer.from(sig));
-        } catch {
-            return false;
-        }
-    });
+/**
+ * Verify Razorpay webhook signature.
+ * Razorpay signs with HMAC-SHA256 using the webhook secret.
+ */
+function verifyRazorpayWebhook(rawBody: string, signature: string): boolean {
+    if (!RAZORPAY_WEBHOOK_SECRET || !signature) return false;
+    const hmac = createHmac('sha256', RAZORPAY_WEBHOOK_SECRET);
+    hmac.update(rawBody);
+    const digest = hmac.digest('hex');
+    try {
+        return timingSafeEqual(Buffer.from(digest, 'hex'), Buffer.from(signature, 'hex'));
+    } catch {
+        return false;
+    }
 }
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
 // GET /api/billing/portal — Customer self-service portal URL
+// Razorpay doesn't have a hosted billing portal like Stripe/Dodo.
+// We redirect the customer to their subscription management page on Razorpay.
 billingRoutes.get('/portal', authMiddleware, async (c) => {
     const userId = c.get('userId' as never) as string;
     const { data: user } = await supabase.from('users')
-        .select('dodo_customer_id, plan').eq('id', userId).single();
-    if (!user?.dodo_customer_id || user.plan === 'none' || user.plan === 'cancelled')
+        .select('razorpay_subscription_id, plan').eq('id', userId).single();
+    if (!user?.razorpay_subscription_id || user.plan === 'none' || user.plan === 'cancelled')
         return c.json({ ok: false, error: 'No active subscription' }, 404);
 
-    const res = await fetch(
-        `${DODO_BASE_URL}/customers/${user.dodo_customer_id}/customer-portal/session`,
-        { method: 'POST', headers: { Authorization: `Bearer ${DODO_API_KEY}` } }
-    );
-    const json = await res.json() as any;
-    const portalUrl = json.link;
-    if (!portalUrl) return c.json({ ok: false, error: 'Portal unavailable' }, 500);
+    // Razorpay doesn't have a self-service portal URL — return a support email fallback
+    // or deep-link to their subscription page if you have the sub ID
+    const portalUrl = `mailto:support@closeclaw.in?subject=Manage%20Subscription&body=My%20subscription%20ID%3A%20${user.razorpay_subscription_id}`;
     return c.json({ ok: true, data: { portalUrl } });
 });
 
@@ -140,8 +180,6 @@ billingRoutes.get('/credits', authMiddleware, async (c) => {
 });
 
 // POST /api/billing/sync-usage
-// Calls sessions.usage on the user's gateway (ground truth) and deducts
-// the delta vs what's already logged. Safe to call repeatedly — only charges new usage since last sync.
 billingRoutes.post('/sync-usage', authMiddleware, async (c) => {
     const userId = c.get('userId' as never) as string;
 
@@ -168,7 +206,6 @@ billingRoutes.post('/sync-usage', authMiddleware, async (c) => {
         const usage = await rpc.call('sessions.usage', { startDate }) as any;
         currentCost = Number(usage?.totals?.totalCost ?? 0);
         currentTokens = Number(usage?.totals?.totalTokens ?? 0);
-
     } catch {
         return c.json({ ok: true, data: { synced: false, reason: 'gateway unreachable' } });
     } finally {
@@ -184,7 +221,6 @@ billingRoutes.post('/sync-usage', authMiddleware, async (c) => {
     if (currentCost >= lastCost) {
         delta = currentCost - lastCost;
     } else {
-        // Session reset
         delta = currentCost;
     }
 
@@ -210,17 +246,17 @@ billingRoutes.post('/checkout', authMiddleware, async (c) => {
 
     const plan = PLANS[planName];
     if (!plan) return c.json({ ok: false, error: 'Invalid plan' }, 400);
+    if (!plan.planId) return c.json({ ok: false, error: 'Plan not configured' }, 500);
 
     try {
-        const redirectUrl = `${APP_URL}/dashboard?cc_setup=resume`;
-        const checkoutUrl = await createDodoCheckout(plan.productId, userId, userEmail, redirectUrl);
+        const checkoutUrl = await createRazorpaySubscription(plan.planId, userId, userEmail);
         return c.json({ ok: true, data: { checkoutUrl } });
     } catch (err: any) {
         return c.json({ ok: false, error: err.message || 'Failed to create checkout' }, 500);
     }
 });
 
-// POST /api/billing/topup — Create credit top-up checkout URL
+// POST /api/billing/topup — Create credit top-up payment link
 billingRoutes.post('/topup', authMiddleware, async (c) => {
     const userId = c.get('userId' as never) as string;
     const userEmail = (c.get('userEmail' as never) as string) ?? '';
@@ -230,23 +266,27 @@ billingRoutes.post('/topup', authMiddleware, async (c) => {
     if (!creditPack) return c.json({ ok: false, error: 'Invalid credit pack' }, 400);
 
     try {
-        const redirectUrl = `${APP_URL}/dashboard?cc_topup=success`;
-        const checkoutUrl = await createDodoCheckout(creditPack.productId, userId, userEmail, redirectUrl);
+        // Currency: USD (cents). Change to 'INR' and multiply by ~83 if billing in INR.
+        const checkoutUrl = await createRazorpayPaymentLink(
+            creditPack.amount,
+            'USD',
+            userId,
+            userEmail,
+            creditPack.credits,
+        );
         return c.json({ ok: true, data: { checkoutUrl } });
     } catch (err: any) {
-        return c.json({ ok: false, error: err.message || 'Failed to create checkout' }, 500);
+        return c.json({ ok: false, error: err.message || 'Failed to create top-up link' }, 500);
     }
 });
 
-// POST /api/billing/webhook — Dodo Payments webhook (no auth — verified by Standard Webhooks HMAC)
+// POST /api/billing/webhook — Razorpay webhook (HMAC-SHA256 verified)
 billingRoutes.post('/webhook', async (c) => {
-    const webhookId        = c.req.header('webhook-id') ?? '';
-    const webhookTimestamp = c.req.header('webhook-timestamp') ?? '';
-    const webhookSignature = c.req.header('webhook-signature') ?? '';
+    const signature = c.req.header('x-razorpay-signature') ?? '';
     const rawBody = await c.req.text();
 
-    if (!verifyDodoWebhook(rawBody, webhookId, webhookTimestamp, webhookSignature)) {
-        console.error('[billing/webhook] Invalid signature');
+    if (!verifyRazorpayWebhook(rawBody, signature)) {
+        console.error('[billing/webhook] Invalid Razorpay signature');
         return c.json({ ok: false, error: 'Invalid signature' }, 401);
     }
 
@@ -257,63 +297,68 @@ billingRoutes.post('/webhook', async (c) => {
         return c.json({ ok: false, error: 'Invalid JSON' }, 400);
     }
 
-    const eventType = event.type as string;
-    const data = event.data ?? {};
-    const userId = data.metadata?.user_id as string | undefined;
+    const eventType = event.event as string;
+    const payload = event.payload ?? {};
 
-    console.log(`[billing/webhook] ${eventType} user=${userId ?? 'unknown'}`);
+    console.log(`[billing/webhook] ${eventType}`);
 
-    // ── New subscription activated ──────────────────────────────────────────
-    if (eventType === 'subscription.active') {
+    // ── Subscription activated ──────────────────────────────────────────────
+    // Fired when a subscription's first payment succeeds.
+    if (eventType === 'subscription.activated') {
+        const sub = payload.subscription?.entity ?? {};
+        const planId = String(sub.plan_id ?? '');
+        const subId = String(sub.id ?? '');
+        const userId = String(sub.notes?.user_id ?? '');
+        const renewsAt = sub.current_end ? new Date(sub.current_end * 1000).toISOString() : null;
+
         if (!userId) return c.json({ ok: true });
 
-        const productId = String(data.product_id ?? '');
-        const planCfg = getProductPlan(productId);
+        const planCfg = getPlanByPlanId(planId);
         if (!planCfg) {
-            console.warn(`[billing/webhook] Unknown product ${productId}`);
+            console.warn(`[billing/webhook] Unknown plan_id: ${planId}`);
             return c.json({ ok: true });
         }
-
-        const subscriptionId = String(data.subscription_id ?? '');
-        const customerId = String(data.customer?.customer_id ?? '');
 
         await supabase.from('users').update({
             plan: planCfg.planKey,
             api_credits: planCfg.credits,
             api_credits_cap: planCfg.credits,
-            dodo_subscription_id: subscriptionId,
-            dodo_customer_id: customerId,
-            subscription_renews_at: data.next_billing_date ?? null,
+            razorpay_subscription_id: subId,
+            subscription_renews_at: renewsAt,
         }).eq('id', userId);
 
-        console.log(`[billing/webhook] Subscription activated: user=${userId} plan=${planCfg.planKey} credits=${planCfg.credits}`);
+        console.log(`[billing/webhook] Subscription activated: user=${userId} plan=${planCfg.planKey}`);
     }
 
-    // ── Subscription renewed (monthly billing cycle) ────────────────────────
-    if (eventType === 'subscription.renewed') {
+    // ── Subscription charged (renewal) ─────────────────────────────────────
+    // Fired every billing cycle after the first.
+    if (eventType === 'subscription.charged') {
+        const sub = payload.subscription?.entity ?? {};
+        const planId = String(sub.plan_id ?? '');
+        const userId = String(sub.notes?.user_id ?? '');
+        const renewsAt = sub.current_end ? new Date(sub.current_end * 1000).toISOString() : null;
+
         if (!userId) return c.json({ ok: true });
 
-        const productId = String(data.product_id ?? '');
-        const planCfg = getProductPlan(productId);
+        const planCfg = getPlanByPlanId(planId);
         if (!planCfg) return c.json({ ok: true });
 
-        // Reset credits to plan level (not additive — avoids hoarding)
-        await supabase.from('users')
-            .update({
-                api_credits: planCfg.credits,
-                api_credits_cap: planCfg.credits,
-                subscription_renews_at: data.next_billing_date ?? null,
-            })
-            .eq('id', userId);
+        await supabase.from('users').update({
+            api_credits: planCfg.credits,
+            api_credits_cap: planCfg.credits,
+            subscription_renews_at: renewsAt,
+        }).eq('id', userId);
 
         console.log(`[billing/webhook] Subscription renewed: user=${userId} credits reset to ${planCfg.credits}`);
     }
 
-    // ── Subscription cancelled ──────────────────────────────────────────────
+    // ── Subscription cancelled ─────────────────────────────────────────────
     if (eventType === 'subscription.cancelled') {
+        const sub = payload.subscription?.entity ?? {};
+        const userId = String(sub.notes?.user_id ?? '');
+
         if (!userId) return c.json({ ok: true });
 
-        // Keep remaining credits; just update plan status
         await supabase.from('users')
             .update({ plan: 'cancelled' })
             .eq('id', userId);
@@ -321,21 +366,19 @@ billingRoutes.post('/webhook', async (c) => {
         console.log(`[billing/webhook] Subscription cancelled: user=${userId}`);
     }
 
-    // ── One-time payment succeeded (credit top-ups) ─────────────────────────
-    if (eventType === 'payment.succeeded') {
-        if (!userId) return c.json({ ok: true });
+    // ── Payment captured (one-time credit top-ups) ─────────────────────────
+    if (eventType === 'payment.captured') {
+        const payment = payload.payment?.entity ?? {};
+        const userId = String(payment.notes?.user_id ?? '');
+        const credits = Number(payment.notes?.credits ?? 0);
+        const type = String(payment.notes?.type ?? '');
 
-        const productId = String(data.product_cart?.[0]?.product_id ?? '');
-        const packCfg = getProductPack(productId);
+        if (!userId || type !== 'topup' || credits <= 0) return c.json({ ok: true });
 
-        // Skip if not a recognised credit pack
-        if (!packCfg) return c.json({ ok: true });
-
-        await supabase.rpc('add_api_credits', { p_user_id: userId, p_amount: packCfg.credits });
-        // Raise the cap to reflect the new higher balance
+        await supabase.rpc('add_api_credits', { p_user_id: userId, p_amount: credits });
         await supabase.rpc('sync_credits_cap', { p_user_id: userId });
 
-        console.log(`[billing/webhook] Credits topped up: user=${userId} +${packCfg.credits}`);
+        console.log(`[billing/webhook] Credits topped up: user=${userId} +${credits}`);
     }
 
     return c.json({ ok: true });

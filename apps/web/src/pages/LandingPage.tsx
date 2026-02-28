@@ -52,10 +52,10 @@ export const LandingPage: React.FC = () => {
           <div className="hero-content">
             <div className="sovereign-badge">OpenClaw ready in 60s</div>
             <h1 className="hero-title">
-              Private OpenClaw <span className="text-gradient">Hosting.</span>
+              Private OpenClaw <span className="text-gradient">Platform.</span>
             </h1>
             <p className="hero-subtitle">
-    No public IPs, no setup, no maintenance. Just your agent, ready on Telegram, Discord, or Slack.
+    No setup, no Docker, no maintenance. Your private OpenClaw instance, ready on Telegram, Discord, or Slack in 60 seconds.
             </p>
             
             <div className="channel-buttons">
@@ -104,7 +104,7 @@ export const LandingPage: React.FC = () => {
           <div className="trust-divider"></div>
           <div className="trust-item">
             <span className="trust-val">100%</span>
-            <span className="trust-label">Private VMs</span>
+            <span className="trust-label">Private Instances</span>
           </div>
         </section>
 
@@ -117,8 +117,7 @@ export const LandingPage: React.FC = () => {
             <div className="comparison-left">
               <h4 className="method-label">Running it yourself</h4>
               <ul className="effort-list">
-                <li><span>Renting and configuring a cloud server</span> <span className="time">20 min</span></li>
-                <li><span>Setting up firewalls and security</span> <span className="time">15 min</span></li>
+                <li><span>Running Docker, VPS setup, and security config</span> <span className="time">20 min</span></li>
                 <li><span>Wiring up Telegram, Discord, Slack</span> <span className="time">30 min</span></li>
                 <li><span>Fixing it when it goes down at 2am</span> <span className="time">???</span></li>
                 <li><span>Keeping everything up to date</span> <span className="time">∞</span></li>
@@ -140,7 +139,7 @@ export const LandingPage: React.FC = () => {
               </p>
               <div className="instant-features">
                 <div className="i-feature"><Check size={16} /> 99.9% Uptime SLA</div>
-                <div className="i-feature"><Check size={16} /> 100% Isolated VMs</div>
+                <div className="i-feature"><Check size={16} /> 100% Isolated Instances</div>
                 <div className="i-feature"><Check size={16} /> Zero maintenance</div>
               </div>
             </div>
@@ -150,8 +149,8 @@ export const LandingPage: React.FC = () => {
         {/* Features Section - Simple & Secure */}
         <section id="features" className="features-section">
           <div className="section-header">
-             <h2>Standard OpenClaw. Better Infra.</h2>
-             <p>We don't touch the OpenClaw source. We just handle the VMs, security isolation, and 99.9% uptime so you don't have to.</p>
+             <h2>Standard OpenClaw. Managed for you.</h2>
+             <p>We don't touch the OpenClaw source. We just handle the deployment, security isolation, and 99.9% uptime so you don't have to.</p>
           </div>
 
           <div className="bento-grid">

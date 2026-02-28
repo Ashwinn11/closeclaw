@@ -18,13 +18,13 @@ const TOS_CONTENT = (
     <p>By accessing or using CloseClaw ("the Service"), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service.</p>
 
     <h3>2. Description of Service</h3>
-    <p>CloseClaw provides dedicated AI assistant infrastructure — a private server running AI models accessible via Telegram, Discord, and Slack. We provision, maintain, and secure the infrastructure on your behalf.</p>
+    <p>CloseClaw is a managed deployment platform for OpenClaw — an open-source AI framework. We automate the provisioning, hosting, and lifecycle management of private OpenClaw instances, accessible via Telegram, Discord, and Slack. We handle all technical complexity on your behalf.</p>
 
     <h3>3. Account Registration</h3>
     <p>You must create an account using Google Sign-In. You are responsible for maintaining the confidentiality of your account and for all activity that occurs under it. You must be at least 18 years old to use the Service.</p>
 
     <h3>4. Billing and Payments</h3>
-    <p>Plans are billed monthly through Dodo Payments. All charges are in USD. Subscriptions renew automatically unless cancelled. API credit usage is deducted from your monthly credit balance. Credits do not roll over between billing cycles. One-time credit top-ups are non-refundable.</p>
+    <p>Plans are billed monthly through Razorpay. All charges are in USD. Subscriptions renew automatically unless cancelled. API credit usage is deducted from your monthly credit balance. Credits do not roll over between billing cycles. One-time credit top-ups are non-refundable.</p>
 
     <h3>5. Acceptable Use</h3>
     <p>You may not use the Service to:</p>
@@ -73,7 +73,7 @@ const PRIVACY_CONTENT = (
     <p>Conversations happen between you and your dedicated AI server. We do not have access to your conversation history. The AI providers (Anthropic, OpenAI, Google) process your messages under their own privacy policies.</p>
 
     <h3>Third-Party Services</h3>
-    <p>We use Dodo Payments for payment processing, Supabase for account data, and Google Cloud for infrastructure. Each service operates under its own privacy policy.</p>
+    <p>We use Razorpay for payment processing, Supabase for account data, and Google Cloud for infrastructure. Each service operates under its own privacy policy.</p>
 
     <h3>Data Retention</h3>
     <p>Account data is retained while your subscription is active. After cancellation, we delete your infrastructure and associated data within 30 days. You can request deletion at any time by emailing us.</p>
@@ -91,8 +91,8 @@ const REFUND_CONTENT = (
     <p className="info-modal-updated">Last updated: February 2026</p>
 
     <h3>Subscription Policy</h3>
-    <p>Due to the immediate cost of provisioning dedicated cloud infrastructure (GCP) and the upfront allocation of AI credits, all CloseClaw subscriptions are non-refundable. Once a subscription is started, your private server is provisioned and resources are reserved for your exclusive use.</p>
-    <p>You may cancel your subscription at any time through the dashboard. Upon cancellation, your server and AI assistant will remain active until the end of your current billing period, after which your infrastructure will be decommissioned.</p>
+    <p>Due to the immediate cost of provisioning a dedicated OpenClaw instance on GCP and the upfront allocation of AI credits, all CloseClaw subscriptions are non-refundable. Once a subscription is started, your private instance is provisioned and resources are reserved exclusively for you.</p>
+    <p>You may cancel your subscription at any time through the dashboard. Upon cancellation, your OpenClaw instance will remain active until the end of your current billing period, after which it will be decommissioned.</p>
 
     <h3>AI Credit Top-ups</h3>
     <p>One-time credit top-up packs ($5 to $100) are non-refundable as they are provisioned and made available for use immediately upon purchase.</p>
@@ -107,10 +107,10 @@ const ABOUT_CONTENT = (
     <div className="info-modal-about-hero">
       <img src="/logo.png" alt="CloseClaw" className="info-modal-logo" />
       <h2>CloseClaw</h2>
-      <p className="info-modal-tagline">Private AI infrastructure for everyone.</p>
+      <p className="info-modal-tagline">Managed OpenClaw deployment for everyone.</p>
     </div>
 
-    <p>CloseClaw gives you a dedicated AI assistant that runs on your own private server — always on, completely isolated, and ready on Telegram, Discord, or Slack within 60 seconds.</p>
+    <p>CloseClaw gives you a private OpenClaw instance — always on, completely isolated, and ready on Telegram, Discord, or Slack within 60 seconds. No Docker. No server setup. No maintenance.</p>
 
     <p>Most people who want a self-hosted AI assistant face hours of setup: renting servers, configuring firewalls, wiring up bots, and maintaining everything when it breaks. We eliminate all of that.</p>
 
@@ -118,7 +118,7 @@ const ABOUT_CONTENT = (
     <p>Your assistant runs on a dedicated virtual machine that belongs to you alone. It's never shared with other users. Conversations are private by design — they never pass through our servers. We handle provisioning, uptime, updates, and security so you don't have to.</p>
 
     <h3>The technology</h3>
-    <p>CloseClaw is built on top of <a href="https://docs.openclaw.ai" target="_blank" rel="noopener noreferrer">OpenClaw</a>, an open-source AI gateway that handles model routing, web browsing, and multi-channel integrations. Your assistant can use Claude, GPT, Gemini, and more — automatically picking the right model for each task.</p>
+    <p>CloseClaw is built on top of <a href="https://docs.openclaw.ai" target="_blank" rel="noopener noreferrer">OpenClaw</a>, an open-source AI framework that handles model routing, web browsing, and multi-channel integrations. Your OpenClaw instance can use Claude, GPT, Gemini, and more — automatically picking the right model for each task.</p>
 
     <h3>Get in touch</h3>
     <p>We're a small team that cares deeply about privacy and developer experience. Reach us at <a href="mailto:support@closeclaw.in">support@closeclaw.in</a> — we read every message.</p>
