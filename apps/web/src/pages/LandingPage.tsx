@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../context/AuthContext';
 import { createCheckout } from '../lib/api';
 import './LandingPage.css';
@@ -13,6 +14,8 @@ import { InfoModal, type InfoModalType } from '../components/ui/InfoModal';
 import { LoginModal } from '../components/ui/LoginModal';
 import { ProductPreview } from '../components/ui/ProductPreview';
 import { Check, Terminal } from 'lucide-react';
+import { useSEO } from '../hooks/useSEO';
+import solutions from '../data/pseo-solutions.json';
 
 type ChannelType = 'Telegram' | 'Discord' | 'Slack';
 
@@ -22,6 +25,21 @@ export const LandingPage: React.FC = () => {
   const [setupChannel, setSetupChannel] = useState<ChannelType | null>(null);
   const [infoModal, setInfoModal] = useState<InfoModalType | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const featuredSolutions = solutions.slice(0, 6);
+  const seo = useSEO({
+    title: 'Managed OpenClaw Hosting',
+    description:
+      'Managed OpenClaw platform for teams that need private, dedicated infrastructure. Deploy in 60 seconds on Telegram, Discord, or Slack with zero Docker and zero maintenance.',
+    keywords: [
+      'managed OpenClaw hosting',
+      'OpenClaw cloud hosting',
+      'OpenClaw without Docker',
+      'private OpenClaw server',
+      'OpenClaw managed service',
+      'OpenClaw enterprise hosting',
+    ],
+    path: '/',
+  });
 
   const handleGetStarted = async (planName: string = 'Guardian') => {
     // If user buys directly from pricing, clear any half-finished channel setups
@@ -43,6 +61,19 @@ export const LandingPage: React.FC = () => {
 
   return (
     <div className="landing-page">
+      <Helmet>
+        <title>{seo.title}</title>
+        <meta name="description" content={seo.description} />
+        <meta name="keywords" content={seo.keywords} />
+        <link rel="canonical" href={seo.canonical} />
+        <meta property="og:title" content={seo.ogTitle} />
+        <meta property="og:description" content={seo.ogDescription} />
+        <meta property="og:url" content={seo.ogUrl} />
+        <meta property="og:image" content={seo.ogImage} />
+        <meta name="twitter:title" content={seo.ogTitle} />
+        <meta name="twitter:description" content={seo.ogDescription} />
+        <script type="application/ld+json">{JSON.stringify(seo.webPageSchema)}</script>
+      </Helmet>
       <NebulaBackground />
       <Header />
 
@@ -285,6 +316,30 @@ export const LandingPage: React.FC = () => {
             </div>
           </div>
         </section>
+
+        <section id="solutions" className="solutions-preview-section">
+          <div className="section-header">
+            <h2>Explore Industry Solutions</h2>
+            <p>Browse targeted OpenClaw deployments by city and regulated use case.</p>
+          </div>
+          <div className="solutions-preview-links">
+            <a href="/openclaw-hosting">OpenClaw Hosting (No Docker)</a>
+            <a href="/openclaw-deploy-guide">OpenClaw Deployment Guide</a>
+            <a href="/openclaw-telegram-discord">OpenClaw on Telegram and Discord</a>
+          </div>
+          <div className="solutions-preview-grid">
+            {featuredSolutions.map((solution) => (
+              <article key={solution.id} className="solution-preview-card">
+                <p className="solution-preview-kicker">{solution.industry} • {solution.location}</p>
+                <h3>
+                  <a href={`/solutions/${solution.id}`}>{solution.title}</a>
+                </h3>
+                <p>{solution.description}</p>
+              </article>
+            ))}
+          </div>
+          <a className="solutions-preview-link" href="/solutions">See all {solutions.length} solution pages</a>
+        </section>
       </main>
 
         {/* Unified Glass Footer */}
@@ -305,14 +360,15 @@ export const LandingPage: React.FC = () => {
               <div className="footer-links-col">
                  <h4>Product</h4>
                  <a href="#features">Features</a>
-                 <a href="#features">Use Cases</a>
+                 <a href="/solutions">Use Cases</a>
+                 <a href="/vs-self-hosting">Self-Hosting vs Managed</a>
                  <a href="#pricing">Pricing</a>
               </div>
 
               <div className="footer-links-col">
                  <h4>Resources</h4>
                  <a href="https://docs.openclaw.ai" target="_blank" rel="noopener noreferrer">OpenClaw Docs</a>
-                 <a href="https://discord.gg/closeclaw" target="_blank" rel="noopener noreferrer">Discord</a>
+                 <a href="https://discord.gg/KzYDpdwm" target="_blank" rel="noopener noreferrer">Discord</a>
                  <a href="https://status.closeclaw.in">Status</a>
               </div>
 
@@ -346,5 +402,3 @@ export const LandingPage: React.FC = () => {
     </div>
   );
 };
-
-

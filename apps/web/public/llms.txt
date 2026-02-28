@@ -96,5 +96,5 @@ CloseClaw runs the official, unmodified OpenClaw open-source core. All OpenClaw 
 - Website: https://closeclaw.in
 - Support: support@closeclaw.in
 - Status: https://status.closeclaw.in
-- Discord community: https://discord.gg/closeclaw
+- Discord community: https://discord.gg/KzYDpdwm
 - OpenClaw documentation: https://docs.openclaw.ai

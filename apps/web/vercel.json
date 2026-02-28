@@ -1,6 +1,22 @@
 {
   "rewrites": [
     {
+      "source": "/openclaw-hosting",
+      "destination": "/openclaw-hosting/index.html"
+    },
+    {
+      "source": "/openclaw-deploy-guide",
+      "destination": "/openclaw-deploy-guide/index.html"
+    },
+    {
+      "source": "/openclaw-telegram-discord",
+      "destination": "/openclaw-telegram-discord/index.html"
+    },
+    {
+      "source": "/solutions",
+      "destination": "/solutions/index.html"
+    },
+    {
       "source": "/solutions/:slug",
       "destination": "/solutions/:slug/index.html"
     },

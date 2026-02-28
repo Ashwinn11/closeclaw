@@ -96,16 +96,17 @@ export const Header: React.FC = () => {
     <div className="header-container">
       <header className="glass-header">
         {/* Left: Logo */}
-        <div className="header-left">
+        <a className="header-left" href="/">
           <img src="/logo.png" alt="CloseClaw Logo" className="logo-icon" />
           <span className="logo-text">CloseClaw</span>
-        </div>
+        </a>
 
         {/* Center: Navigation - Hidden on mobile, shown on desktop */}
         <nav className="header-nav">
-          <a href="#features" className="nav-link">Features</a>
-          <a href="#how-it-works" className="nav-link">How it Works</a>
-          <a href="#pricing" className="nav-link">Pricing</a>
+          <a href="/#features" className="nav-link">Features</a>
+          <a href="/openclaw-hosting" className="nav-link">Hosting</a>
+          <a href="/solutions" className="nav-link">Solutions</a>
+          <a href="/vs-self-hosting" className="nav-link">Compare</a>
         </nav>
 
         <div className="header-right">
@@ -141,9 +142,10 @@ export const Header: React.FC = () => {
 
       {mobileMenuOpen && (
         <div className="mobile-menu-dropdown">
-          <a href="#features" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Features</a>
-          <a href="#how-it-works" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>How it Works</a>
-          <a href="#pricing" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
+          <a href="/#features" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Features</a>
+          <a href="/openclaw-hosting" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Hosting</a>
+          <a href="/solutions" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Solutions</a>
+          <a href="/vs-self-hosting" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Compare</a>
           {!isAuthenticated && (
             <Button
               variant="primary"
