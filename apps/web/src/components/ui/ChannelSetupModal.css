@@ -3,8 +3,9 @@
 .setup-modal {
     width: 95vw;
     max-width: 900px;
-    height: 660px;
-    max-height: 92vh;
+    height: auto;
+    min-height: 400px;
+    max-height: 70vh;
     overflow: hidden;
     background: transparent !important;
     backdrop-filter: none !important;
@@ -49,7 +50,7 @@
 
 .modal-content {
     background: #0C0E14;
-    padding: 2.5rem 3rem 2rem;
+    padding: 2.5rem 3rem 0;
     flex: 1;
     overflow: hidden;
     display: flex;
@@ -745,7 +746,7 @@
     }
 
     .modal-content {
-        padding: 1.5rem;
+        padding: 1.5rem 1.5rem 0;
     }
 
     .token-step {
