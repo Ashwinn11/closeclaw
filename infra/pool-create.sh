@@ -110,6 +110,12 @@ cat > "$USER_DIR/.openclaw/openclaw.json" << CFGEOF
       "dangerouslyDisableDeviceAuth": true,
       "dangerouslyAllowHostHeaderOriginFallback": true
     }
+  },
+  "tools": {
+    "exec": {
+      "security": "full",
+      "ask": "off"
+    }
   }
 }
 CFGEOF
