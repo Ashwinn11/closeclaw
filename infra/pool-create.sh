@@ -76,6 +76,45 @@ OPENCLAW_WORKSPACE_DIR=$USER_DIR/.openclaw/workspace
 EOF
 log ".env written with gateway token."
 
+# ── Write Gateway config ──
+# Required for token-only auth over LAN (no device keypair, no TLS).
+# Without these flags, openclaw v2026.2.27+ will either refuse to start
+# or reject proxy connections.
+#
+# browser.executablePath is resolved dynamically from the Playwright cache
+# so it survives Playwright version bumps in the Docker image.
+mkdir -p "$USER_DIR/.openclaw"
+
+CHROME_BIN=$(sudo docker run --rm --entrypoint find \
+  ${OPENCLAW_IMAGE:-openclaw:latest} \
+  /home/node/.cache/ms-playwright -name chrome -path "*/chrome-linux64/*" -type f 2>/dev/null | head -1)
+CHROME_BIN="${CHROME_BIN:-/home/node/.cache/ms-playwright/chromium-1208/chrome-linux64/chrome}"
+log "Resolved Chromium path: $CHROME_BIN"
+
+cat > "$USER_DIR/.openclaw/openclaw.json" << CFGEOF
+{
+  "browser": {
+    "enabled": true,
+    "headless": true,
+    "noSandbox": true,
+    "executablePath": "$CHROME_BIN"
+  },
+  "gateway": {
+    "mode": "local",
+    "port": 18789,
+    "auth": {
+      "mode": "token"
+    },
+    "controlUi": {
+      "allowInsecureAuth": true,
+      "dangerouslyDisableDeviceAuth": true,
+      "dangerouslyAllowHostHeaderOriginFallback": true
+    }
+  }
+}
+CFGEOF
+log "openclaw.json written with controlUi + browser config."
+
 # ── Start Gateway ──
 log "Starting openclaw gateway..."
 sudo docker compose up -d openclaw-gateway
