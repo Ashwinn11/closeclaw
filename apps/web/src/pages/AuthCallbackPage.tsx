@@ -25,17 +25,56 @@ export const AuthCallbackPage: React.FC = () => {
   useEffect(() => {
     if (error) return;
 
-    // If no error, wait for session to be established then redirect
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
+    let isActive = true;
+    const timeoutId = window.setTimeout(() => {
+      if (isActive) {
+        setError('Sign-in timed out. Please try again.');
+      }
+    }, 12000);
+
+    const resolveSession = async () => {
+      const { data: initialData } = await supabase.auth.getSession();
+      if (initialData.session && isActive) {
         navigate('/dashboard', { replace: true });
-      } else if (event === 'INITIAL_SESSION' && !session) {
-        // No session established — something went wrong
-        setError('Authentication failed. Please try again.');
+        return;
+      }
+
+      // Handle PKCE callback explicitly when `code` is present.
+      const code = new URLSearchParams(window.location.search).get('code');
+      if (code) {
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (exchangeError && isActive) {
+          setError(exchangeError.message || 'Authentication failed. Please try again.');
+          return;
+        }
+      }
+
+      // Redirect immediately if a session already exists.
+      const { data, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError && isActive) {
+        setError(sessionError.message || 'Authentication failed. Please try again.');
+        return;
+      }
+      if (data.session && isActive) {
+        navigate('/dashboard', { replace: true });
+      }
+    };
+
+    void resolveSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isActive) return;
+      if (session) {
+        window.clearTimeout(timeoutId);
+        navigate('/dashboard', { replace: true });
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isActive = false;
+      window.clearTimeout(timeoutId);
+      subscription.unsubscribe();
+    };
   }, [navigate, error]);
 
   return (
