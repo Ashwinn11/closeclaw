@@ -6,7 +6,7 @@ import { setupChannel, verifyChannel, getMyInstance, getCredits, createCheckout,
 import { buildChannelPatch } from '../../lib/channelConfig';
 import { useGateway } from '../../context/GatewayContext';
 import { useError } from '../../context/ErrorContext';
-import { Check, Loader2, AlertCircle, Bot, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Check, Loader2, AlertCircle, Bot, ArrowRight } from 'lucide-react';
 import './ChannelSetupModal.css';
 
 type ChannelType = 'Telegram' | 'Discord' | 'Slack';
