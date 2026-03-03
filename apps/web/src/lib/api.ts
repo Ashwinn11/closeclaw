@@ -188,6 +188,19 @@ export async function getBillingPortal(): Promise<{ portalUrl: string }> {
     return request('/api/billing/portal');
 }
 
+export async function changePlan(planName: string): Promise<{ plan: string; credits: number }> {
+    return request('/api/billing/change-plan', {
+        method: 'POST',
+        body: JSON.stringify({ planName }),
+    });
+}
+
+export async function cancelSubscription(): Promise<{ message: string }> {
+    return request('/api/billing/cancel', {
+        method: 'POST',
+    });
+}
+
 // ─── Auth ──────────────────────────────────────────────────────────────────
 
 export async function getMe() {

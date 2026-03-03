@@ -280,6 +280,141 @@ billingRoutes.post('/topup', authMiddleware, async (c) => {
     }
 });
 
+// POST /api/billing/change-plan — Upgrade or downgrade an existing subscription
+billingRoutes.post('/change-plan', authMiddleware, async (c) => {
+    const userId = c.get('userId' as never) as string;
+    const { planName } = await c.req.json() as { planName: string };
+
+    const newPlan = PLANS[planName];
+    if (!newPlan) return c.json({ ok: false, error: 'Invalid plan' }, 400);
+    if (!newPlan.planId) return c.json({ ok: false, error: 'Plan not configured' }, 500);
+
+    // Get current subscription ID
+    const { data: user } = await supabase.from('users')
+        .select('razorpay_subscription_id, plan')
+        .eq('id', userId).single();
+
+    if (!user?.razorpay_subscription_id) {
+        return c.json({ ok: false, error: 'No active subscription to change' }, 400);
+    }
+
+    if (user.plan === newPlan.planKey) {
+        return c.json({ ok: false, error: 'Already on this plan' }, 400);
+    }
+
+    try {
+        // Razorpay: PATCH subscription with new plan_id
+        // This prorates the charge automatically
+        const res = await fetch(`${RAZORPAY_BASE_URL}/subscriptions/${user.razorpay_subscription_id}`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': razorpayAuthHeader(),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                plan_id: newPlan.planId,
+                schedule_change_at: 'now',   // Apply immediately (or 'cycle_end' to wait)
+            }),
+        });
+
+        if (!res.ok) {
+            const err = await res.text();
+            throw new Error(`Razorpay error (${res.status}): ${err}`);
+        }
+
+        // Update local DB immediately (webhook will confirm, but this gives instant UI feedback)
+        await supabase.from('users').update({
+            plan: newPlan.planKey,
+            api_credits: newPlan.credits,
+            api_credits_cap: newPlan.credits,
+        }).eq('id', userId);
+
+        return c.json({ ok: true, data: { plan: newPlan.planKey, credits: newPlan.credits } });
+    } catch (err: any) {
+        return c.json({ ok: false, error: err.message || 'Failed to change plan' }, 500);
+    }
+});
+
+// POST /api/billing/cancel — Cancel subscription (stays active until end of billing period)
+billingRoutes.post('/cancel', authMiddleware, async (c) => {
+    const userId = c.get('userId' as never) as string;
+
+    const { data: user } = await supabase.from('users')
+        .select('razorpay_subscription_id, plan')
+        .eq('id', userId).single();
+
+    if (!user?.razorpay_subscription_id || user.plan === 'none' || user.plan === 'cancelled') {
+        return c.json({ ok: false, error: 'No active subscription' }, 400);
+    }
+
+    try {
+        // Cancel at end of current billing cycle (cancel_at_cycle_end = true)
+        const res = await fetch(`${RAZORPAY_BASE_URL}/subscriptions/${user.razorpay_subscription_id}/cancel`, {
+            method: 'POST',
+            headers: {
+                'Authorization': razorpayAuthHeader(),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ cancel_at_cycle_end: 1 }),
+        });
+
+        if (!res.ok) {
+            const err = await res.text();
+            throw new Error(`Razorpay error (${res.status}): ${err}`);
+        }
+
+        return c.json({ ok: true, data: { message: 'Subscription will cancel at end of billing period' } });
+    } catch (err: any) {
+        return c.json({ ok: false, error: err.message || 'Failed to cancel subscription' }, 500);
+    }
+});
+
+// GET /api/billing/subscription — Get current subscription details
+billingRoutes.get('/subscription', authMiddleware, async (c) => {
+    const userId = c.get('userId' as never) as string;
+
+    const { data: user } = await supabase.from('users')
+        .select('razorpay_subscription_id, plan, api_credits, api_credits_cap, subscription_renews_at')
+        .eq('id', userId).single();
+
+    if (!user?.razorpay_subscription_id || user.plan === 'none') {
+        return c.json({ ok: true, data: { active: false, plan: 'none' } });
+    }
+
+    // Fetch live subscription status from Razorpay
+    try {
+        const res = await fetch(`${RAZORPAY_BASE_URL}/subscriptions/${user.razorpay_subscription_id}`, {
+            headers: { 'Authorization': razorpayAuthHeader() },
+        });
+        const sub = await res.json() as any;
+
+        return c.json({
+            ok: true,
+            data: {
+                active: sub.status === 'active',
+                plan: user.plan,
+                status: sub.status,           // 'created' | 'authenticated' | 'active' | 'paused' | 'halted' | 'cancelled' | 'completed' | 'expired'
+                api_credits: Number(user.api_credits),
+                api_credits_cap: Number(user.api_credits_cap),
+                subscription_renews_at: user.subscription_renews_at,
+                cancel_at_cycle_end: sub.ended_at ? true : false,
+            },
+        });
+    } catch {
+        // Fallback to DB data if Razorpay is unreachable
+        return c.json({
+            ok: true,
+            data: {
+                active: user.plan !== 'cancelled',
+                plan: user.plan,
+                api_credits: Number(user.api_credits),
+                api_credits_cap: Number(user.api_credits_cap),
+                subscription_renews_at: user.subscription_renews_at,
+            },
+        });
+    }
+});
+
 // POST /api/billing/webhook — Razorpay webhook (HMAC-SHA256 verified)
 billingRoutes.post('/webhook', async (c) => {
     const signature = c.req.header('x-razorpay-signature') ?? '';

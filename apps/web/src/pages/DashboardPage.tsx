@@ -8,7 +8,7 @@ import { Button } from '../components/ui/Button';
 import { BrandIcons } from '../components/ui/BrandIcons';
 import { ChannelSetupModal } from '../components/ui/ChannelSetupModal';
 import { CronSetupModal } from '../components/ui/CronSetupModal';
-import { listChannels, disconnectChannel, type ChannelConnection, getCronJobs, getUsageStats, getCredits, createTopup, createCheckout, getBillingPortal, removeCronJob, patchGatewayConfig } from '../lib/api';
+import { listChannels, disconnectChannel, type ChannelConnection, getCronJobs, getUsageStats, getCredits, createTopup, createCheckout, removeCronJob, patchGatewayConfig, changePlan, cancelSubscription } from '../lib/api';
 import { NebulaBackground } from '../components/ui/NebulaBackground';
 import { ChatTab } from '../components/chat/ChatTab';
 import {
@@ -43,32 +43,32 @@ const upcomingChannels = [
 
 const predefinedCrons = [
   {
-     title: 'Morning Briefing',
-     description: "Give me a morning briefing every day at 7 AM — weather, calendar, important emails, and top news",
-     icon: <Sun size={20} color="#FFBD2E" />,
-     schedule: '0 7 * * *',
-     text: 'Give me a morning briefing — weather, calendar, important emails, and top news'
+    title: 'Morning Briefing',
+    description: "Give me a morning briefing every day at 7 AM — weather, calendar, important emails, and top news",
+    icon: <Sun size={20} color="#FFBD2E" />,
+    schedule: '0 7 * * *',
+    text: 'Give me a morning briefing — weather, calendar, important emails, and top news'
   },
   {
-     title: 'Bill Reminder',
-     description: "Remind me before every bill and subscription renewal — Netflix, AWS, rent, everything",
-     icon: <Receipt size={20} color="#ECEEF3" />,
-     schedule: '0 9 1 * *',
-     text: 'Remind me to check upcoming bills and subscription renewals'
+    title: 'Bill Reminder',
+    description: "Remind me before every bill and subscription renewal — Netflix, AWS, rent, everything",
+    icon: <Receipt size={20} color="#ECEEF3" />,
+    schedule: '0 9 1 * *',
+    text: 'Remind me to check upcoming bills and subscription renewals'
   },
   {
-     title: 'Price Drop Alert',
-     description: "Watch this product link and alert me instantly when the price drops",
-     icon: <TrendingDown size={20} color="#2AABEE" />,
-     schedule: '0 * * * *',
-     text: 'Check the price of previously tracked items and alert me if there is a drop'
+    title: 'Price Drop Alert',
+    description: "Watch this product link and alert me instantly when the price drops",
+    icon: <TrendingDown size={20} color="#2AABEE" />,
+    schedule: '0 * * * *',
+    text: 'Check the price of previously tracked items and alert me if there is a drop'
   },
   {
-     title: 'Server Down Alert',
-     description: "Monitor my website every 5 minutes and alert me immediately if it goes down",
-     icon: <Server size={20} color="#FF5F56" />,
-     schedule: '*/5 * * * *',
-     text: 'Check if my website is online and responsive'
+    title: 'Server Down Alert',
+    description: "Monitor my website every 5 minutes and alert me immediately if it goes down",
+    icon: <Server size={20} color="#FF5F56" />,
+    schedule: '*/5 * * * *',
+    text: 'Check if my website is online and responsive'
   }
 ];
 
@@ -90,7 +90,7 @@ export const DashboardPage: React.FC = () => {
   const [cronView, setCronView] = useState<'active' | 'templates'>('active');
   const [setupChannel, setSetupChannel] = useState<ChannelType | null>(null);
   const [showCronModal, setShowCronModal] = useState(false);
-  const [initialCronValues, setInitialCronValues] = useState<{name?: string, schedule?: string, text?: string} | undefined>(undefined);
+  const [initialCronValues, setInitialCronValues] = useState<{ name?: string, schedule?: string, text?: string } | undefined>(undefined);
   const [connections, setConnections] = useState<ChannelConnection[]>([]);
   const [loadingChannels, setLoadingChannels] = useState(true);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
@@ -114,8 +114,9 @@ export const DashboardPage: React.FC = () => {
   // Billing tab state
   const [billingCredits, setBillingCredits] = useState<{ api_credits: number; plan: string; api_credits_cap: number; subscription_renews_at: string | null } | null>(null);
   const [billingLoading, setBillingLoading] = useState(false);
-  const [openingPortal, setOpeningPortal] = useState(false);
   const [subscribing, setSubscribing] = useState<string | null>(null);
+  const [changingPlan, setChangingPlan] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState(false);
 
   const PLAN_DISPLAY: Record<string, string> = { basic: 'Base', guardian: 'Guardian', fortress: 'Fortress' };
 
@@ -131,7 +132,7 @@ export const DashboardPage: React.FC = () => {
     }
   }, [showError]);
 
-const fetchCron = useCallback(async () => {
+  const fetchCron = useCallback(async () => {
     setLoadingCron(true);
     setCronError(null);
     try {
@@ -241,22 +242,11 @@ const fetchCron = useCallback(async () => {
     if (gatewayStatus !== 'connected') return;
     const unsubscribe = subscribe(['chat'], (_event, payload: any) => {
       if (payload?.state !== 'final') return;
-      getCredits().then(setBillingCredits).catch(() => {});
+      getCredits().then(setBillingCredits).catch(() => { });
     });
     return unsubscribe;
   }, [gatewayStatus, subscribe]);
 
-  const handleManageSubscription = async () => {
-    setOpeningPortal(true);
-    try {
-      const { portalUrl } = await getBillingPortal();
-      window.open(portalUrl, '_blank');
-    } catch (err: any) {
-      showError(err.message || 'Portal unavailable', 'Billing Error');
-    } finally {
-      setOpeningPortal(false);
-    }
-  };
 
   const handleSubscribe = async (planName: string) => {
     setSubscribing(planName);
@@ -266,6 +256,32 @@ const fetchCron = useCallback(async () => {
     } catch (err: any) {
       showError(err.message || 'Failed to create checkout', 'Billing Error');
       setSubscribing(null);
+    }
+  };
+
+  const handleChangePlan = async (planName: string) => {
+    if (!window.confirm(`Are you sure you want to switch to the ${planName} plan? This will take effect immediately.`)) return;
+    setChangingPlan(planName);
+    try {
+      await changePlan(planName);
+      await fetchBilling();
+    } catch (err: any) {
+      showError(err.message || 'Failed to change plan', 'Plan Change Error');
+    } finally {
+      setChangingPlan(null);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!window.confirm('Are you sure you want to cancel? Your OpenClaw instance will remain active until the end of your current billing period.')) return;
+    setCancelling(true);
+    try {
+      await cancelSubscription();
+      await fetchBilling();
+    } catch (err: any) {
+      showError(err.message || 'Failed to cancel subscription', 'Cancellation Error');
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -280,7 +296,7 @@ const fetchCron = useCallback(async () => {
       (_event, payload: any) => {
         if (payload?.state !== 'final') return;
         // Silent refresh after agent conversation completes
-        getCronJobs().then(setCronJobs).catch(() => {});
+        getCronJobs().then(setCronJobs).catch(() => { });
       }
     );
 
@@ -307,7 +323,7 @@ const fetchCron = useCallback(async () => {
             setUsageData({ ...data.value, apiCreditsLeft });
             setUpdatedFields(new Set(['tokensUsed', 'costThisMonth']));
           })
-          .catch(() => {});
+          .catch(() => { });
       }
     );
 
@@ -341,7 +357,7 @@ const fetchCron = useCallback(async () => {
         await patchGatewayConfig({
           channels: { [conn.channel]: null },
           plugins: { entries: { [conn.channel]: null } },
-        }).catch(() => {}); // best-effort
+        }).catch(() => { }); // best-effort
       }
       await disconnectChannel(connectionId);
       await fetchChannels();
@@ -500,20 +516,20 @@ const fetchCron = useCallback(async () => {
                             <Icon />
                           </div>
                           <div className="channel-status top-right">
-                             {status === 'active' ? (
-                               <div className="status-badge connected"><Wifi size={12} /> Connected</div>
-                             ) : status === 'pending' ? (
-                               <div className="status-badge pending"><Loader2 size={12} className="spin" /> Provisioning</div>
-                             ) : (
-                               <div className="status-badge disconnected"><WifiOff size={12} /> Not Connected</div>
-                             )}
+                            {status === 'active' ? (
+                              <div className="status-badge connected"><Wifi size={12} /> Connected</div>
+                            ) : status === 'pending' ? (
+                              <div className="status-badge pending"><Loader2 size={12} className="spin" /> Provisioning</div>
+                            ) : (
+                              <div className="status-badge disconnected"><WifiOff size={12} /> Not Connected</div>
+                            )}
                           </div>
                         </div>
                         <div className="channel-content">
-                            <h3>{ch.name}</h3>
-                            <p className="channel-desc">{ch.description}</p>
+                          <h3>{ch.name}</h3>
+                          <p className="channel-desc">{ch.description}</p>
                         </div>
-                        
+
                         {status === 'active' || status === 'pending' ? (
                           <Button
                             className="channel-action-btn"
@@ -546,20 +562,20 @@ const fetchCron = useCallback(async () => {
                   const Icon = ch.icon || MessageCircle;
                   return (
                     <Card key={ch.name} className="channel-card coming-soon" hoverable={false}>
-                        <div className="channel-card-header">
-                          <div className="channel-card-icon" style={{ '--ch-color': ch.color } as React.CSSProperties}>
-                            <Icon />
-                          </div>
-                          <div className="channel-status top-right">
-                               <div className="status-badge coming-soon">SOON</div>
-                          </div>
+                      <div className="channel-card-header">
+                        <div className="channel-card-icon" style={{ '--ch-color': ch.color } as React.CSSProperties}>
+                          <Icon />
                         </div>
-                        <div className="channel-content">
-                            <h3>{ch.name}</h3>
-                            <p className="channel-desc">{ch.description}</p>
+                        <div className="channel-status top-right">
+                          <div className="status-badge coming-soon">SOON</div>
                         </div>
-                        {/* No buttons for upcoming channels */}
-                        <div className="coming-soon-spacer"></div>
+                      </div>
+                      <div className="channel-content">
+                        <h3>{ch.name}</h3>
+                        <p className="channel-desc">{ch.description}</p>
+                      </div>
+                      {/* No buttons for upcoming channels */}
+                      <div className="coming-soon-spacer"></div>
                     </Card>
                   );
                 })}
@@ -569,21 +585,21 @@ const fetchCron = useCallback(async () => {
 
           {/* Chat Tab */}
           {activeTab === 'chat' && (
-             <ChatTab />
+            <ChatTab />
           )}
 
-{/* Cron Tab */}
+          {/* Cron Tab */}
           {activeTab === 'cron' && (
             <div className="cron-tab">
               <div className="cron-header-redesigned">
                 <div className="cron-tabs-toggle">
-                  <button 
+                  <button
                     className={`cron-tab-btn ${cronView === 'active' ? 'active' : ''}`}
                     onClick={() => setCronView('active')}
                   >
                     Active Tasks
                   </button>
-                  <button 
+                  <button
                     className={`cron-tab-btn ${cronView === 'templates' ? 'active' : ''}`}
                     onClick={() => setCronView('templates')}
                   >
@@ -593,9 +609,9 @@ const fetchCron = useCallback(async () => {
               </div>
 
               <div className="pro-tip-banner">
-                 <Smartphone size={16} />
-                 <span><span className="highlight">Tip:</span> Your AI sends alerts straight to your phone — connect Telegram or Discord and never miss a beat.</span>
-                 <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('connections'); }} className="connect-link">Connect <ArrowRight size={12} /></a>
+                <Smartphone size={16} />
+                <span><span className="highlight">Tip:</span> Your AI sends alerts straight to your phone — connect Telegram or Discord and never miss a beat.</span>
+                <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('connections'); }} className="connect-link">Connect <ArrowRight size={12} /></a>
               </div>
 
               {cronView === 'active' ? (
@@ -613,12 +629,12 @@ const fetchCron = useCallback(async () => {
                     </div>
                   ) : cronJobs.length === 0 ? (
                     <div className="empty-state-redesigned">
-                       <div className="empty-icon"><Clock size={48} strokeWidth={1} /></div>
-                       <h3>Nothing scheduled yet</h3>
-                       <p>Your AI can send you daily briefings, price alerts, bill reminders — set it once and let it run</p>
-                       <Button className="create-cron-pill large" onClick={() => handleNewCron()}>
-                          Create Cron Job
-                       </Button>
+                      <div className="empty-icon"><Clock size={48} strokeWidth={1} /></div>
+                      <h3>Nothing scheduled yet</h3>
+                      <p>Your AI can send you daily briefings, price alerts, bill reminders — set it once and let it run</p>
+                      <Button className="create-cron-pill large" onClick={() => handleNewCron()}>
+                        Create Cron Job
+                      </Button>
                     </div>
                   ) : (
                     <div className="cron-list">
@@ -634,8 +650,8 @@ const fetchCron = useCallback(async () => {
                             </div>
                             <div className="cron-meta">
                               <code>{
-                                typeof job.schedule === 'string' 
-                                  ? job.schedule 
+                                typeof job.schedule === 'string'
+                                  ? job.schedule
                                   : (job.schedule?.expr || job.schedule?.at || JSON.stringify(job.schedule))
                               }</code>
                               {job.lastRunAt && (
@@ -654,10 +670,10 @@ const fetchCron = useCallback(async () => {
                           </button>
                         </Card>
                       ))}
-                      
+
                       <div className="fab-container">
                         <Button className="create-cron-pill" onClick={() => handleNewCron()}>
-                            <Plus size={16} /> Create New Job
+                          <Plus size={16} /> Create New Job
                         </Button>
                       </div>
                     </div>
@@ -665,29 +681,29 @@ const fetchCron = useCallback(async () => {
                 </div>
               ) : (
                 <div className="cron-templates-view">
-                   <div className="templates-grid">
-                      {predefinedCrons.map((template, idx) => (
-                        <Card key={idx} className="template-card" hoverable onClick={() => {
-                           handleNewCron({
-                              name: template.title,
-                              schedule: template.schedule,
-                              text: template.text
-                           });
-                        }}>
-                           <div className="template-header">
-                              <div className="template-icon">{template.icon}</div>
-                              <h4>{template.title}</h4>
-                           </div>
-                           <p>{template.description}</p>
-                        </Card>
-                      ))}
-                   </div>
-                   
-                   <div className="fab-container">
-                      <Button className="create-cron-pill" onClick={() => handleNewCron()}>
-                          Create Custom Job
-                      </Button>
-                   </div>
+                  <div className="templates-grid">
+                    {predefinedCrons.map((template, idx) => (
+                      <Card key={idx} className="template-card" hoverable onClick={() => {
+                        handleNewCron({
+                          name: template.title,
+                          schedule: template.schedule,
+                          text: template.text
+                        });
+                      }}>
+                        <div className="template-header">
+                          <div className="template-icon">{template.icon}</div>
+                          <h4>{template.title}</h4>
+                        </div>
+                        <p>{template.description}</p>
+                      </Card>
+                    ))}
+                  </div>
+
+                  <div className="fab-container">
+                    <Button className="create-cron-pill" onClick={() => handleNewCron()}>
+                      Create Custom Job
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
@@ -772,10 +788,10 @@ const fetchCron = useCallback(async () => {
                         <div className="section-label" style={{ marginTop: '2rem' }}>Top Up Credits</div>
                         <div className="topup-grid">
                           {[
-                            { pack: '5',   label: '$5',   credits: 5   },
-                            { pack: '10',  label: '$10',  credits: 10  },
-                            { pack: '25',  label: '$25',  credits: 25  },
-                            { pack: '50',  label: '$50',  credits: 50  },
+                            { pack: '5', label: '$5', credits: 5 },
+                            { pack: '10', label: '$10', credits: 10 },
+                            { pack: '25', label: '$25', credits: 25 },
+                            { pack: '50', label: '$50', credits: 50 },
                             { pack: '100', label: '$100', credits: 100 },
                           ].map(({ pack, label, credits }) => (
                             <Card key={pack} className="topup-card" hoverable onClick={() => !toppingUp && handleTopup(pack)}>
@@ -821,9 +837,9 @@ const fetchCron = useCallback(async () => {
                   ? new Date(billingCredits.subscription_renews_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                   : null;
                 const planData = [
-                  { name: 'Base',     tagline: 'Light & always on',        price: '$50',  features: ['Dedicated AI on Telegram, Discord & Slack', '$20 in AI credits/mo', 'Your own private server, never shared'] },
-                  { name: 'Guardian', tagline: 'For daily productivity',    price: '$75',  features: ['Everything in Base', '$35 in AI credits/mo', 'Best for heavy daily use', 'Multi-step tasks & deep research'], isPopular: true },
-                  { name: 'Fortress', tagline: 'For power users',           price: '$100', features: ['Everything in Guardian', '$50 in AI credits/mo', 'Built for automation & long sessions', 'Top up credits anytime'] },
+                  { name: 'Base', tagline: 'Light & always on', price: '$50', features: ['Dedicated AI on Telegram, Discord & Slack', '$20 in AI credits/mo', 'Your own private server, never shared'] },
+                  { name: 'Guardian', tagline: 'For daily productivity', price: '$75', features: ['Everything in Base', '$35 in AI credits/mo', 'Best for heavy daily use', 'Multi-step tasks & deep research'], isPopular: true },
+                  { name: 'Fortress', tagline: 'For power users', price: '$100', features: ['Everything in Guardian', '$50 in AI credits/mo', 'Built for automation & long sessions', 'Top up credits anytime'] },
                 ];
                 if (isActive) return (
                   <>
@@ -847,20 +863,62 @@ const fetchCron = useCallback(async () => {
                       <div className="bt-renews">
                         {renewsAt ? `Renews ${renewsAt}` : 'Renews monthly'}
                       </div>
-                      <Button variant="secondary" onClick={handleManageSubscription} disabled={openingPortal}>
-                        {openingPortal
-                          ? <><Loader2 size={14} className="spin" /> Opening...</>
-                          : <><Zap size={14} /> Manage Subscription</>}
+                      <Button variant="secondary" size="sm" onClick={handleCancel} disabled={cancelling}
+                        style={{ marginTop: '0.75rem', color: '#ff5f56' }}>
+                        {cancelling
+                          ? <><Loader2 size={14} className="spin" /> Cancelling...</>
+                          : 'Cancel Subscription'}
                       </Button>
                     </Card>
+
+                    <div className="bt-plans-header" style={{ marginTop: '2rem' }}>
+                      <h2>Change Plan</h2>
+                      <p>Switch plans instantly — charges are prorated</p>
+                    </div>
+                    <div className="bt-plan-grid">
+                      {planData.map((p) => {
+                        const isCurrent = p.name === planName;
+                        const isUpgrade = !isCurrent;
+                        return (
+                          <Card key={p.name}
+                            className={`bt-plan-item${p.isPopular ? ' popular' : ''}${isCurrent ? ' current' : ''}${changingPlan ? ' disabled' : ''}`}
+                            onClick={() => !isCurrent && !changingPlan && handleChangePlan(p.name)}
+                          >
+                            {p.isPopular && <div className="bt-popular-badge">Most Popular</div>}
+                            {isCurrent && <div className="bt-popular-badge" style={{ background: '#27C93F' }}>Current</div>}
+                            <div className="bt-item-top">
+                              <div className="bt-item-name">{p.name}</div>
+                              <div className="bt-item-tagline">{p.tagline}</div>
+                            </div>
+                            <div className="bt-item-price">{p.price}<span className="bt-period">/mo</span></div>
+                            <ul className="bt-item-features">
+                              {p.features.map((f, i) => (
+                                <li key={i}><Check size={13} style={{ color: '#27C93F', flexShrink: 0, marginTop: '1px' }} />{f}</li>
+                              ))}
+                            </ul>
+                            <Button
+                              variant={isCurrent ? 'secondary' : (p.isPopular ? 'primary' : 'secondary')}
+                              fullWidth
+                              disabled={isCurrent || !!changingPlan}
+                              onClick={(e: React.MouseEvent) => { e.stopPropagation(); if (!isCurrent) handleChangePlan(p.name); }}>
+                              {changingPlan === p.name
+                                ? <><Loader2 size={14} className="spin" /> Switching...</>
+                                : isCurrent
+                                  ? 'Current Plan'
+                                  : isUpgrade ? `Switch to ${p.name}` : `Switch to ${p.name}`}
+                            </Button>
+                          </Card>
+                        );
+                      })}
+                    </div>
 
                     <div className="section-label" style={{ marginTop: '2rem' }}>Top Up Credits</div>
                     <div className="topup-grid">
                       {[
-                        { pack: '5',   label: '$5',   credits: 5   },
-                        { pack: '10',  label: '$10',  credits: 10  },
-                        { pack: '25',  label: '$25',  credits: 25  },
-                        { pack: '50',  label: '$50',  credits: 50  },
+                        { pack: '5', label: '$5', credits: 5 },
+                        { pack: '10', label: '$10', credits: 10 },
+                        { pack: '25', label: '$25', credits: 25 },
+                        { pack: '50', label: '$50', credits: 50 },
                         { pack: '100', label: '$100', credits: 100 },
                       ].map(({ pack, label, credits }) => (
                         <Card key={pack} className="topup-card" hoverable onClick={() => !toppingUp && handleTopup(pack)}>
@@ -991,7 +1049,7 @@ const fetchCron = useCallback(async () => {
           onClose={() => setShowCronModal(false)}
           onSuccess={() => {
             // Silent refresh — no loading spinner
-            getCronJobs().then(setCronJobs).catch(() => {});
+            getCronJobs().then(setCronJobs).catch(() => { });
           }}
           initialValues={initialCronValues}
         />
