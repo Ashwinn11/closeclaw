@@ -8,6 +8,7 @@ import { Button } from '../components/ui/Button';
 import { BrandIcons } from '../components/ui/BrandIcons';
 import { ChannelSetupModal } from '../components/ui/ChannelSetupModal';
 import { CronSetupModal } from '../components/ui/CronSetupModal';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { listChannels, disconnectChannel, type ChannelConnection, getCronJobs, getUsageStats, getCredits, createTopup, createCheckout, removeCronJob, patchGatewayConfig, changePlan, cancelSubscription } from '../lib/api';
 import { NebulaBackground } from '../components/ui/NebulaBackground';
 import { ChatTab } from '../components/chat/ChatTab';
@@ -117,6 +118,7 @@ export const DashboardPage: React.FC = () => {
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [changingPlan, setChangingPlan] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'change-plan' | 'cancel'; planName?: string } | null>(null);
 
   const PLAN_DISPLAY: Record<string, string> = { basic: 'Base', guardian: 'Guardian', fortress: 'Fortress' };
 
@@ -260,28 +262,40 @@ export const DashboardPage: React.FC = () => {
   };
 
   const handleChangePlan = async (planName: string) => {
-    if (!window.confirm(`Are you sure you want to switch to the ${planName} plan? This will take effect immediately.`)) return;
-    setChangingPlan(planName);
-    try {
-      await changePlan(planName);
-      await fetchBilling();
-    } catch (err: any) {
-      showError(err.message || 'Failed to change plan', 'Plan Change Error');
-    } finally {
-      setChangingPlan(null);
-    }
+    setConfirmAction({ type: 'change-plan', planName });
   };
 
   const handleCancel = async () => {
-    if (!window.confirm('Are you sure you want to cancel? Your OpenClaw instance will remain active until the end of your current billing period.')) return;
-    setCancelling(true);
-    try {
-      await cancelSubscription();
-      await fetchBilling();
-    } catch (err: any) {
-      showError(err.message || 'Failed to cancel subscription', 'Cancellation Error');
-    } finally {
-      setCancelling(false);
+    setConfirmAction({ type: 'cancel' });
+  };
+
+  const executeConfirmedAction = async () => {
+    if (!confirmAction) return;
+
+    if (confirmAction.type === 'change-plan' && confirmAction.planName) {
+      setChangingPlan(confirmAction.planName);
+      setConfirmAction(null);
+      try {
+        await changePlan(confirmAction.planName);
+        await fetchBilling();
+      } catch (err: any) {
+        showError(err.message || 'Failed to change plan', 'Plan Change Error');
+      } finally {
+        setChangingPlan(null);
+      }
+    }
+
+    if (confirmAction.type === 'cancel') {
+      setCancelling(true);
+      setConfirmAction(null);
+      try {
+        await cancelSubscription();
+        await fetchBilling();
+      } catch (err: any) {
+        showError(err.message || 'Failed to cancel subscription', 'Cancellation Error');
+      } finally {
+        setCancelling(false);
+      }
     }
   };
 
@@ -1052,6 +1066,24 @@ export const DashboardPage: React.FC = () => {
             getCronJobs().then(setCronJobs).catch(() => { });
           }}
           initialValues={initialCronValues}
+        />
+      )}
+
+      {/* Confirm Modal (plan change / cancel) */}
+      {confirmAction && (
+        <ConfirmModal
+          title={confirmAction.type === 'cancel' ? 'Cancel Subscription' : 'Change Plan'}
+          message={
+            confirmAction.type === 'cancel'
+              ? 'Your OpenClaw instance will remain active until the end of your current billing period. After that, it will be decommissioned.'
+              : `Switch to the ${confirmAction.planName} plan? The charge difference will be prorated and your credits will be adjusted immediately.`
+          }
+          confirmLabel={confirmAction.type === 'cancel' ? 'Cancel Subscription' : `Switch to ${confirmAction.planName}`}
+          cancelLabel="Go Back"
+          danger={confirmAction.type === 'cancel'}
+          loading={confirmAction.type === 'cancel' ? cancelling : !!changingPlan}
+          onConfirm={executeConfirmedAction}
+          onCancel={() => setConfirmAction(null)}
         />
       )}
     </div>

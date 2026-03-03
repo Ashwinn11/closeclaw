@@ -289,9 +289,9 @@ billingRoutes.post('/change-plan', authMiddleware, async (c) => {
     if (!newPlan) return c.json({ ok: false, error: 'Invalid plan' }, 400);
     if (!newPlan.planId) return c.json({ ok: false, error: 'Plan not configured' }, 500);
 
-    // Get current subscription ID
+    // Get current subscription + credits
     const { data: user } = await supabase.from('users')
-        .select('razorpay_subscription_id, plan')
+        .select('razorpay_subscription_id, plan, api_credits, api_credits_cap')
         .eq('id', userId).single();
 
     if (!user?.razorpay_subscription_id) {
@@ -301,6 +301,11 @@ billingRoutes.post('/change-plan', authMiddleware, async (c) => {
     if (user.plan === newPlan.planKey) {
         return c.json({ ok: false, error: 'Already on this plan' }, 400);
     }
+
+    // Find the OLD plan's base credits so we can compute the delta
+    const oldPlanCfg = Object.values(PLANS).find(p => p.planKey === user.plan);
+    const oldBaseCredits = oldPlanCfg?.credits ?? 0;
+    const creditDelta = newPlan.credits - oldBaseCredits;  // e.g. Guardian(35) - Base(20) = +15
 
     try {
         // Razorpay: PATCH subscription with new plan_id
@@ -322,14 +327,19 @@ billingRoutes.post('/change-plan', authMiddleware, async (c) => {
             throw new Error(`Razorpay error (${res.status}): ${err}`);
         }
 
-        // Update local DB immediately (webhook will confirm, but this gives instant UI feedback)
+        // Add the credit difference to existing balance (preserves top-ups)
+        // e.g. user had $25 (Base $20 + $5 top-up) → upgrade to Guardian → $25 + $15 = $40
+        const currentCredits = Number(user.api_credits ?? 0);
+        const newCredits = Math.max(0, currentCredits + creditDelta);
+        const newCap = Number(user.api_credits_cap ?? 0) + creditDelta;
+
         await supabase.from('users').update({
             plan: newPlan.planKey,
-            api_credits: newPlan.credits,
-            api_credits_cap: newPlan.credits,
+            api_credits: newCredits,
+            api_credits_cap: Math.max(0, newCap),
         }).eq('id', userId);
 
-        return c.json({ ok: true, data: { plan: newPlan.planKey, credits: newPlan.credits } });
+        return c.json({ ok: true, data: { plan: newPlan.planKey, credits: newCredits } });
     } catch (err: any) {
         return c.json({ ok: false, error: err.message || 'Failed to change plan' }, 500);
     }
