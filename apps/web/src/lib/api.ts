@@ -169,9 +169,9 @@ export async function getCredits(): Promise<{
 }> {
     // Mock credits for demo/bypass
     return {
-        api_credits: 2000,
-        plan: 'Platform',
-        api_credits_cap: 5000,
+        api_credits: 20,
+        plan: 'platform',
+        api_credits_cap: 20,
         subscription_renews_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     };
 }
