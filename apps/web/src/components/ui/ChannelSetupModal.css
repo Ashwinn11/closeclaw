@@ -2,24 +2,36 @@
 
 .setup-modal {
     width: 95vw;
-    max-width: 900px;
+    max-width: 1000px;
     height: auto;
-    min-height: 400px;
-    max-height: 70vh;
+    min-height: 500px;
+    max-height: 85vh;
     overflow: hidden;
-    background: transparent !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background: rgba(12, 14, 20, 0.4) !important;
+    backdrop-filter: blur(60px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(60px) saturate(200%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
     position: relative;
     padding: 0 !important;
-    border-radius: 20px;
-    animation: modalSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5),
-        inset 0 1px 1px rgba(255, 255, 255, 0.05);
+    border-radius: 40px;
+    animation: modalScaleIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 60px 120px rgba(0, 0, 0, 0.8),
+        inset 0 1px 1px rgba(255, 255, 255, 0.03);
     cursor: default;
     display: flex;
     flex-direction: column;
+}
+
+@keyframes modalScaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(40px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
 }
 
 @keyframes modalSlideUp {
@@ -27,6 +39,7 @@
         opacity: 0;
         transform: translateY(20px) scale(0.97);
     }
+
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
@@ -38,23 +51,21 @@
 .modal-titlebar {
     display: flex;
     align-items: center;
-    padding: 20px 24px;
-    background: rgba(12, 14, 20, 0.75);
-    backdrop-filter: blur(60px) saturate(200%);
-    -webkit-backdrop-filter: blur(60px) saturate(200%);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 28px 40px;
+    background: rgba(255, 255, 255, 0.01);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     position: relative;
     z-index: 10;
     flex-shrink: 0;
 }
 
 .modal-content {
-    background: #0C0E14;
-    padding: 2.5rem 3rem 0;
+    padding: 3rem 4rem;
     flex: 1;
-    overflow: hidden;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
+    min-height: 0;
 }
 
 /* ─── Traffic Lights ──────────────────────────────────────────────────────── */
@@ -174,19 +185,20 @@
 }
 
 .progress-dot {
-    width: 10px;
-    height: 10px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid rgba(255, 255, 255, 0.15);
-    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.05);
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     flex-shrink: 0;
 }
 
 .progress-dot.active {
     background: var(--accent-primary);
-    border-color: var(--accent-primary);
-    box-shadow: 0 0 12px var(--accent-glow);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 20px var(--accent-glow);
+    transform: scale(1.2);
 }
 
 .progress-dot.done {
@@ -215,6 +227,7 @@
         opacity: 0;
         transform: translateX(10px);
     }
+
     to {
         opacity: 1;
         transform: translateX(0);
@@ -232,7 +245,8 @@
     flex: 1;
     min-height: 0;
     display: grid;
-    grid-template-columns: 1fr 1px 260px;
+    grid-template-columns: 1fr 1px 320px;
+    gap: 4rem;
 }
 
 /* ─── Left: Scrollable Instructions ──────────────────────────────────────── */
@@ -466,8 +480,13 @@
 }
 
 @keyframes spinAnim {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* ─── Verified Step ───────────────────────────────────────────────────────── */
@@ -569,8 +588,8 @@
     flex-shrink: 0;
 }
 
-.step-actions > button,
-.step-actions > .btn {
+.step-actions>button,
+.step-actions>.btn {
     flex: 1;
     font-size: var(--text-sm);
     height: 44px;
@@ -605,7 +624,8 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
     margin-bottom: 1.5rem;
-    padding-top: 12px; /* prevent popular badge from clipping */
+    padding-top: 12px;
+    /* prevent popular badge from clipping */
 }
 
 .billing-step .plan-card {

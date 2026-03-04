@@ -55,12 +55,15 @@ export const LandingPage: React.FC = () => {
         {/* Hero Section */}
         <section className="hero-section">
           <div className="hero-content">
-            <div className="sovereign-badge">OpenClaw ready in 60s</div>
+            <div className="sovereign-badge">
+              <span className="hero-badge-dot"></span>
+              OpenClaw ready in 60s
+            </div>
             <h1 className="hero-title">
-              Private OpenClaw <span className="text-gradient">Platform.</span>
+              Sovereign <span className="text-gradient">Platform.</span>
             </h1>
             <p className="hero-subtitle">
-              No setup, no Docker, no maintenance. Your private OpenClaw instance, ready on Telegram, Discord, or Slack in 60 seconds.
+              Your private agentic workspace. Decentralized, isolated, and deployed instantly to your favorite channels.
             </p>
 
             <div className="channel-buttons">
@@ -115,37 +118,36 @@ export const LandingPage: React.FC = () => {
 
         {/* Comparison Section */}
         <section className="comparison-section">
-          <div className="comparison-badge">The difference</div>
-          <h2 className="comparison-title">Why CloseClaw?</h2>
+          <div className="comparison-header">
+            <div className="comparison-badge">Surgical Precision</div>
+            <h2 className="comparison-title">The architecture of freedom.</h2>
+          </div>
 
           <div className="comparison-grid">
             <div className="comparison-left">
-              <h4 className="method-label">Running it yourself</h4>
+              <h4 className="method-label">Legacy Maintenance</h4>
               <ul className="effort-list">
-                <li><span>Running Docker, VPS setup, and security config</span> <span className="time">20 min</span></li>
-                <li><span>Wiring up Telegram, Discord, Slack</span> <span className="time">30 min</span></li>
-                <li><span>Fixing it when it goes down at 2am</span> <span className="time">???</span></li>
-                <li><span>Keeping everything up to date</span> <span className="time">∞</span></li>
+                <li><span>Infrastructure Orchestration</span> <span className="time">20 min</span></li>
+                <li><span>API Gateway Integration</span> <span className="time">30 min</span></li>
+                <li><span>Critical System Recovery</span> <span className="time">Unpredictable</span></li>
+                <li><span>Kernel Security Updates</span> <span className="time">Persistent</span></li>
               </ul>
               <div className="total-effort">
-                <span className="total-label">Total effort</span>
-                <span className="total-value">Never done</span>
+                <span className="total-label">Operational Overload</span>
+                <span className="total-value">High</span>
               </div>
             </div>
 
-            <div className="comparison-divider"></div>
-
             <div className="comparison-right">
-              <h4 className="method-label">With CloseClaw</h4>
-              <div className="instant-badge">All handled</div>
+              <h4 className="method-label">CloseClaw Engine</h4>
+              <div className="instant-badge">Optimized</div>
               <p className="instant-desc">
-                Your OpenClaw workspace is provisioned instantly. Our platform saves teams an average of 4.5 hours per week in manual maintenance. We handle everything —
-                setup, 99.9% uptime guarantees, updates, and military-grade security isolation. You just talk to your agent.
+                We've automated the entire stack. From network isolation to model routing, our engine handles the complexity so you can focus on result.
               </p>
               <div className="instant-features">
-                <div className="i-feature"><Check size={16} /> 99.9% Uptime SLA</div>
-                <div className="i-feature"><Check size={16} /> 100% Isolated Instances</div>
-                <div className="i-feature"><Check size={16} /> Zero maintenance</div>
+                <div className="i-feature"><Check size={16} /> 99.9% Infrastructure Uptime</div>
+                <div className="i-feature"><Check size={16} /> Military-Grade Sandbox</div>
+                <div className="i-feature"><Check size={16} /> Autonomous Management</div>
               </div>
             </div>
           </div>

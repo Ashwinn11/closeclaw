@@ -7,17 +7,19 @@
 }
 
 .pp-chat {
-    background: rgba(18, 18, 22, 0.95);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
+    background: rgba(12, 14, 20, 0.5);
+    backdrop-filter: blur(60px) saturate(200%);
+    -webkit-backdrop-filter: blur(60px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 40px;
     padding: 0;
-    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
-    animation: pp-float 6s ease-in-out infinite;
+    box-shadow: 0 80px 160px rgba(0, 0, 0, 0.8),
+        inset 0 1px 1px rgba(255, 255, 255, 0.03);
+    animation: pp-float 8s ease-in-out infinite;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    height: 480px;
+    height: 520px;
 }
 
 .pp-chat-header {
@@ -98,18 +100,19 @@
 }
 
 .pp-message.user {
-    background: #3390ec;
+    background: rgba(255, 255, 255, 0.05);
     align-self: flex-end;
     color: #fff;
-    border-bottom-right-radius: 4px;
+    border-radius: 20px 20px 4px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .pp-message.bot {
-    background: #212121;
+    background: rgba(255, 77, 77, 0.05);
     align-self: flex-start;
     color: #fff;
-    border-bottom-left-radius: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px 20px 20px 4px;
+    border: 1px solid rgba(255, 77, 77, 0.1);
 }
 
 .pp-time {
@@ -183,13 +186,13 @@
 }
 
 .pp-stat-card {
-    background: rgba(18, 18, 22, 0.8);
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 12px 18px;
-    border-radius: 14px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-    animation: pp-float-alt 8s ease-in-out infinite;
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(40px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 20px 28px;
+    border-radius: 28px;
+    box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.6);
+    animation: pp-float-alt 10s ease-in-out infinite;
 }
 
 .pp-stat-header {
@@ -238,19 +241,19 @@
 
 .pp-floating-terminal {
     position: absolute;
-    left: -40px;
-    bottom: 10px;
-    background: #000;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 8px 12px;
-    border-radius: 8px;
+    left: -80px;
+    bottom: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(0, 255, 136, 0.2);
+    padding: 12px 18px;
+    border-radius: 16px;
     font-family: 'Fira Code', monospace;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     color: #00ff88;
     display: flex;
     align-items: center;
-    gap: 8px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    gap: 12px;
+    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.8);
     z-index: 5;
 }
 
