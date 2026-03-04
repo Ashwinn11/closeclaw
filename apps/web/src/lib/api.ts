@@ -167,38 +167,22 @@ export async function getCredits(): Promise<{
     api_credits_cap: number;
     subscription_renews_at: string | null;
 }> {
-    return request('/api/billing/credits');
+    // Mock credits for demo/bypass
+    return {
+        api_credits: 2000,
+        plan: 'Platform',
+        api_credits_cap: 5000,
+        subscription_renews_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    };
 }
 
-export async function createCheckout(planName: string): Promise<{ checkoutUrl: string }> {
-    return request('/api/billing/checkout', {
-        method: 'POST',
-        body: JSON.stringify({ planName }),
-    });
+export async function createCheckout(_planName: string): Promise<{ checkoutUrl: string }> {
+    // Mock checkout by redirecting to a success state
+    return { checkoutUrl: `${window.location.origin}/dashboard?checkout=success` };
 }
 
-export async function createTopup(pack: string): Promise<{ checkoutUrl: string }> {
-    return request('/api/billing/topup', {
-        method: 'POST',
-        body: JSON.stringify({ pack }),
-    });
-}
-
-export async function getBillingPortal(): Promise<{ portalUrl: string }> {
-    return request('/api/billing/portal');
-}
-
-export async function changePlan(planName: string): Promise<{ plan: string; credits: number }> {
-    return request('/api/billing/change-plan', {
-        method: 'POST',
-        body: JSON.stringify({ planName }),
-    });
-}
-
-export async function cancelSubscription(): Promise<{ message: string }> {
-    return request('/api/billing/cancel', {
-        method: 'POST',
-    });
+export async function createTopup(_pack: string): Promise<{ checkoutUrl: string }> {
+    return { checkoutUrl: `${window.location.origin}/dashboard?topup=success` };
 }
 
 // ─── Auth ──────────────────────────────────────────────────────────────────

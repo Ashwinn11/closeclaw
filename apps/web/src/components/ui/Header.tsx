@@ -51,7 +51,7 @@ const UserProfile: React.FC = () => {
   const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
-  
+
   const handleLogout = async () => {
     await logout();
     navigate('/');
@@ -69,8 +69,8 @@ const UserProfile: React.FC = () => {
 
       {isOpen && (
         <>
-          <div style={{position: 'fixed', top:0, left:0, right:0, bottom:0, zIndex: 10}} onClick={() => setIsOpen(false)} />
-          <div className="user-dropdown" style={{zIndex: 11}}>
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10 }} onClick={() => setIsOpen(false)} />
+          <div className="user-dropdown" style={{ zIndex: 11 }}>
             <div className="user-info">
               <p className="user-name">{user?.name || 'User'}</p>
               <p className="user-email">{user?.email}</p>
@@ -104,9 +104,6 @@ export const Header: React.FC = () => {
         {/* Center: Navigation - Hidden on mobile, shown on desktop */}
         <nav className="header-nav">
           <a href="/#features" className="nav-link">Features</a>
-          <a href="/openclaw-hosting" className="nav-link">Hosting</a>
-          <a href="/solutions" className="nav-link">Solutions</a>
-          <a href="/vs-self-hosting" className="nav-link">Compare</a>
         </nav>
 
         <div className="header-right">
@@ -143,9 +140,6 @@ export const Header: React.FC = () => {
       {mobileMenuOpen && (
         <div className="mobile-menu-dropdown">
           <a href="/#features" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Features</a>
-          <a href="/openclaw-hosting" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Hosting</a>
-          <a href="/solutions" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Solutions</a>
-          <a href="/vs-self-hosting" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Compare</a>
           {!isAuthenticated && (
             <Button
               variant="primary"

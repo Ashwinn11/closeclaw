@@ -8,8 +8,8 @@ import { Button } from '../components/ui/Button';
 import { BrandIcons } from '../components/ui/BrandIcons';
 import { ChannelSetupModal } from '../components/ui/ChannelSetupModal';
 import { CronSetupModal } from '../components/ui/CronSetupModal';
-import { ConfirmModal } from '../components/ui/ConfirmModal';
-import { listChannels, disconnectChannel, type ChannelConnection, getCronJobs, getUsageStats, getCredits, createTopup, createCheckout, removeCronJob, patchGatewayConfig, changePlan, cancelSubscription } from '../lib/api';
+
+import { listChannels, disconnectChannel, type ChannelConnection, getCronJobs, getUsageStats, getCredits, removeCronJob, patchGatewayConfig } from '../lib/api';
 import { NebulaBackground } from '../components/ui/NebulaBackground';
 import { ChatTab } from '../components/chat/ChatTab';
 import {
@@ -116,11 +116,7 @@ export const DashboardPage: React.FC = () => {
   const [billingCredits, setBillingCredits] = useState<{ api_credits: number; plan: string; api_credits_cap: number; subscription_renews_at: string | null } | null>(null);
   const [billingLoading, setBillingLoading] = useState(false);
   const [subscribing, setSubscribing] = useState<string | null>(null);
-  const [changingPlan, setChangingPlan] = useState<string | null>(null);
-  const [cancelling, setCancelling] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<{ type: 'change-plan' | 'cancel'; planName?: string } | null>(null);
-
-  const PLAN_DISPLAY: Record<string, string> = { basic: 'Base', guardian: 'Guardian', fortress: 'Fortress' };
+  const PLAN_DISPLAY: Record<string, string> = { platform: 'Platform Plan' };
 
   const fetchChannels = useCallback(async () => {
     try {
@@ -186,7 +182,7 @@ export const DashboardPage: React.FC = () => {
     fetchChannels();
   }, [fetchChannels]);
 
-  // Handle return from Dodo Payments checkout
+  // Handle return from checkout
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
 
@@ -216,10 +212,12 @@ export const DashboardPage: React.FC = () => {
   const handleTopup = async (pack: string) => {
     setToppingUp(pack);
     try {
-      const { checkoutUrl } = await createTopup(pack);
-      window.location.href = checkoutUrl;
+      // Mock topup
+      await new Promise(r => setTimeout(r, 1500));
+      window.history.replaceState({}, '', '/dashboard?cc_topup=success');
+      window.location.reload();
     } catch (err: any) {
-      showError(err.message || 'Failed to create checkout', 'Top-up Error');
+      showError(err.message || 'Failed to mock topup', 'Top-up Error');
       setToppingUp(null);
     }
   };
@@ -253,51 +251,17 @@ export const DashboardPage: React.FC = () => {
   const handleSubscribe = async (planName: string) => {
     setSubscribing(planName);
     try {
-      const { checkoutUrl } = await createCheckout(planName);
-      window.location.href = checkoutUrl;
+      // Mock checkout
+      await new Promise(r => setTimeout(r, 1500));
+      window.history.replaceState({}, '', '/dashboard?cc_setup=resume');
+      window.location.reload();
     } catch (err: any) {
-      showError(err.message || 'Failed to create checkout', 'Billing Error');
+      showError(err.message || 'Failed to mock checkout', 'Billing Error');
       setSubscribing(null);
     }
   };
 
-  const handleChangePlan = async (planName: string) => {
-    setConfirmAction({ type: 'change-plan', planName });
-  };
 
-  const handleCancel = async () => {
-    setConfirmAction({ type: 'cancel' });
-  };
-
-  const executeConfirmedAction = async () => {
-    if (!confirmAction) return;
-
-    if (confirmAction.type === 'change-plan' && confirmAction.planName) {
-      setChangingPlan(confirmAction.planName);
-      setConfirmAction(null);
-      try {
-        await changePlan(confirmAction.planName);
-        await fetchBilling();
-      } catch (err: any) {
-        showError(err.message || 'Failed to change plan', 'Plan Change Error');
-      } finally {
-        setChangingPlan(null);
-      }
-    }
-
-    if (confirmAction.type === 'cancel') {
-      setCancelling(true);
-      setConfirmAction(null);
-      try {
-        await cancelSubscription();
-        await fetchBilling();
-      } catch (err: any) {
-        showError(err.message || 'Failed to cancel subscription', 'Cancellation Error');
-      } finally {
-        setCancelling(false);
-      }
-    }
-  };
 
   // Subscribe to cron updates via chat completion events
   // Gateway doesn't emit cron-specific events, so we silently re-fetch
@@ -796,8 +760,7 @@ export const DashboardPage: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Top-up section — only for subscribed users */}
-                    {billingCredits && ['basic', 'guardian', 'fortress'].includes(billingCredits.plan) && (
+                    {billingCredits && (billingCredits.plan === 'platform' || billingCredits.plan === 'Platform') && (
                       <div className="topup-section">
                         <div className="section-label" style={{ marginTop: '2rem' }}>Top Up Credits</div>
                         <div className="topup-grid">
@@ -841,9 +804,8 @@ export const DashboardPage: React.FC = () => {
                 </div>
               ) : billingCredits ? (() => {
                 const plan = billingCredits.plan;
-                const isActive = ['basic', 'guardian', 'fortress'].includes(plan);
-                const isCancelled = plan === 'cancelled';
-                const planName = PLAN_DISPLAY[plan];
+                const isActive = (plan === 'platform' || plan === 'Platform');
+                const planDisplayName = PLAN_DISPLAY[plan] || 'Platform Plan';
                 const creditsLeft = Number(billingCredits.api_credits ?? 0);
                 const creditsCap = Number(billingCredits.api_credits_cap ?? 0);
                 const creditsPct = creditsCap > 0 ? Math.min(100, Math.max(0, (creditsLeft / creditsCap) * 100)) : 0;
@@ -851,17 +813,16 @@ export const DashboardPage: React.FC = () => {
                   ? new Date(billingCredits.subscription_renews_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                   : null;
                 const planData = [
-                  { name: 'Base', tagline: 'Light & always on', price: '$50', features: ['Dedicated AI on Telegram, Discord & Slack', '$20 in AI credits/mo', 'Your own private server, never shared'] },
-                  { name: 'Guardian', tagline: 'For daily productivity', price: '$75', features: ['Everything in Base', '$35 in AI credits/mo', 'Best for heavy daily use', 'Multi-step tasks & deep research'], isPopular: true },
-                  { name: 'Fortress', tagline: 'For power users', price: '$100', features: ['Everything in Guardian', '$50 in AI credits/mo', 'Built for automation & long sessions', 'Top up credits anytime'] },
+                  { name: 'Platform', tagline: 'Full Access & Private Environment', price: '$50', features: ['Dedicated AI on Telegram, Discord & Slack', '$20 in AI credits/mo included', 'Your own private environment, never shared', 'Zero technical maintenance', 'Priority platform support'] }
                 ];
+
                 if (isActive) return (
                   <>
                     <Card className="bt-plan-card">
                       <div className="bt-plan-header">
                         <div>
                           <div className="bt-plan-label">Current Plan</div>
-                          <div className="bt-plan-name">{planName}</div>
+                          <div className="bt-plan-name">{planDisplayName}</div>
                         </div>
                         <div className="bt-status-badge active">Active</div>
                       </div>
@@ -877,54 +838,7 @@ export const DashboardPage: React.FC = () => {
                       <div className="bt-renews">
                         {renewsAt ? `Renews ${renewsAt}` : 'Renews monthly'}
                       </div>
-                      <Button variant="secondary" size="sm" onClick={handleCancel} disabled={cancelling}
-                        style={{ marginTop: '0.75rem', color: '#ff5f56' }}>
-                        {cancelling
-                          ? <><Loader2 size={14} className="spin" /> Cancelling...</>
-                          : 'Cancel Subscription'}
-                      </Button>
                     </Card>
-
-                    <div className="bt-plans-header" style={{ marginTop: '2rem' }}>
-                      <h2>Change Plan</h2>
-                      <p>Switch plans instantly — charges are prorated</p>
-                    </div>
-                    <div className="bt-plan-grid">
-                      {planData.map((p) => {
-                        const isCurrent = p.name === planName;
-                        const isUpgrade = !isCurrent;
-                        return (
-                          <Card key={p.name}
-                            className={`bt-plan-item${p.isPopular ? ' popular' : ''}${isCurrent ? ' current' : ''}${changingPlan ? ' disabled' : ''}`}
-                            onClick={() => !isCurrent && !changingPlan && handleChangePlan(p.name)}
-                          >
-                            {p.isPopular && <div className="bt-popular-badge">Most Popular</div>}
-                            {isCurrent && <div className="bt-popular-badge" style={{ background: '#27C93F' }}>Current</div>}
-                            <div className="bt-item-top">
-                              <div className="bt-item-name">{p.name}</div>
-                              <div className="bt-item-tagline">{p.tagline}</div>
-                            </div>
-                            <div className="bt-item-price">{p.price}<span className="bt-period">/mo</span></div>
-                            <ul className="bt-item-features">
-                              {p.features.map((f, i) => (
-                                <li key={i}><Check size={13} style={{ color: '#27C93F', flexShrink: 0, marginTop: '1px' }} />{f}</li>
-                              ))}
-                            </ul>
-                            <Button
-                              variant={isCurrent ? 'secondary' : (p.isPopular ? 'primary' : 'secondary')}
-                              fullWidth
-                              disabled={isCurrent || !!changingPlan}
-                              onClick={(e: React.MouseEvent) => { e.stopPropagation(); if (!isCurrent) handleChangePlan(p.name); }}>
-                              {changingPlan === p.name
-                                ? <><Loader2 size={14} className="spin" /> Switching...</>
-                                : isCurrent
-                                  ? 'Current Plan'
-                                  : isUpgrade ? `Switch to ${p.name}` : `Switch to ${p.name}`}
-                            </Button>
-                          </Card>
-                        );
-                      })}
-                    </div>
 
                     <div className="section-label" style={{ marginTop: '2rem' }}>Top Up Credits</div>
                     <div className="topup-grid">
@@ -948,81 +862,22 @@ export const DashboardPage: React.FC = () => {
                   </>
                 );
 
-                if (isCancelled) return (
-                  <>
-                    <Card className="bt-plan-card">
-                      <div className="bt-plan-header">
-                        <div>
-                          <div className="bt-plan-label">Subscription</div>
-                          <div className="bt-plan-name">Cancelled</div>
-                        </div>
-                        <div className="bt-status-badge cancelled">Cancelled</div>
-                      </div>
-                      {creditsLeft > 0.001 && (
-                        <div className="bt-credits-bar-wrap">
-                          <div className="bt-credits-bar-top">
-                            <span className="bt-credits-label">Remaining Credits</span>
-                            <span className="bt-credits-value">${creditsLeft.toFixed(2)} left</span>
-                          </div>
-                          <div className="bt-bar-track">
-                            <div className="bt-bar-fill" style={{ width: `${creditsPct}%` }} />
-                          </div>
-                        </div>
-                      )}
-                      <div className="bt-cancelled-note">
-                        Your subscription has ended.{creditsLeft > 0.001 ? ' You can still use your AI until the remaining credits run out.' : ' Subscribe below to get back online.'}
-                      </div>
-                    </Card>
-
-                    <div className="bt-plans-header" style={{ marginTop: '2rem' }}>
-                      <h2>Resubscribe</h2>
-                      <p>Pick a plan to continue · Billed monthly · Cancel anytime</p>
-                    </div>
-                    <div className="bt-plan-grid">
-                      {planData.map((p) => (
-                        <Card key={p.name}
-                          className={`bt-plan-item${p.isPopular ? ' popular' : ''}${subscribing ? ' disabled' : ''}`}
-                          onClick={() => !subscribing && handleSubscribe(p.name)}
-                        >
-                          {p.isPopular && <div className="bt-popular-badge">Most Popular</div>}
-                          <div className="bt-item-top">
-                            <div className="bt-item-name">{p.name}</div>
-                            <div className="bt-item-tagline">{p.tagline}</div>
-                          </div>
-                          <div className="bt-item-price">{p.price}<span className="bt-period">/mo</span></div>
-                          <ul className="bt-item-features">
-                            {p.features.map((f, i) => (
-                              <li key={i}><Check size={13} style={{ color: '#27C93F', flexShrink: 0, marginTop: '1px' }} />{f}</li>
-                            ))}
-                          </ul>
-                          <Button variant={p.isPopular ? 'primary' : 'secondary'} fullWidth disabled={!!subscribing}
-                            onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleSubscribe(p.name); }}>
-                            {subscribing === p.name
-                              ? <><Loader2 size={14} className="spin" /> Redirecting...</>
-                              : 'Get Started →'}
-                          </Button>
-                        </Card>
-                      ))}
-                    </div>
-                  </>
-                );
-
                 // No subscription at all
                 return (
                   <>
                     <div className="bt-plans-header">
-                      <h2>Pick a plan that fits your life</h2>
-                      <p>Billed monthly · Cancel anytime</p>
+                      <h2>Private AI Workspace</h2>
+                      <p>Full access to OpenClaw with zero technical overhead</p>
                     </div>
-                    <div className="bt-plan-grid">
+                    <div className="bt-plan-grid single-plan">
                       {planData.map((p) => (
                         <Card key={p.name}
-                          className={`bt-plan-item${p.isPopular ? ' popular' : ''}${subscribing ? ' disabled' : ''}`}
+                          className="bt-plan-item popular"
                           onClick={() => !subscribing && handleSubscribe(p.name)}
                         >
-                          {p.isPopular && <div className="bt-popular-badge">Most Popular</div>}
+                          <div className="bt-popular-badge">Recommended</div>
                           <div className="bt-item-top">
-                            <div className="bt-item-name">{p.name}</div>
+                            <div className="bt-item-name">{p.name} Plan</div>
                             <div className="bt-item-tagline">{p.tagline}</div>
                           </div>
                           <div className="bt-item-price">{p.price}<span className="bt-period">/mo</span></div>
@@ -1031,11 +886,11 @@ export const DashboardPage: React.FC = () => {
                               <li key={i}><Check size={13} style={{ color: '#27C93F', flexShrink: 0, marginTop: '1px' }} />{f}</li>
                             ))}
                           </ul>
-                          <Button variant={p.isPopular ? 'primary' : 'secondary'} fullWidth disabled={!!subscribing}
+                          <Button variant="primary" fullWidth disabled={!!subscribing}
                             onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleSubscribe(p.name); }}>
-                            {subscribing === p.name
+                            {subscribing
                               ? <><Loader2 size={14} className="spin" /> Redirecting...</>
-                              : 'Get Started →'}
+                              : 'Get Started Now'}
                           </Button>
                         </Card>
                       ))}
@@ -1069,23 +924,7 @@ export const DashboardPage: React.FC = () => {
         />
       )}
 
-      {/* Confirm Modal (plan change / cancel) */}
-      {confirmAction && (
-        <ConfirmModal
-          title={confirmAction.type === 'cancel' ? 'Cancel Subscription' : 'Change Plan'}
-          message={
-            confirmAction.type === 'cancel'
-              ? 'Your OpenClaw instance will remain active until the end of your current billing period. After that, it will be decommissioned.'
-              : `Switch to the ${confirmAction.planName} plan? The charge difference will be prorated and your credits will be adjusted immediately.`
-          }
-          confirmLabel={confirmAction.type === 'cancel' ? 'Cancel Subscription' : `Switch to ${confirmAction.planName}`}
-          cancelLabel="Go Back"
-          danger={confirmAction.type === 'cancel'}
-          loading={confirmAction.type === 'cancel' ? cancelling : !!changingPlan}
-          onConfirm={executeConfirmedAction}
-          onCancel={() => setConfirmAction(null)}
-        />
-      )}
+
     </div>
   );
 };

@@ -23,8 +23,8 @@ const TOS_CONTENT = (
     <h3>3. Account Registration</h3>
     <p>You must create an account using Google Sign-In. You are responsible for maintaining the confidentiality of your account and for all activity that occurs under it. You must be at least 18 years old to use the Service.</p>
 
-    <h3>4. Billing and Payments</h3>
-    <p>Plans are billed monthly through Razorpay. All charges are in USD. Subscriptions renew automatically unless cancelled. API credit usage is deducted from your monthly credit balance. Credits do not roll over between billing cycles. One-time credit top-ups are non-refundable.</p>
+    <h3>4. Billing</h3>
+    <p>Plans are billed monthly through our secure platform. All charges are in USD. Subscriptions renew automatically unless cancelled. API credit usage is deducted from your monthly credit balance. Credits do not roll over between billing cycles. One-time credit top-ups are non-refundable.</p>
 
     <h3>5. Acceptable Use</h3>
     <p>You may not use the Service to:</p>
@@ -73,7 +73,7 @@ const PRIVACY_CONTENT = (
     <p>Conversations happen between you and your dedicated AI server. We do not have access to your conversation history. The AI providers (Anthropic, OpenAI, Google) process your messages under their own privacy policies.</p>
 
     <h3>Third-Party Services</h3>
-    <p>We use Razorpay for payment processing, Supabase for account data, and Google Cloud for infrastructure. Each service operates under its own privacy policy.</p>
+    <p>We use secure industry-standard processors, Supabase for account data, and Google Cloud for infrastructure. Each service operates under its own privacy policy.</p>
 
     <h3>Data Retention</h3>
     <p>Account data is retained while your subscription is active. After cancellation, we delete your infrastructure and associated data within 30 days. You can request deletion at any time by emailing us.</p>
@@ -126,10 +126,10 @@ const ABOUT_CONTENT = (
 );
 
 const MODAL_CONFIG: Record<InfoModalType, { title: string; content: React.ReactNode }> = {
-  tos:     { title: 'Terms of Service', content: TOS_CONTENT },
-  privacy: { title: 'Privacy Policy',   content: PRIVACY_CONTENT },
-  refund:  { title: 'Refund Policy',    content: REFUND_CONTENT },
-  about:   { title: 'About CloseClaw',  content: ABOUT_CONTENT },
+  tos: { title: 'Terms of Service', content: TOS_CONTENT },
+  privacy: { title: 'Privacy Policy', content: PRIVACY_CONTENT },
+  refund: { title: 'Refund Policy', content: REFUND_CONTENT },
+  about: { title: 'About CloseClaw', content: ABOUT_CONTENT },
 };
 
 export const InfoModal: FC<InfoModalProps> = ({ type, onClose }) => {
