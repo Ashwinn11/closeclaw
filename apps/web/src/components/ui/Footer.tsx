@@ -31,15 +31,12 @@ export const Footer: React.FC<FooterProps> = ({ setInfoModal, onGetStarted }) =>
                 <div className="footer-links-col">
                     <h4>Product</h4>
                     <a href="/#features">Features</a>
-                    <a href="/solutions">Use Cases</a>
-                    <a href="/why-closeclaw">Why CloseClaw</a>
                     <a href="/#pricing">Pricing</a>
                 </div>
 
                 <div className="footer-links-col">
                     <h4>Resources</h4>
                     <a href="https://docs.openclaw.ai" target="_blank" rel="noopener noreferrer">OpenClaw Docs</a>
-                    <a href="/openclaw-deploy-guide">Setup Guide</a>
                     <a href="https://status.closeclaw.in">Status</a>
                 </div>
 

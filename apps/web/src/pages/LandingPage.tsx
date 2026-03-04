@@ -194,7 +194,7 @@ export const LandingPage: React.FC = () => {
               <div className="card-content horizontal">
                 <div className="text-content">
                   <h3>Isolated and private by design</h3>
-                  <p>Our platform ensures 100% network isolation. Your instance runs on a dedicated environment with no data sharing between tenants. Your conversations are cryptographically secure.</p>
+                  <p>Our platform ensures 100% network isolation. Your instance runs on a dedicated environment with no data sharing between tenants. Your conversations are fully private and secure.</p>
                 </div>
                 <div className="visual-shield">
                   <div className="network-nodes">
