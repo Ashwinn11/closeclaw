@@ -1,0 +1,6 @@
+// Copy this file to Local.xcconfig and include secrets there.
+// Do not commit real secrets.
+
+CLOSECLAW_API_BASE_URL = http://localhost:3001
+CLOSECLAW_SUPABASE_URL = https://YOUR-PROJECT.supabase.co
+CLOSECLAW_SUPABASE_ANON_KEY = REPLACE_ME

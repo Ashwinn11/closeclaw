@@ -24,6 +24,7 @@ openclaw
 *.suo
 *.ntvs*
 *.njsproj
+AuthKey_Q7QGC7AH3S.p8
 *.sln
 *.sw?
 .vercel
