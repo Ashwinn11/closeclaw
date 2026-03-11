@@ -252,11 +252,7 @@ export const LandingPage: React.FC = () => {
             <h3>Need more? Top up credits anytime.</h3>
             <p>If you run through your monthly allowance, you can add more credits instantly.</p>
             <div className="topup-packs">
-              <div className="topup-pack"><span>$5 Pack</span></div>
-              <div className="topup-pack"><span>$10 Pack</span></div>
-              <div className="topup-pack"><span>$25 Pack</span></div>
               <div className="topup-pack"><span>$50 Pack</span></div>
-              <div className="topup-pack"><span>$100 Pack</span></div>
             </div>
           </div>
         </section>

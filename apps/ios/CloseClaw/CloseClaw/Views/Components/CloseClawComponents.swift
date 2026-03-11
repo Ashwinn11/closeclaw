@@ -39,24 +39,27 @@ struct CloseClawButton: View {
                     )
                 
                 // Content
-                ZStack {
+                HStack(spacing: 12) {
                     if isLoading {
                         CoreLoaderRing()
-                            .frame(width: 22, height: 22)
-                            .transition(.scale.combined(with: .opacity))
+                            .frame(width: 20, height: 20)
                     }
                     
                     Text(title)
-                        .font(CloseClawTheme.Typography.body())
+                        .font(CloseClawTheme.Typography.body(17).weight(.bold))
                         .opacity(isLoading ? 0 : 1)
                 }
                 .foregroundStyle(foregroundColor)
-                .padding(.vertical, 14)
-                .padding(.horizontal, 24)
             }
             .frame(maxWidth: .infinity)
+            .frame(height: 54)
+            .background(backgroundView)
             .clipShape(Capsule())
-            .shadow(color: shadowColor, radius: 10, y: 4)
+            .overlay(
+                Capsule()
+                    .stroke(borderColor, lineWidth: 1)
+            )
+            .shadow(color: shadowColor, radius: 15, y: 8)
         }
         .disabled(isLoading)
         .buttonStyle(CloseClawButtonStyle())
@@ -103,9 +106,13 @@ struct CloseClawButton: View {
     private var backgroundView: some View {
         switch variant {
         case .primary:
-            CloseClawTheme.accentPrimary
+            LinearGradient(
+                colors: [CloseClawTheme.accentPrimary, Color(hex: "#FF6B6B")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
         case .secondary:
-            CloseClawTheme.accentSecondary.opacity(0.1)
+            CloseClawTheme.surfaceBase
         case .ghost:
             Color.clear
         }

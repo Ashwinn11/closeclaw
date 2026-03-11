@@ -1,12 +1,16 @@
 import SwiftUI
+import StoreKit
 
 struct SettingsTabView: View {
     let user: UserProfile?
     let gatewayStatusText: String
     @ObservedObject var creditsViewModel: CreditsViewModel
+    @ObservedObject var purchaseService: PurchaseService
     var isLoadingReconnect: Bool = false
     var isLoadingDelete: Bool = false
     let onReconnect: () async -> Void
+    let onRefreshCredits: () async -> Void
+    let onVerifyPurchase: (VerificationResult<StoreKit.Transaction>?) async -> Void
     let onSignOut: () async -> Void
     let onDeleteAccount: () async -> Void
 
@@ -58,41 +62,67 @@ struct SettingsTabView: View {
                                 .foregroundStyle(CloseClawTheme.textSecondary)
                                 .padding(.leading, 4)
                             
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("Current Balance")
-                                    .font(CloseClawTheme.Typography.footnote())
-                                    .foregroundStyle(CloseClawTheme.textSecondary)
-                                
-                                if creditsViewModel.isLoading {
-                                    ProgressView()
-                                        .tint(CloseClawTheme.accentPrimary)
-                                        .padding(.vertical, 10)
-                                } else if let credits = creditsViewModel.credits {
-                                    HStack(alignment: .firstTextBaseline, spacing: 6) {
-                                        Text("\(String(format: "%.2f", credits.api_credits))")
-                                            .font(CloseClawTheme.Typography.title(32))
-                                            .premiumTextGradient()
-                                        
-                                        Text("Credits")
-                                            .font(CloseClawTheme.Typography.body())
+                            NavigationLink {
+                                CreditsTabView(
+                                    viewModel: creditsViewModel,
+                                    purchaseService: purchaseService,
+                                    onRefresh: onRefreshCredits,
+                                    onVerify: onVerifyPurchase
+                                )
+                            } label: {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    HStack {
+                                        Text("Current Balance")
+                                            .font(CloseClawTheme.Typography.footnote())
+                                            .foregroundStyle(CloseClawTheme.textSecondary)
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .font(.system(size: 12))
                                             .foregroundStyle(CloseClawTheme.textSecondary)
                                     }
                                     
-                                    HStack {
-                                        Image(systemName: "checkmark.seal.fill")
-                                            .foregroundStyle(CloseClawTheme.accentSecondary)
-                                        Text("Plan: \(credits.plan.capitalized)")
-                                            .font(CloseClawTheme.Typography.footnote())
+                                    if creditsViewModel.isLoading {
+                                        ProgressView()
+                                            .tint(CloseClawTheme.accentPrimary)
+                                            .padding(.vertical, 10)
+                                    } else if let credits = creditsViewModel.credits {
+                                        HStack(alignment: .firstTextBaseline, spacing: 6) {
+                                            Text("\(String(format: "%.2f", credits.api_credits))")
+                                                .font(CloseClawTheme.Typography.title(32))
+                                                .premiumTextGradient()
+                                            
+                                            Text("Credits")
+                                                .font(CloseClawTheme.Typography.body())
+                                                .foregroundStyle(CloseClawTheme.textSecondary)
+                                        }
+                                        
+                                        HStack {
+                                            Image(systemName: credits.plan == "platform" ? "star.fill" : "seal.fill")
+                                                .foregroundStyle(CloseClawTheme.accentSecondary)
+                                            Text(credits.plan == "platform" ? "Platform Plan" : "Free Plan")
+                                                .font(CloseClawTheme.Typography.footnote())
+                                                .foregroundStyle(CloseClawTheme.textSecondary)
+                                            
+                                            Spacer()
+                                            
+                                            Text("Top Up")
+                                                .font(CloseClawTheme.Typography.footnote().weight(.bold))
+                                                .foregroundStyle(CloseClawTheme.accentPrimary)
+                                                .padding(.horizontal, 10)
+                                                .padding(.vertical, 4)
+                                                .background(CloseClawTheme.accentPrimary.opacity(0.1))
+                                                .clipShape(Capsule())
+                                        }
+                                    } else {
+                                        Text("No balance data")
+                                            .font(CloseClawTheme.Typography.body())
                                             .foregroundStyle(CloseClawTheme.textSecondary)
                                     }
-                                } else {
-                                    Text("No balance data")
-                                        .font(CloseClawTheme.Typography.body())
-                                        .foregroundStyle(CloseClawTheme.textSecondary)
                                 }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .closeClawGlassCard(cornerRadius: 24)
                             }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .closeClawGlassCard(cornerRadius: 24)
+                            .buttonStyle(.plain)
                         }
                         .staggeredReveal(index: 1)
 

@@ -1,4 +1,5 @@
 import SwiftUI
+import StoreKit
 
 struct RootView: View {
     @StateObject private var viewModel: AppViewModel
@@ -31,6 +32,11 @@ struct RootView: View {
                                 email: email
                             )
                         }
+                    )
+                case .paywall:
+                    PaywallView(
+                        viewModel: viewModel,
+                        purchaseService: viewModel.purchaseService
                     )
                 case .onboarding:
                     OnboardingView(
@@ -232,22 +238,29 @@ private struct ChatViewContainer: View {
             }
         )
         .sheet(isPresented: $showingSettings) {
-            SettingsTabView(
-                user: viewModel.user,
-                gatewayStatusText: viewModel.gatewayStatusText,
-                creditsViewModel: viewModel.creditsViewModel,
-                isLoadingReconnect: viewModel.isReconnectingGateway,
-                isLoadingDelete: viewModel.isAuthenticating,
-                onReconnect: {
-                    await viewModel.reconnectGateway()
-                },
-                onSignOut: {
-                    await viewModel.signOut()
-                },
-                onDeleteAccount: {
-                    await viewModel.deleteAccount()
-                }
-            )
+                SettingsTabView(
+                    user: viewModel.user,
+                    gatewayStatusText: viewModel.gatewayStatusText,
+                    creditsViewModel: viewModel.creditsViewModel,
+                    purchaseService: viewModel.purchaseService,
+                    isLoadingReconnect: viewModel.isReconnectingGateway,
+                    isLoadingDelete: viewModel.isAuthenticating,
+                    onReconnect: {
+                        await viewModel.reconnectGateway()
+                    },
+                    onRefreshCredits: {
+                        await viewModel.refreshCredits()
+                    },
+                    onVerifyPurchase: { result in
+                        await viewModel.handlePurchaseSuccess(result: result)
+                    },
+                    onSignOut: {
+                        await viewModel.signOut()
+                    },
+                    onDeleteAccount: {
+                        await viewModel.deleteAccount()
+                    }
+                )
         }
     }
 }

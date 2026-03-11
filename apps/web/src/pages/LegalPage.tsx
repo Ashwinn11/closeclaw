@@ -59,7 +59,7 @@ const PRIVACY_CONTENT = (
     <p className="info-modal-updated">Last updated: March 2026</p>
 
     <h3>Data Collection</h3>
-    <p>We collect your Google/Apple ID, name, and email for account setup. We collect technical "Usage Metadata" (token usage, cost, timestamp) to manage your billing and credits across devices.</p>
+    <p>We collect your Apple ID, name, and email for account setup. We collect technical "Usage Metadata" (token usage, cost, timestamp) to manage your billing and credits across devices.</p>
 
     <h3>AI Conversation Privacy</h3>
     <p>Conversations occur on your private, isolated instance. We do not store or monitor your conversation history on our central servers. However, content reported via the "Flag" button is reviewed for safety compliance.</p>

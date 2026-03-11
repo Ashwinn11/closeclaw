@@ -392,17 +392,12 @@ export const DashboardPage: React.FC = () => {
 
         {billingCredits && (() => {
           const left = Number(billingCredits.api_credits ?? 0);
-          const cap = Number(billingCredits.api_credits_cap ?? 0);
-          const pct = cap > 0 ? Math.min(100, Math.max(0, (left / cap) * 100)) : 0;
           const isCancelledSidebar = billingCredits.plan === 'cancelled';
           return (
             <div className="sidebar-credits-bar">
               <div className="scb-row">
                 <span className="scb-label">API Credits</span>
                 <span className="scb-value">${left.toFixed(2)}</span>
-              </div>
-              <div className="scb-track">
-                <div className="scb-fill" style={{ width: `${pct}%` }} />
               </div>
               {isCancelledSidebar && (
                 <div className="scb-cancelled-hint">Subscription ended</div>

@@ -11,10 +11,12 @@ struct CloseClawApp: App {
             let authService = AuthService(config: config, tokenStore: tokenStore)
             let apiClient = APIClient(baseURL: config.apiBaseURL)
             let gatewayClient = GatewayWebSocketClient(apiBaseURL: config.apiBaseURL)
+            let purchaseService = PurchaseService()
             let viewModel = AppViewModel(
                 authService: authService,
                 apiClient: apiClient,
-                gatewayClient: gatewayClient
+                gatewayClient: gatewayClient,
+                purchaseService: purchaseService
             )
             bootstrapResult = .success(viewModel)
         } catch {

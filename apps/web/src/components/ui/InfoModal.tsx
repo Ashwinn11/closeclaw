@@ -39,7 +39,7 @@ const PRIVACY_CONTENT = (
     <p className="info-modal-updated">Last updated: March 2026</p>
 
     <h3>Data Collection</h3>
-    <p>We collect your Google/Apple ID, name, and email for account setup. We collect technical "Usage Metadata" (token usage, cost, timestamp) to manage your billing and credits across devices.</p>
+    <p>We collect your Apple ID, name, and email for account setup. We collect technical "Usage Metadata" (token usage, cost, timestamp) to manage your billing and credits across devices.</p>
 
     <h3>AI Conversation Privacy</h3>
     <p>Conversations occur on your private, isolated instance. We do not store or monitor your conversation history on our central servers. However, content reported via the "Flag" button is reviewed for safety compliance.</p>
@@ -64,7 +64,7 @@ const REFUND_CONTENT = (
     <p>You may cancel your subscription at any time through the dashboard. Upon cancellation, your OpenClaw instance will remain active until the end of your current billing period, after which it will be decommissioned.</p>
 
     <h3>AI Credit Top-ups</h3>
-    <p>One-time credit top-up packs ($5 to $100) are non-refundable as they are provisioned and made available for use immediately upon purchase.</p>
+    <p>One-time credit top-up packs ($50) are non-refundable as they are provisioned and made available for use immediately upon purchase.</p>
 
     <h3>Technical Issues</h3>
     <p>If you experience a persistent technical issue that prevents the use of the service, please reach out to <a href="mailto:support@closeclaw.in">support@closeclaw.in</a>. We handle these cases individually and may offer a pro-rated refund or account credit if we are unable to resolve the infrastructure issue within 48 hours.</p>

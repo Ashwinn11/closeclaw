@@ -15,7 +15,6 @@ struct UserProfile: Codable, Equatable {
 struct CreditsInfo: Decodable, Equatable {
     let api_credits: Double
     let plan: String
-    let api_credits_cap: Double
     let subscription_renews_at: String?
 }
 
@@ -67,7 +66,8 @@ struct AppSession: Codable, Equatable {
     let user: UserProfile
 
     var isExpired: Bool {
-        Date() >= expiresAt
+        // Return true if the token expires in less than 10 minutes to allow proactive refresh
+        Date().addingTimeInterval(600) >= expiresAt
     }
 }
 

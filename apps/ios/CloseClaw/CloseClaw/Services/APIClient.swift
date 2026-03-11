@@ -7,6 +7,7 @@ protocol APIClientProtocol {
     func claimInstance(accessToken: String) async throws -> InstanceInfo
     func getGatewayProviderConfig(accessToken: String) async throws -> JSONValue
     func getCronJobs(accessToken: String) async throws -> [CronJob]
+    func verifyPurchase(accessToken: String, signedTransaction: String) async throws
 }
 
 
@@ -72,6 +73,16 @@ final class APIClient: APIClientProtocol {
             method: "GET",
             accessToken: accessToken,
             body: nil
+        )
+    }
+
+    func verifyPurchase(accessToken: String, signedTransaction: String) async throws {
+        let body = try JSONSerialization.data(withJSONObject: ["signedTransaction": signedTransaction])
+        let _: JSONValue = try await request(
+            path: "/api/billing/verify-ios",
+            method: "POST",
+            accessToken: accessToken,
+            body: body
         )
     }
 

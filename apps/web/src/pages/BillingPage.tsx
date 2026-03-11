@@ -29,7 +29,7 @@ const planData = [
 export const BillingPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [credits, setCredits] = useState<{ api_credits: number; plan: string; api_credits_cap: number; subscription_renews_at: string | null } | null>(null);
+  const [credits, setCredits] = useState<{ api_credits: number; plan: string; subscription_renews_at: string | null } | null>(null);
   const [toppingUp, setToppingUp] = useState<string | null>(null);
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -46,10 +46,6 @@ export const BillingPage: React.FC = () => {
 
   const planDisplayName = PLAN_DISPLAY[plan] ?? 'Platform Plan';
   const creditsLeft = Number(credits?.api_credits ?? 0);
-  const creditsCap = Number(credits?.api_credits_cap ?? 0);
-  const creditsPct = creditsCap > 0
-    ? Math.min(100, Math.max(0, (creditsLeft / creditsCap) * 100))
-    : 0;
   const renewsAt = credits?.subscription_renews_at
     ? new Date(credits.subscription_renews_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : null;
@@ -125,9 +121,6 @@ export const BillingPage: React.FC = () => {
                     ${creditsLeft.toFixed(2)} remaining
                   </span>
                 </div>
-                <div className="credits-bar-track">
-                  <div className="credits-bar-fill" style={{ width: `${creditsPct}%` }} />
-                </div>
               </div>
 
               <div className="plan-renews-row">
@@ -142,11 +135,7 @@ export const BillingPage: React.FC = () => {
               </div>
               <div className="billing-topup-grid">
                 {[
-                  { pack: '5', label: '$5', amount: 5 },
-                  { pack: '10', label: '$10', amount: 10 },
-                  { pack: '25', label: '$25', amount: 25 },
                   { pack: '50', label: '$50', amount: 50 },
-                  { pack: '100', label: '$100', amount: 100 },
                 ].map(({ pack, label, amount }) => (
                   <Card
                     key={pack}

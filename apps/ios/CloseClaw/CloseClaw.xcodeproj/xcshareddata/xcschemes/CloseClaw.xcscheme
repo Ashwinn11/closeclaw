@@ -59,6 +59,9 @@
             ReferencedContainer = "container:CloseClaw.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <StoreKitConfigurationFileReference
+         identifier = "../../CloseClaw/Resources/CloseClaw.storekit">
+      </StoreKitConfigurationFileReference>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"

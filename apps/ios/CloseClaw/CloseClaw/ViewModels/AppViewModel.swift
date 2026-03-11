@@ -1,4 +1,5 @@
 import Foundation
+import StoreKit
 
 @MainActor
 final class AppViewModel: ObservableObject {
@@ -6,6 +7,7 @@ final class AppViewModel: ObservableObject {
         case loading
         case signedOut
         case onboarding
+        case paywall
         case signedIn
     }
 
@@ -20,6 +22,7 @@ final class AppViewModel: ObservableObject {
     let gatewayClient: GatewayWebSocketClient
     let chatViewModel: ChatViewModel
     let creditsViewModel: CreditsViewModel
+    let purchaseService: PurchaseService
 
     private let authService: AuthServiceProtocol
     private let apiClient: APIClientProtocol
@@ -29,19 +32,23 @@ final class AppViewModel: ObservableObject {
         set { UserDefaults.standard.set(newValue, forKey: "hasCompletedInitialSetup") }
     }
     private var stateObservationTask: Task<Void, Never>?
+    private var sessionRefreshTask: Task<Void, Never>?
 
     init(
         authService: AuthServiceProtocol,
         apiClient: APIClientProtocol,
-        gatewayClient: GatewayWebSocketClient
+        gatewayClient: GatewayWebSocketClient,
+        purchaseService: PurchaseService
     ) {
         self.authService = authService
         self.apiClient = apiClient
         self.gatewayClient = gatewayClient
+        self.purchaseService = purchaseService
         self.chatViewModel = ChatViewModel(gatewayClient: gatewayClient)
         self.creditsViewModel = CreditsViewModel(apiClient: apiClient)
 
         setupStateObservation()
+        setupSessionRefresh()
     }
 
     private func setupStateObservation() {
@@ -52,6 +59,38 @@ final class AppViewModel: ObservableObject {
                 if case .connected = state {
                     await self.handleGatewayConnected()
                 }
+            }
+        }
+    }
+
+    private func setupSessionRefresh() {
+        sessionRefreshTask = Task { [weak self] in
+            while !Task.isCancelled {
+                // Check token health every 60 seconds
+                try? await Task.sleep(nanoseconds: 60 * 1_000_000_000)
+                guard let self else { return }
+                await self.refreshSessionIfNeeded()
+            }
+        }
+    }
+
+    private func refreshSessionIfNeeded() async {
+        // AppSession.isExpired now has a 10-minute buffer
+        guard let current = session, current.isExpired else { return }
+        
+        do {
+            print("[AppViewModel] Proactively refreshing session...")
+            let refreshed = try await authService.refreshSession(current)
+            self.session = refreshed
+            self.user = refreshed.user
+        } catch {
+            print("[AppViewModel] Background session refresh failed: \(error)")
+            // If the error caused the session to be cleared in TokenStore (HTTP 400),
+            // we should reflect that in the UI.
+            if (try? await authService.restoreSession()) == nil {
+                self.session = nil
+                self.user = nil
+                self.authPhase = .signedOut
             }
         }
     }
@@ -89,8 +128,17 @@ final class AppViewModel: ObservableObject {
                 authPhase = .signedOut
             }
         } catch {
-            authPhase = .signedOut
-            errorMessage = error.localizedDescription
+            // Check if we still have a session. If we do (e.g. network error), stay in loading or retry.
+            // If session is gone (Auth error), then signedOut.
+            if (try? await authService.restoreSession()) == nil {
+                authPhase = .signedOut
+                errorMessage = error.localizedDescription
+            } else {
+                // Network error occurred. We have a session but couldn't refresh it.
+                // We'll let the background refresh task or user-initiated actions retry later.
+                authPhase = .signedOut
+                errorMessage = "Network error. Please check your connection."
+            }
         }
     }
 
@@ -209,9 +257,22 @@ final class AppViewModel: ObservableObject {
         guard let session else { return }
 
         await loadCurrentUser(accessToken: session.accessToken)
-        let hasActiveInstance = await connectGatewayIfInstanceAvailable(accessToken: session.accessToken)
         await creditsViewModel.load(accessToken: session.accessToken)
-        authPhase = hasActiveInstance ? .signedIn : .onboarding
+        
+        // Step 1 of Funnel: Check if user has an instance yet
+        let hasActiveInstance = await connectGatewayIfInstanceAvailable(accessToken: session.accessToken)
+        
+        if hasActiveInstance {
+            // Returning user. Enforce paywall if their subscription expired.
+            if creditsViewModel.credits?.plan != "platform" {
+                authPhase = .paywall
+            } else {
+                authPhase = .signedIn
+            }
+        } else {
+            // New user without an instance. Always send them to the Onboarding 'Funnel' first.
+            authPhase = .onboarding
+        }
     }
 
     private func loadCurrentUser(accessToken: String) async {
@@ -227,33 +288,37 @@ final class AppViewModel: ObservableObject {
     func claimInstanceFromOnboarding() async {
         guard let accessToken = session?.accessToken else { return }
 
+        if creditsViewModel.credits?.plan != "platform" {
+            // Step 3 of Funnel: Intercept the 'Activate' click if they haven't paid.
+            authPhase = .paywall
+            return
+        }
+
+        // Prevent double-fires
+        guard !isProvisioningInstance else { return }
+
+        // Switch to onboarding view to show the 'Provisioning...' state
+        authPhase = .onboarding
         isProvisioningInstance = true
         defer { isProvisioningInstance = false }
-
+        
         do {
             _ = try await apiClient.claimInstance(accessToken: accessToken)
             
             // Attempt to connect immediately.
-            // connectGatewayIfInstanceAvailable returns true if an instance record exists.
             _ = await connectGatewayIfInstanceAvailable(accessToken: accessToken)
             
-            // Poll for connection success (up to 30 seconds)
-            // GatewayWebSocketClient now handles its own exponential backoff retries.
+            // Poll for connection success
             var attempts = 0
             while gatewayClient.state != .connected && attempts < 30 {
                 try? await Task.sleep(nanoseconds: 1_000_000_000) // 1s
                 attempts += 1
                 
-                // If the state somehow becomes disconnected (not just failing/retrying), 
-                // we might want to break early or re-trigger. 
-                // But with auto-reconnect, it should stay in .failed or .connecting.
                 if case .disconnected = gatewayClient.state {
                     break
                 }
             }
 
-            // Move to signedIn phase regardless if we at least have an instance now.
-            // The gateway will continue to try and connect in the background.
             await creditsViewModel.load(accessToken: accessToken)
             authPhase = .signedIn
             errorMessage = nil
@@ -384,6 +449,30 @@ final class AppViewModel: ObservableObject {
                 "dmScope": .string("main")
             ])
         ]
+    }
+
+    func handlePurchaseSuccess(result: VerificationResult<StoreKit.Transaction>?) async {
+        guard let accessToken = session?.accessToken else { return }
+        
+        if let result = result {
+            do {
+                // Send to backend for verification and DB update
+                try await apiClient.verifyPurchase(accessToken: accessToken, signedTransaction: result.jwsRepresentation)
+            } catch {
+                print("[AppViewModel] Backend purchase verification failed: \(error)")
+            }
+        }
+        
+        await creditsViewModel.load(accessToken: accessToken)
+        
+        let hasActiveInstance = await connectGatewayIfInstanceAvailable(accessToken: accessToken)
+        if hasActiveInstance {
+            authPhase = .signedIn
+        } else {
+            // Step 4 of Funnel: They just paid but don't have an instance. 
+            // Automatically fast-forward them into claiming it so they don't have to click "Activate" again.
+            await claimInstanceFromOnboarding()
+        }
     }
 }
 

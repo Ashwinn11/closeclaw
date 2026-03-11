@@ -25,6 +25,8 @@
 		CC224150E18EEE205D404749 /* CloseClawTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24ED98B961793964FDEC423D /* CloseClawTheme.swift */; };
 		E1FAAC24DC7B32344FD06EC7 /* CloseClawApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44443782CA742F87A86F5CEB /* CloseClawApp.swift */; };
 		EC73FD298EEE1317CDFCF46F /* TokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BC7010C3CAB47C0520AA6CA /* TokenStore.swift */; };
+		D3E1A2B3C4D5E6F7A8B9C0D1 /* PurchaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2B3C4D5E6F7A8B9C0D1E2B3 /* PurchaseService.swift */; };
+		D3E1A2B3C4D5E6F7A8B9C0D3 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2B3C4D5E6F7A8B9C0D1E2D3 /* PaywallView.swift */; };
 		FCA087319F667D3D5BFD68FC /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13AB0C272E3AB30AC2068A51 /* RootView.swift */; };
 /* End PBXBuildFile section */
 
@@ -40,6 +42,7 @@
 		66BEA3EE2E9193B6E7CEBAA8 /* JSONValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONValue.swift; sourceTree = "<group>"; };
 		806FB1ECE300AB50783BD1C0 /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
 		88579E69A6BABBF36913D8CF /* APIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIModels.swift; sourceTree = "<group>"; };
+		8C23E5522F6179AB006EF73B /* CloseClaw.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; name = CloseClaw.storekit; path = CloseClaw/Resources/CloseClaw.storekit; sourceTree = "<group>"; };
 		8D375210DC86468804436F66 /* CloseClawComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloseClawComponents.swift; sourceTree = "<group>"; };
 		990F13E3F62CAB7874D72298 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A36B9FB1A13FB7DFCD7391B7 /* CreditsTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditsTabView.swift; sourceTree = "<group>"; };
@@ -50,6 +53,8 @@
 		ADEC2E773737ECDA550E6756 /* CloseClaw.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CloseClaw.entitlements; sourceTree = "<group>"; };
 		B24175B492820D677C7A5EB3 /* AppViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViewModel.swift; sourceTree = "<group>"; };
 		B554523F2F30CB4D927A1F8E /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
+		E2B3C4D5E6F7A8B9C0D1E2D3 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
+		E2B3C4D5E6F7A8B9C0D1E2B3 /* PurchaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchaseService.swift; sourceTree = "<group>"; };
 		C34E0DD18A8CF25CB0D80791 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		C673571DC9BEFBEC576D1D4A /* GatewayWebSocketClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayWebSocketClient.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -105,6 +110,7 @@
 			isa = PBXGroup;
 			children = (
 				B554523F2F30CB4D927A1F8E /* AuthView.swift */,
+				E2B3C4D5E6F7A8B9C0D1E2D3 /* PaywallView.swift */,
 			);
 			path = Auth;
 			sourceTree = "<group>";
@@ -112,6 +118,7 @@
 		80EA7FB3B579B9B6B806DDC5 = {
 			isa = PBXGroup;
 			children = (
+				8C23E5522F6179AB006EF73B /* CloseClaw.storekit */,
 				98C3FBEE9F73B2EA214916AC /* CloseClaw */,
 				2B2208A3E6125FCC129208B9 /* Products */,
 			);
@@ -122,6 +129,7 @@
 			children = (
 				ADE2686B9D765304F4BA6477 /* APIClient.swift */,
 				A82FC650EDE3CFD3A18A540C /* AuthService.swift */,
+				E2B3C4D5E6F7A8B9C0D1E2B3 /* PurchaseService.swift */,
 				C673571DC9BEFBEC576D1D4A /* GatewayWebSocketClient.swift */,
 				1BC7010C3CAB47C0520AA6CA /* TokenStore.swift */,
 			);
@@ -277,7 +285,9 @@
 				3FB4E9B42BCFBA781637BB9A /* GatewayWebSocketClient.swift in Sources */,
 				A51EC13DACEA6DA4EEC356DF /* JSONValue.swift in Sources */,
 				FCA087319F667D3D5BFD68FC /* RootView.swift in Sources */,
+				D3E1A2B3C4D5E6F7A8B9C0D3 /* PaywallView.swift in Sources */,
 				7F9744E8DE958707431005AC /* SettingsTabView.swift in Sources */,
+				D3E1A2B3C4D5E6F7A8B9C0D1 /* PurchaseService.swift in Sources */,
 				EC73FD298EEE1317CDFCF46F /* TokenStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

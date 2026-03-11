@@ -24,6 +24,19 @@ final class CreditsViewModel: ObservableObject {
         }
     }
 
+    func verify(accessToken: String, signedTransaction: String) async {
+        isLoading = true
+        defer { isLoading = false }
+        
+        do {
+            try await apiClient.verifyPurchase(accessToken: accessToken, signedTransaction: signedTransaction)
+            credits = try await apiClient.getCredits(accessToken: accessToken)
+            errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     func clear() {
         credits = nil
         isLoading = false

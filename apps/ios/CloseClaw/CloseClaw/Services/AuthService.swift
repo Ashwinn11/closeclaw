@@ -147,7 +147,10 @@ final class AuthService: AuthServiceProtocol {
             throw AuthError.invalidResponse
         }
         guard http.statusCode >= 200, http.statusCode < 300 else {
-            try? tokenStore.clearSession()
+            if http.statusCode == 400 {
+                // Only clear if the refresh token itself is invalid (Supabase returns 400 for invalid_grant)
+                try? tokenStore.clearSession()
+            }
             throw parseSupabaseError(from: data, statusCode: http.statusCode)
         }
 
