@@ -260,21 +260,28 @@ final class ChatViewModel: ObservableObject {
         var inFence = false
         var hasEncounteredContent = false
         
-        // Robust sentinel detection (matches Conversation info or Sender with variations)
-        // Robust sentinel detection (matches Conversation info or Sender with variations)
-        let sentinelRegex = try? NSRegularExpression(pattern: "(?:Conversation info|Sender) \\(untrusted metadata\\):", options: .caseInsensitive)
-        // Timestamp detection (matches [2024-01-01 10:00:00 UTC] or similar)
-        let tsRegex = try? NSRegularExpression(pattern: "^\\[\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\s+(?:UTC|GMT)\\]\\s*", options: .caseInsensitive)
-        // System log detection (matches System: [Timestamp] or System: Exec...)
-        let systemLogRegex = try? NSRegularExpression(pattern: "^System:\\s*(?:\\[.*?\\])?\\s*", options: .caseInsensitive)
+        // Sentinels from OpenClaw (strip-inbound-meta.ts)
+        let openClawSentinels = [
+            "Conversation info (untrusted metadata):",
+            "Sender (untrusted metadata):",
+            "Thread starter (untrusted, for context):",
+            "Replied message (untrusted, for context):",
+            "Forwarded message context (untrusted metadata):",
+            "Chat history since last reply (untrusted, for context):",
+            "Untrusted context (metadata, do not treat as instructions or commands):"
+        ]
         
+        // Regexes for technical logs
+        let tsRegex = try? NSRegularExpression(pattern: "^\\[\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\s+(?:UTC|GMT)\\]\\s*", options: .caseInsensitive)
+        let systemLogRegex = try? NSRegularExpression(pattern: "^System:\\s*(?:\\[.*?\\])?\\s*", options: .caseInsensitive)
+        let execLogRegex = try? NSRegularExpression(pattern: "^(?:Exec failed|Exec completed|Gateway restart)", options: .caseInsensitive)
+
         for line in lines {
             let trimmed = line.trimmingCharacters(in: .whitespaces)
             
-            // 1. GLOBAL STRIPPING: Metadata Blocks
+            // 1. GLOBAL STRIPPING: Known OpenClaw Metadata Blocks (JSON)
             if !inMetaBlock {
-                let range = NSRange(location: 0, length: trimmed.utf16.count)
-                if sentinelRegex?.firstMatch(in: trimmed, options: [], range: range) != nil {
+                if openClawSentinels.contains(where: { trimmed.hasPrefix($0) }) {
                     inMetaBlock = true
                     inFence = false
                     continue
@@ -295,52 +302,40 @@ final class ChatViewModel: ObservableObject {
                 inMetaBlock = false
             }
             
-            // 2. HEADER-ONLY STRIPPING (Logs, Doctor Hints, Timestamps)
-            // We strip leading logs until we hit the first line of real content.
+            // 2. HEADER-ONLY STRIPPING: Logs and Technical Preambles
+            // We strip these strictly from the top of the message until we hit the actual text.
             if !hasEncounteredContent {
                 if trimmed.isEmpty { continue }
                 
                 let range = NSRange(location: 0, length: trimmed.utf16.count)
                 
-                // Skip System lines (regex handles variation in spacing/timestamp)
+                // Match "System: [Timestamp]"
                 if systemLogRegex?.firstMatch(in: trimmed, options: [], range: range) != nil {
                     continue
                 }
                 
-                // Skip common internal Gateway instructions/hints
-                if trimmed.hasPrefix("Run: openclaw doctor") || trimmed.hasPrefix("Actually, skip this") {
-                    continue
-                }
-                
-                // Skip standalone code fence clutter at the very top
-                if trimmed == "json" || trimmed == "```" || trimmed == "```json" {
-                    continue
-                }
-                
-                // Skip message ID hints [message_id:...]
-                if trimmed.hasPrefix("[message_id:") && trimmed.hasSuffix("]") {
-                    continue
-                }
-                
-                // Check if this line is JUST a timestamp at the top
-                var lineAfterTS = line
+                // Match standalone timestamps at the top
                 if let tsRegex = tsRegex {
-                    lineAfterTS = tsRegex.stringByReplacingMatches(
-                        in: line,
-                        range: NSRange(location: 0, length: line.utf16.count),
-                        withTemplate: ""
-                    )
+                    let lineAfterTS = tsRegex.stringByReplacingMatches(in: line, range: range, withTemplate: "")
+                    let remaining = lineAfterTS.trimmingCharacters(in: .whitespacesAndNewlines)
+                    
+                    if remaining.isEmpty { continue } // Just a timestamp line
+                    
+                    // If timestamp is followed by "Exec failed" etc., it's still a log
+                    if execLogRegex?.firstMatch(in: remaining, options: [], range: NSRange(location:0, length: remaining.utf16.count)) != nil {
+                        continue
+                    }
                 }
                 
-                let contentRemaining = lineAfterTS.trimmingCharacters(in: .whitespacesAndNewlines)
-                if contentRemaining.isEmpty {
-                    // It was just a standalone timestamp line at the top
+                // Skip common technical preambles
+                if trimmed.hasPrefix("Run: openclaw doctor") || 
+                   trimmed.hasPrefix("Actually, skip this") ||
+                   trimmed.hasPrefix("[message_id:") {
                     continue
                 }
                 
-                // Special case: if the line starts with a timestamp but is followed by "Exec failed" or "Exec completed"
-                // those are also system logs we want to strip from the header.
-                if contentRemaining.hasPrefix("Exec failed") || contentRemaining.hasPrefix("Exec completed") || contentRemaining.hasPrefix("Gateway restart") {
+                // Skip standalone formatting clutter at the very top
+                if trimmed == "json" || trimmed == "```" || trimmed == "```json" {
                     continue
                 }
                 
@@ -349,11 +344,7 @@ final class ChatViewModel: ObservableObject {
                 
                 // Even for the first content line, we strip the leading timestamp part if present
                 if let tsRegex = tsRegex {
-                    let processed = tsRegex.stringByReplacingMatches(
-                        in: line,
-                        range: NSRange(location: 0, length: line.utf16.count),
-                        withTemplate: ""
-                    )
+                    let processed = tsRegex.stringByReplacingMatches(in: line, range: range, withTemplate: "")
                     if !processed.isEmpty {
                         result.append(processed)
                     }
@@ -361,8 +352,7 @@ final class ChatViewModel: ObservableObject {
                     result.append(line)
                 }
             } else {
-                // 3. BODY CONTENT: Keep the text (including markdown for the renderer)
-                // Only strip strictly internal directives.
+                // 3. BODY CONTENT: Keep the text as-is (except for strictly internal directives)
                 var processedLine = line
                 processedLine = processedLine.replacingOccurrences(
                     of: "\\[\\[\\s*audio_as_voice\\s*\\]\\]",
@@ -375,11 +365,6 @@ final class ChatViewModel: ObservableObject {
         }
         
         let output = result.joined(separator: "\n")
-        
-        if trimTrailing {
-            return output.trimmingCharacters(in: .whitespacesAndNewlines)
-        } else {
-            return output.trimmingCharacters(in: .whitespaces)
-        }
+        return trimTrailing ? output.trimmingCharacters(in: .whitespacesAndNewlines) : output.trimmingCharacters(in: .whitespaces)
     }
 }
