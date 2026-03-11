@@ -11,62 +11,110 @@ struct AuthView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    VStack(spacing: 12) {
-                        Image("BrandMark")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 82, height: 82)
-                            .shadow(color: CloseClawTheme.accentGlow, radius: 18)
-                        Text("CloseClaw")
-                            .font(.system(size: 34, weight: .bold, design: .rounded))
-                            .foregroundStyle(CloseClawTheme.textPrimary)
-                        Text("Your own AI agent, now with native iOS sign-in")
-                            .font(.subheadline)
-                            .multilineTextAlignment(.center)
-                            .foregroundStyle(CloseClawTheme.textSecondary)
+            ZStack {
+                NebulaBackground()
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                     }
-                    .padding(.top, 20)
-
-                    VStack(spacing: 14) {
-                        SignInWithAppleButton(.continue) { request in
-                            let nonce = Self.randomNonce()
-                            currentNonce = nonce
-                            request.requestedScopes = [.fullName, .email]
-                            request.nonce = Self.sha256(nonce)
-                        } onCompletion: { result in
-                            handleAppleResult(result)
+                
+                ScrollView {
+                    VStack(spacing: 40) {
+                        // Brand Section
+                        VStack(spacing: 20) {
+                            Image("logo3")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 100, height: 100)
+                                .shadow(color: CloseClawTheme.accentGlow, radius: 24)
+                            
+                            VStack(spacing: 8) {
+                                Text("CloseClaw")
+                                    .font(CloseClawTheme.Typography.title(44))
+                                    .premiumTextGradient()
+                                
+                                Text("Your Personal AI Core")
+                                    .font(CloseClawTheme.Typography.headline())
+                                    .foregroundStyle(CloseClawTheme.textPrimary)
+                                
+                                Text("Secure, private, and always available.")
+                                    .font(CloseClawTheme.Typography.body())
+                                    .foregroundStyle(CloseClawTheme.textSecondary)
+                            }
                         }
-                        .signInWithAppleButtonStyle(.white)
-                        .frame(height: 52)
-                        .disabled(isLoading)
-
-                        if isLoading {
-                            ProgressView("Signing in...")
-                                .foregroundStyle(CloseClawTheme.textSecondary)
+                        .padding(.top, 60)
+                        .staggeredReveal(index: 0)
+                        
+                        // Action Section
+                        VStack(spacing: 30) {
+                            VStack(spacing: 16) {
+                                ZStack {
+                                    // Hidden while loading to allow spinner to take center stage
+                                    SignInWithAppleButton(.continue) { request in
+                                        let nonce = Self.randomNonce()
+                                        currentNonce = nonce
+                                        request.requestedScopes = [.fullName, .email]
+                                        request.nonce = Self.sha256(nonce)
+                                    } onCompletion: { result in
+                                        handleAppleResult(result)
+                                    }
+                                    .signInWithAppleButtonStyle(.white)
+                                    .frame(height: 54)
+                                    .clipShape(Capsule())
+                                    .opacity(isLoading ? 0 : 1)
+                                    .disabled(isLoading)
+                                    
+                                    if isLoading {
+                                        // A matching placeholder capsule with a spinner
+                                        Capsule()
+                                            .fill(.white)
+                                            .frame(height: 54)
+                                            .overlay(
+                                                ProgressView()
+                                                    .tint(.black)
+                                            )
+                                    }
+                                }
+                            }
+                            
+                            VStack(alignment: .center, spacing: 12) {
+                                Label("Private & Secure", systemImage: "lock.shield.fill")
+                                    .font(CloseClawTheme.Typography.footnote())
+                                    .foregroundStyle(CloseClawTheme.textSecondary)
+                                    .imageScale(.small)
+                                
+                                Text("Your hardware-isolated environment is ready. Data remains strictly yours.")
+                                    .font(CloseClawTheme.Typography.footnote())
+                                    .foregroundStyle(CloseClawTheme.textSecondary.opacity(0.7))
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal)
+                            }
                         }
-
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Uses your existing Supabase Apple OAuth setup.")
-                            Text("Profile details are synced to Supabase user records.")
-                        }
-                        .font(.footnote)
-                        .foregroundStyle(CloseClawTheme.textSecondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                        if let localError {
-                            Text(localError)
-                                .font(.footnote)
-                                .foregroundStyle(CloseClawTheme.accentPrimary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
+                        .padding(24)
+                        .background(
+                            CloseClawTheme.surfaceBase
+                                .background(.ultraThinMaterial)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 32, style: .continuous)
+                                .stroke(CloseClawTheme.cardBorder, lineWidth: 1)
+                        )
+                        .staggeredReveal(index: 1)
                     }
-                    .closeClawGlassCard()
+                    .padding(20)
                 }
-                .padding(20)
             }
-            .background(CloseClawTheme.bgRoot.ignoresSafeArea())
+            .alert("Authentication Error", isPresented: Binding(
+                get: { localError != nil },
+                set: { if !$0 { localError = nil } }
+            )) {
+                Button("OK", role: .cancel) { localError = nil }
+            } message: {
+                if let error = localError {
+                    Text(error)
+                }
+            }
         }
     }
 

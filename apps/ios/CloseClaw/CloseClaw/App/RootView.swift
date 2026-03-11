@@ -43,7 +43,7 @@ struct RootView: View {
                         }
                     )
                 case .signedIn:
-                    MainTabsView(viewModel: viewModel)
+                    ChatViewContainer(viewModel: viewModel)
                 }
             }
         }
@@ -76,128 +76,179 @@ private struct OnboardingView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 18) {
-                    VStack(spacing: 12) {
-                        Image("BrandMark")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 72, height: 72)
-                            .shadow(color: CloseClawTheme.accentGlow, radius: 16)
+            ZStack {
+                NebulaBackground().ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 32) {
+                        VStack(spacing: 16) {
+                            Image("logo3")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 80, height: 80)
+                                .shadow(color: CloseClawTheme.accentGlow, radius: 24)
 
-                        Text("Welcome to CloseClaw")
-                            .font(.system(size: 30, weight: .bold, design: .rounded))
-                            .foregroundStyle(CloseClawTheme.textPrimary)
-
-                        Text("Set up your private instance before entering the app.")
-                            .font(.subheadline)
-                            .foregroundStyle(CloseClawTheme.textSecondary)
-                            .multilineTextAlignment(.center)
-                    }
-                    .padding(.top, 20)
-
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Onboarding")
-                            .font(.headline)
-                            .foregroundStyle(CloseClawTheme.textPrimary)
-                        Text("1. Verify account")
-                            .foregroundStyle(CloseClawTheme.textSecondary)
-                        Text("2. Activate instance")
-                            .foregroundStyle(CloseClawTheme.textSecondary)
-                        Text("3. Connect channels (next)")
-                            .foregroundStyle(CloseClawTheme.textSecondary)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .closeClawGlassCard()
-
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Paywall Hook")
-                            .font(.headline)
-                            .foregroundStyle(CloseClawTheme.textPrimary)
-                        Text("Paywall is not enforced yet in iOS. Keep this gate before provisioning so we can require subscription later.")
-                            .font(.footnote)
-                            .foregroundStyle(CloseClawTheme.textSecondary)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .closeClawGlassCard()
-
-                    Button {
-                        Task { await onProvision() }
-                    } label: {
-                        HStack {
-                            if isProvisioning {
-                                ProgressView()
-                                    .tint(CloseClawTheme.textPrimary)
+                            VStack(spacing: 8) {
+                                Text("Setting Up Your Core")
+                                    .font(CloseClawTheme.Typography.title())
+                                    .premiumTextGradient()
+                                
+                                Text("We're preparing your private, dedicated AI environment.")
+                                    .font(CloseClawTheme.Typography.body())
+                                    .foregroundStyle(CloseClawTheme.textPrimary)
+                                    .multilineTextAlignment(.center)
                             }
-                            Text(isProvisioning ? "Activating..." : "Activate My Instance")
-                                .fontWeight(.semibold)
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                    }
-                    .buttonStyle(.plain)
-                    .background(CloseClawTheme.accentPrimary)
-                    .foregroundStyle(CloseClawTheme.textPrimary)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .disabled(isProvisioning)
+                        .padding(.top, 40)
+                        .staggeredReveal(index: 0)
 
-                    Button {
-                        Task { await onSignOut() }
-                    } label: {
-                        Text("Sign out")
-                            .font(.footnote)
-                            .foregroundStyle(CloseClawTheme.textSecondary)
+                        VStack(spacing: 20) {
+                            OnboardingStepRow(
+                                number: "01",
+                                title: "Identity Verified",
+                                description: "Your secure session is active.",
+                                isCompleted: true
+                            )
+                            
+                            OnboardingStepRow(
+                                number: "02",
+                                title: "Activate Core",
+                                description: "Provisioning your personal processing unit.",
+                                isCurrent: true
+                            )
+                            
+                            OnboardingStepRow(
+                                number: "03",
+                                title: "Connect Channels",
+                                description: "Bridge your tools directly into the chat.",
+                                isLocked: true
+                            )
+                        }
+                        .padding(20)
+                        .background(
+                            CloseClawTheme.surfaceBase
+                                .background(.ultraThinMaterial)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                .stroke(CloseClawTheme.cardBorder, lineWidth: 1)
+                        )
+                        .staggeredReveal(index: 1)
+
+                        VStack(spacing: 16) {
+                            CloseClawButton(
+                                title: isProvisioning ? "Activating Core..." : "Activate My Environment",
+                                isLoading: isProvisioning,
+                                action: {
+                                    Task { await onProvision() }
+                                }
+                            )
+
+                            Button {
+                                Task { await onSignOut() }
+                            } label: {
+                                Text("Sign out")
+                                    .font(CloseClawTheme.Typography.footnote())
+                                    .foregroundStyle(CloseClawTheme.textSecondary)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .staggeredReveal(index: 2)
                     }
-                    .buttonStyle(.plain)
+                    .padding(24)
                 }
-                .padding(20)
             }
-            .background(CloseClawTheme.bgRoot.ignoresSafeArea())
+            .tapToDismissKeyboard()
         }
+    }
+
+}
+
+private struct OnboardingStepRow: View {
+    let number: String
+    let title: String
+    let description: String
+    var isCompleted: Bool = false
+    var isCurrent: Bool = false
+    var isLocked: Bool = false
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(circleBackground)
+                    .frame(width: 36, height: 36)
+                
+                if isCompleted {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(.white)
+                } else {
+                    Text(number)
+                        .font(CloseClawTheme.Typography.footnote())
+                        .foregroundStyle(numberColor)
+                }
+            }
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(CloseClawTheme.Typography.body())
+                    .foregroundStyle(isLocked ? CloseClawTheme.textSecondary : CloseClawTheme.textPrimary)
+                
+                Text(description)
+                    .font(CloseClawTheme.Typography.footnote())
+                    .foregroundStyle(CloseClawTheme.textSecondary.opacity(0.8))
+            }
+            
+            Spacer()
+        }
+        .opacity(isLocked ? 0.5 : 1.0)
+    }
+    
+    private var circleBackground: Color {
+        if isCompleted { return CloseClawTheme.accentSecondary }
+        if isCurrent { return CloseClawTheme.accentPrimary }
+        return CloseClawTheme.surfaceHover
+    }
+    
+    private var numberColor: Color {
+        isCurrent ? .white : CloseClawTheme.textSecondary
     }
 }
 
-private struct MainTabsView: View {
+private struct ChatViewContainer: View {
     @ObservedObject var viewModel: AppViewModel
-
+    @State private var showingSettings = false
+    
     var body: some View {
-        TabView {
-            ChatTabView(viewModel: viewModel.chatViewModel)
-                .tabItem {
-                    Label("Chat", systemImage: "message")
-                }
-
-            TasksTabView(viewModel: viewModel.tasksViewModel, onRefresh: {
-                await viewModel.refreshTasks()
-            })
-            .tabItem {
-                Label("Tasks", systemImage: "clock.arrow.circlepath")
+        ChatTabView(
+            viewModel: viewModel.chatViewModel,
+            onReload: {
+                Task { await viewModel.chatViewModel.loadHistory() }
+            },
+            onShowSettings: {
+                showingSettings = true
             }
-
-            CreditsTabView(viewModel: viewModel.creditsViewModel, onRefresh: {
-                await viewModel.refreshCredits()
-            })
-            .tabItem {
-                Label("Credits", systemImage: "creditcard")
-            }
-
+        )
+        .sheet(isPresented: $showingSettings) {
             SettingsTabView(
                 user: viewModel.user,
                 gatewayStatusText: viewModel.gatewayStatusText,
+                creditsViewModel: viewModel.creditsViewModel,
+                isLoadingReconnect: viewModel.isReconnectingGateway,
+                isLoadingDelete: viewModel.isAuthenticating,
                 onReconnect: {
                     await viewModel.reconnectGateway()
                 },
                 onSignOut: {
                     await viewModel.signOut()
+                },
+                onDeleteAccount: {
+                    await viewModel.deleteAccount()
                 }
             )
-
-            .tabItem {
-                Label("Settings", systemImage: "gearshape")
-            }
         }
-        .tint(CloseClawTheme.accentPrimary)
-        .toolbarBackground(CloseClawTheme.bgRoot, for: .tabBar)
-        .toolbarBackground(.visible, for: .tabBar)
     }
 }
+

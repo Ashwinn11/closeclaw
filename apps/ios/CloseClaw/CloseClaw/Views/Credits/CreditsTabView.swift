@@ -6,53 +6,68 @@ struct CreditsTabView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 12) {
-                    if viewModel.isLoading {
-                        ProgressView("Refreshing credits...")
-                            .tint(CloseClawTheme.accentPrimary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
+            ZStack {
+                NebulaBackground().ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 20) {
+                        if viewModel.isLoading {
+                            VStack(spacing: 12) {
+                                ProgressView()
+                                    .tint(CloseClawTheme.accentPrimary)
+                                Text("Refreshing billing details...")
+                                    .font(CloseClawTheme.Typography.footnote())
+                                    .foregroundStyle(CloseClawTheme.textSecondary)
+                            }
+                            .frame(maxWidth: .infinity, minHeight: 100)
+                        }
 
-                    if let credits = viewModel.credits {
-                        CreditStatCard(
-                            title: "Balance",
-                            value: String(format: "%.2f", credits.api_credits),
-                            subtitle: "Plan: \(credits.plan.capitalized)"
-                        )
-                        CreditStatCard(
-                            title: "Monthly Cap",
-                            value: String(format: "%.2f", credits.api_credits_cap),
-                            subtitle: credits.subscription_renews_at.map { "Renews: \($0)" } ?? "No renewal date"
-                        )
-                    } else {
-                        ContentUnavailableView(
-                            "No Credits Data",
-                            systemImage: "creditcard.trianglebadge.exclamationmark",
-                            description: Text("Pull billing details once your API is configured.")
-                        )
+                        if let credits = viewModel.credits {
+                            VStack(spacing: 16) {
+                                CreditStatCard(
+                                    title: "Current Balance",
+                                    value: String(format: "%.2f", credits.api_credits),
+                                    subtitle: "Platform Plan: \(credits.plan.capitalized)"
+                                )
+                                .staggeredReveal(index: 0)
+                            }
+                        } else {
+                            VStack(spacing: 16) {
+                                Image(systemName: "creditcard.trianglebadge.exclamationmark")
+                                    .font(.system(size: 44))
+                                    .foregroundStyle(CloseClawTheme.textSecondary)
+                                
+                                Text("No Usage Data")
+                                    .font(CloseClawTheme.Typography.headline())
+                                
+                                Text("Connect your API billing to see usage details.")
+                                    .font(CloseClawTheme.Typography.body())
+                                    .foregroundStyle(CloseClawTheme.textSecondary)
+                                    .multilineTextAlignment(.center)
+                            }
+                            .padding(.top, 60)
+                        }
                     }
+                    .padding(20)
                 }
-                .padding(14)
             }
-            .background(CloseClawTheme.bgRoot.ignoresSafeArea())
-            .navigationTitle("Credits")
-            .foregroundStyle(CloseClawTheme.textPrimary)
-            .toolbarBackground(CloseClawTheme.bgRoot, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .navigationTitle("Usage & Credits")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         Task { await onRefresh() }
                     } label: {
                         Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 14, weight: .semibold))
                     }
-                    .foregroundStyle(CloseClawTheme.accentPrimary)
+                    .foregroundStyle(CloseClawTheme.textSecondary)
                 }
             }
         }
     }
 }
+
 
 private struct CreditStatCard: View {
     let title: String

@@ -15,17 +15,16 @@
 		3DBDB2BAF856E82D4D263C4F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 990F13E3F62CAB7874D72298 /* Assets.xcassets */; };
 		3EC9CD60321F374D55AE4683 /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 806FB1ECE300AB50783BD1C0 /* ChatViewModel.swift */; };
 		3FB4E9B42BCFBA781637BB9A /* GatewayWebSocketClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C673571DC9BEFBEC576D1D4A /* GatewayWebSocketClient.swift */; };
+		4A04E1C9BC9404C27B459BB4 /* CloseClawComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D375210DC86468804436F66 /* CloseClawComponents.swift */; };
 		6F942C5418BEBB780DFA8D3E /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADE2686B9D765304F4BA6477 /* APIClient.swift */; };
 		7073402F756828EC9883F3A2 /* CreditsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 025C78ECE5B7E7A8E85E4B8D /* CreditsViewModel.swift */; };
 		77C1129C352DD68AA3AF4A77 /* CreditsTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A36B9FB1A13FB7DFCD7391B7 /* CreditsTabView.swift */; };
 		7F9744E8DE958707431005AC /* SettingsTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB2EAB979C5835FCCA794B7 /* SettingsTabView.swift */; };
 		814E19E113D382767029C0EE /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34E0DD18A8CF25CB0D80791 /* AppConfig.swift */; };
 		A51EC13DACEA6DA4EEC356DF /* JSONValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BEA3EE2E9193B6E7CEBAA8 /* JSONValue.swift */; };
-		CA4262068935D19769FFD743 /* TasksTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE724502B4C0FE52C7A240E0 /* TasksTabView.swift */; };
 		CC224150E18EEE205D404749 /* CloseClawTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24ED98B961793964FDEC423D /* CloseClawTheme.swift */; };
 		E1FAAC24DC7B32344FD06EC7 /* CloseClawApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44443782CA742F87A86F5CEB /* CloseClawApp.swift */; };
 		EC73FD298EEE1317CDFCF46F /* TokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BC7010C3CAB47C0520AA6CA /* TokenStore.swift */; };
-		F9E2DE10DD35B0FBD28A392C /* TasksViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90218A4AEFDC722C7D2307D4 /* TasksViewModel.swift */; };
 		FCA087319F667D3D5BFD68FC /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13AB0C272E3AB30AC2068A51 /* RootView.swift */; };
 /* End PBXBuildFile section */
 
@@ -41,7 +40,7 @@
 		66BEA3EE2E9193B6E7CEBAA8 /* JSONValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONValue.swift; sourceTree = "<group>"; };
 		806FB1ECE300AB50783BD1C0 /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
 		88579E69A6BABBF36913D8CF /* APIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIModels.swift; sourceTree = "<group>"; };
-		90218A4AEFDC722C7D2307D4 /* TasksViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasksViewModel.swift; sourceTree = "<group>"; };
+		8D375210DC86468804436F66 /* CloseClawComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloseClawComponents.swift; sourceTree = "<group>"; };
 		990F13E3F62CAB7874D72298 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A36B9FB1A13FB7DFCD7391B7 /* CreditsTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditsTabView.swift; sourceTree = "<group>"; };
 		A3F0D3F6E3BBAEC07E808345 /* Config.template.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.template.xcconfig; sourceTree = "<group>"; };
@@ -53,7 +52,6 @@
 		B554523F2F30CB4D927A1F8E /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
 		C34E0DD18A8CF25CB0D80791 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		C673571DC9BEFBEC576D1D4A /* GatewayWebSocketClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayWebSocketClient.swift; sourceTree = "<group>"; };
-		CE724502B4C0FE52C7A240E0 /* TasksTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasksTabView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -72,7 +70,6 @@
 				B24175B492820D677C7A5EB3 /* AppViewModel.swift */,
 				806FB1ECE300AB50783BD1C0 /* ChatViewModel.swift */,
 				025C78ECE5B7E7A8E85E4B8D /* CreditsViewModel.swift */,
-				90218A4AEFDC722C7D2307D4 /* TasksViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -131,6 +128,14 @@
 			path = Services;
 			sourceTree = "<group>";
 		};
+		8E978616CC401916DBFA97AC /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				8D375210DC86468804436F66 /* CloseClawComponents.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
 		98C3FBEE9F73B2EA214916AC /* CloseClaw */ = {
 			isa = PBXGroup;
 			children = (
@@ -176,6 +181,7 @@
 			children = (
 				714CC306D1B552686582FCEC /* Auth */,
 				9AE76E9018240505C1A2B85C /* Chat */,
+				8E978616CC401916DBFA97AC /* Components */,
 				382D4C1A45FADBB0D3C137F9 /* Credits */,
 				B286CA0E9BCF4DA19D93F9D0 /* Settings */,
 				F9508317BE79AB748B641D77 /* Tasks */,
@@ -186,7 +192,6 @@
 		F9508317BE79AB748B641D77 /* Tasks */ = {
 			isa = PBXGroup;
 			children = (
-				CE724502B4C0FE52C7A240E0 /* TasksTabView.swift */,
 			);
 			path = Tasks;
 			sourceTree = "<group>";
@@ -219,7 +224,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1430;
+				LastUpgradeCheck = 2620;
 			};
 			buildConfigurationList = 96BC7B1BD1F566745287082E /* Build configuration list for PBXProject "CloseClaw" */;
 			developmentRegion = en;
@@ -265,6 +270,7 @@
 				1655CF32D5E28EF33C7BB0D8 /* ChatTabView.swift in Sources */,
 				3EC9CD60321F374D55AE4683 /* ChatViewModel.swift in Sources */,
 				E1FAAC24DC7B32344FD06EC7 /* CloseClawApp.swift in Sources */,
+				4A04E1C9BC9404C27B459BB4 /* CloseClawComponents.swift in Sources */,
 				CC224150E18EEE205D404749 /* CloseClawTheme.swift in Sources */,
 				77C1129C352DD68AA3AF4A77 /* CreditsTabView.swift in Sources */,
 				7073402F756828EC9883F3A2 /* CreditsViewModel.swift in Sources */,
@@ -272,8 +278,6 @@
 				A51EC13DACEA6DA4EEC356DF /* JSONValue.swift in Sources */,
 				FCA087319F667D3D5BFD68FC /* RootView.swift in Sources */,
 				7F9744E8DE958707431005AC /* SettingsTabView.swift in Sources */,
-				CA4262068935D19769FFD743 /* TasksTabView.swift in Sources */,
-				F9E2DE10DD35B0FBD28A392C /* TasksViewModel.swift in Sources */,
 				EC73FD298EEE1317CDFCF46F /* TokenStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -285,6 +289,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -317,7 +322,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = PVQK77DQWL;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -335,6 +340,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = CloseClaw;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.1;
@@ -347,7 +353,6 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = CloseClaw/Resources/CloseClaw.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = PVQK77DQWL;
 				INFOPLIST_FILE = CloseClaw/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -364,6 +369,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -396,7 +402,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = PVQK77DQWL;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -421,6 +427,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = CloseClaw;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.1;
@@ -433,7 +440,6 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = CloseClaw/Resources/CloseClaw.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = PVQK77DQWL;
 				INFOPLIST_FILE = CloseClaw/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (

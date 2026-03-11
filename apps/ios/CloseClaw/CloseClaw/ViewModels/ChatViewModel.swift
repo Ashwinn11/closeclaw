@@ -14,6 +14,15 @@ final class ChatViewModel: ObservableObject {
     private var seenEventKeys = Set<String>()
     private var activeRunId: String?
 
+    var isConnected: Bool {
+        if case .connected = gatewayClient.state { return true }
+        return false
+    }
+
+    var gatewayState: GatewayWebSocketClient.ConnectionState {
+        gatewayClient.state
+    }
+
     init(gatewayClient: GatewayWebSocketClient) {
         self.gatewayClient = gatewayClient
     }
@@ -68,7 +77,6 @@ final class ChatViewModel: ObservableObject {
     func send() async {
         let text = composerText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
-        guard !isSending else { return }
 
         let runId = UUID().uuidString
         activeRunId = runId
@@ -95,8 +103,10 @@ final class ChatViewModel: ObservableObject {
                 ]
             )
         } catch {
-            isSending = false
-            activeRunId = nil
+            if activeRunId == runId {
+                isSending = false
+                activeRunId = nil
+            }
             errorMessage = error.localizedDescription
             messages.append(
                 ChatMessage(
@@ -146,7 +156,11 @@ final class ChatViewModel: ObservableObject {
         let state = payload["state"]?.stringValue ?? ""
         if state == "delta" {
             if let message = payload["message"], let text = extractText(from: message), !text.isEmpty {
-                streamingText = cleanInboundText(text)
+                // False means we keep trailing whitespace/newlines during stream
+                let cleaned = cleanInboundText(text, trimTrailing: false)
+                if !cleaned.isEmpty || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    streamingText = cleaned
+                }
             }
             return
         }
@@ -230,7 +244,7 @@ final class ChatViewModel: ObservableObject {
                         guard let obj = block.objectValue else { return nil }
                         guard obj["type"]?.stringValue == "text" else { return nil }
                         return obj["text"]?.stringValue
-                    }.joined()
+                    }.joined(separator: "\n")
                     return text.isEmpty ? nil : text
                 }
             }
@@ -238,23 +252,118 @@ final class ChatViewModel: ObservableObject {
         return value.stringValue
     }
 
-    private func cleanInboundText(_ text: String) -> String {
-        var output = text
-        output = output.replacingOccurrences(
-            of: "(?s)Conversation info \\(untrusted metadata\\):\\s*```json.*?```\\s*",
-            with: "",
-            options: .regularExpression
-        )
-        output = output.replacingOccurrences(
-            of: "(?m)^\\s*\\[message_id:\\s*[^\\]]+\\]\\s*$",
-            with: "",
-            options: .regularExpression
-        )
-        output = output.replacingOccurrences(
-            of: "\\[\\[\\s*audio_as_voice\\s*\\]\\]",
-            with: "",
-            options: .regularExpression
-        )
-        return output.trimmingCharacters(in: .whitespacesAndNewlines)
+    private func cleanInboundText(_ text: String, trimTrailing: Bool = true) -> String {
+        let lines = text.components(separatedBy: .newlines)
+        var result: [String] = []
+        
+        var inMetaBlock = false
+        var inFence = false
+        var hasEncounteredContent = false
+        
+        // Robust sentinel detection (matches Conversation info or Sender with variations)
+        let sentinelRegex = try? NSRegularExpression(pattern: "(?:Conversation info|Sender) \\(untrusted metadata\\):", options: .caseInsensitive)
+        // Timestamp detection
+        let tsRegex = try? NSRegularExpression(pattern: "^\\[.*?(?:UTC|GMT)\\]\\s*", options: .caseInsensitive)
+        
+        for line in lines {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            
+            // 1. GLOBAL STRIPPING: Metadata Blocks
+            // These are always stripped regardless of position (though they usually appear at top)
+            if !inMetaBlock {
+                let range = NSRange(location: 0, length: trimmed.utf16.count)
+                if sentinelRegex?.firstMatch(in: trimmed, options: [], range: range) != nil {
+                    inMetaBlock = true
+                    inFence = false
+                    continue
+                }
+            } else {
+                if !inFence && (trimmed == "```json" || trimmed == "```") {
+                    inFence = true
+                    continue
+                }
+                if inFence {
+                    if trimmed == "```" {
+                        inMetaBlock = false
+                        inFence = false
+                    }
+                    continue
+                }
+                if trimmed.isEmpty { continue }
+                inMetaBlock = false
+            }
+            
+            // 2. HEADER-ONLY STRIPPING (Logs, Doctor Hints, Timestamps)
+            // We only strip these if we haven't seen "real" content yet.
+            if !hasEncounteredContent {
+                if trimmed.isEmpty { continue }
+                
+                // Skip System lines and doctor hints at the top
+                if trimmed.hasPrefix("System:") || trimmed.hasPrefix("Run: openclaw doctor") {
+                    continue
+                }
+                
+                // Skip standalone markers at the top
+                if trimmed == "json" || trimmed == "```" || trimmed == "```json" {
+                    continue
+                }
+                
+                // Skip message ID hints at the top
+                if trimmed.hasPrefix("[message_id:") && trimmed.hasSuffix("]") {
+                    continue
+                }
+                
+                // Check if this line is JUST a timestamp at the top
+                var lineAfterTS = line
+                if let tsRegex = tsRegex {
+                    lineAfterTS = tsRegex.stringByReplacingMatches(
+                        in: line,
+                        range: NSRange(location: 0, length: line.utf16.count),
+                        withTemplate: ""
+                    )
+                }
+                
+                if lineAfterTS.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    // It was just a timestamp line at the top
+                    continue
+                }
+                
+                // If we got here, this is the first line of REAL content
+                hasEncounteredContent = true
+                
+                // Even for the first content line, we still strip the leading timestamp part
+                if let tsRegex = tsRegex {
+                    let processed = tsRegex.stringByReplacingMatches(
+                        in: line,
+                        range: NSRange(location: 0, length: line.utf16.count),
+                        withTemplate: ""
+                    )
+                    if !processed.isEmpty {
+                        result.append(processed)
+                    }
+                } else {
+                    result.append(line)
+                }
+            } else {
+                // 3. BODY CONTENT: Keep markdown markers (```, json) for the renderer.
+                // Strip only internal directives [[ ... ]] which are never user-visible.
+                var processedLine = line
+                processedLine = processedLine.replacingOccurrences(
+                    of: "\\[\\[\\s*audio_as_voice\\s*\\]\\]",
+                    with: "",
+                    options: .regularExpression
+                )
+                
+                result.append(processedLine)
+            }
+        }
+        
+        let output = result.joined(separator: "\n")
+        
+        if trimTrailing {
+            return output.trimmingCharacters(in: .whitespacesAndNewlines)
+        } else {
+            return output.trimmingCharacters(in: .whitespaces)
+        }
     }
 }

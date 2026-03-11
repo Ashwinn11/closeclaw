@@ -11,6 +11,7 @@ protocol AuthServiceProtocol {
     ) async throws -> AppSession
     func refreshSession(_ session: AppSession) async throws -> AppSession
     func signOut(session: AppSession?) async
+    func deleteAccount(session: AppSession) async throws
 }
 
 final class AuthService: AuthServiceProtocol {
@@ -169,6 +170,27 @@ final class AuthService: AuthServiceProtocol {
         if let session {
             await sendLogout(accessToken: session.accessToken)
         }
+        try? tokenStore.clearSession()
+    }
+
+    func deleteAccount(session: AppSession) async throws {
+        guard let url = URL(string: "/api/auth/delete", relativeTo: config.apiBaseURL) else {
+            return
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(session.accessToken)", forHTTPHeaderField: "Authorization")
+        
+        let (data, response) = try await self.session.data(for: request)
+        guard let http = response as? HTTPURLResponse else {
+            throw AuthError.invalidResponse
+        }
+        
+        guard http.statusCode >= 200, http.statusCode < 300 else {
+            throw parseSupabaseError(from: data, statusCode: http.statusCode)
+        }
+        
         try? tokenStore.clearSession()
     }
 
