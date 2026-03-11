@@ -47,7 +47,7 @@ struct ChatTabView: View {
                             ScrollView {
                                 LazyVStack(spacing: 20) {
                                     ForEach(Array(viewModel.messages.enumerated()), id: \.element.id) { index, message in
-                                        MessageBubble(message: message)
+                                        MessageBubble(message: message, viewModel: viewModel)
                                             .id(message.id)
                                     }
                                     
@@ -65,7 +65,8 @@ struct ChatTabView: View {
                                                 content: stream,
                                                 createdAt: Date()
                                             ),
-                                            isStreaming: true
+                                            isStreaming: true,
+                                            viewModel: viewModel
                                         )
                                         .id("streaming")
                                     }
@@ -124,6 +125,16 @@ struct ChatTabView: View {
             } message: {
                 if let error = viewModel.errorMessage {
                     Text(error)
+                }
+            }
+            .alert("Report Received", isPresented: Binding(
+                get: { viewModel.successMessage != nil },
+                set: { if !$0 { viewModel.successMessage = nil } }
+            )) {
+                Button("OK", role: .cancel) { viewModel.successMessage = nil }
+            } message: {
+                if let msg = viewModel.successMessage {
+                    Text(msg)
                 }
             }
         }
@@ -221,18 +232,31 @@ struct ChatTabView: View {
 private struct MessageBubble: View {
     let message: ChatMessage
     var isStreaming = false
+    let viewModel: ChatViewModel
 
     var body: some View {
         HStack(alignment: .bottom, spacing: 0) {
             if message.role == .user { Spacer(minLength: 60) }
             
-            VStack(alignment: .trailing, spacing: 2) {
+            VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 2) {
                 MarkdownMessageView(content: message.content, role: message.role)
                 
-                Text(message.createdAt, style: .time)
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(foreground.opacity(0.6))
-                    .padding(.top, 2)
+                HStack(spacing: 8) {
+                    Text(message.createdAt, style: .time)
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(foreground.opacity(0.6))
+                    
+                    if message.role == .assistant && !isStreaming {
+                        Button {
+                            viewModel.flagMessage(message)
+                        } label: {
+                            Image(systemName: "flag")
+                                .font(.system(size: 10))
+                                .foregroundStyle(foreground.opacity(0.6))
+                        }
+                    }
+                }
+                .padding(.top, 2)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)

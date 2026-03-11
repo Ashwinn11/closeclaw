@@ -146,7 +146,7 @@ final class AppViewModel: ObservableObject {
         session = nil
         user = nil
         isProvisioningInstance = false
-        hasPatchedConfig = false
+        hasCompletedInitialSetup = false
         authPhase = .signedOut
     }
 
@@ -163,7 +163,7 @@ final class AppViewModel: ObservableObject {
             self.session = nil
             self.user = nil
             isProvisioningInstance = false
-            hasPatchedConfig = false
+            hasCompletedInitialSetup = false
             authPhase = .signedOut
         } catch {
             errorMessage = error.localizedDescription

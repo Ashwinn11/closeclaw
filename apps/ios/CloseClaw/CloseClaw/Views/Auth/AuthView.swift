@@ -88,6 +88,18 @@ struct AuthView: View {
                                     .foregroundStyle(CloseClawTheme.textSecondary.opacity(0.7))
                                     .multilineTextAlignment(.center)
                                     .padding(.horizontal)
+
+                                HStack(spacing: 4) {
+                                    Text("By signing in, you agree to our")
+                                    Link("Terms", destination: URL(string: "https://closeclaw.in/terms")!)
+                                        .underline()
+                                    Text("&")
+                                    Link("Privacy", destination: URL(string: "https://closeclaw.in/privacy")!)
+                                        .underline()
+                                }
+                                .font(.system(size: 10))
+                                .foregroundStyle(CloseClawTheme.textSecondary.opacity(0.6))
+                                .padding(.top, 4)
                             }
                         }
                         .padding(24)
