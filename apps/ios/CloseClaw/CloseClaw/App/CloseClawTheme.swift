@@ -16,6 +16,29 @@ enum CloseClawTheme {
     
     static let cardBorder = Color.white.opacity(0.08)
     
+    // MARK: - Spacing
+    // Use these instead of magic numbers throughout the app
+    struct Spacing {
+        static let xs: CGFloat   = 4
+        static let sm: CGFloat   = 8
+        static let md: CGFloat   = 16
+        static let lg: CGFloat   = 24
+        static let xl: CGFloat   = 32
+        static let xxl: CGFloat  = 48
+    }
+
+    // MARK: - Corner Radii
+    struct Radius {
+        /// Apple-standard app icon squircle corner radius (22% of side length)
+        static func icon(_ size: CGFloat) -> CGFloat { size * 0.2237 }
+        /// Card / sheet level
+        static let card: CGFloat   = 20
+        /// Button / pill level
+        static let button: CGFloat = 14
+        /// Inner / small chip level
+        static let chip: CGFloat   = 10
+    }
+    
     // Typography
     struct Typography {
         static func title(_ size: CGFloat = 34) -> Font {
@@ -168,4 +191,34 @@ struct VisualEffectBlur: UIViewRepresentable {
     }
 }
 
+// MARK: - App Logo
+/// Single source of truth for the CloseClaw logo.
+/// Always renders with the Apple-standard squircle corner radius (22.37% of size)
+/// matching how the OS draws app icons — same on auth, loading, and any other screen.
+struct AppLogo: View {
+    var size: CGFloat = 100
+    var glowing: Bool = true
+    var pulsing: Bool = false
 
+    @State private var isPulsing = false
+
+    private var radius: CGFloat { CloseClawTheme.Radius.icon(size) }
+
+    var body: some View {
+        Image("logo3")
+            .resizable()
+            .scaledToFit()
+            .frame(width: size, height: size)
+            .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .shadow(color: glowing ? CloseClawTheme.accentGlow : .clear, radius: 24)
+            .scaleEffect(pulsing ? (isPulsing ? 1.05 : 0.95) : 1.0)
+            .opacity(pulsing ? (isPulsing ? 1.0 : 0.6) : 1.0)
+            .animation(
+                pulsing ? .easeInOut(duration: 1.2).repeatForever(autoreverses: true) : .default,
+                value: isPulsing
+            )
+            .onAppear {
+                if pulsing { isPulsing = true }
+            }
+    }
+}

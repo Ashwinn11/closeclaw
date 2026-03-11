@@ -14,6 +14,7 @@ final class ChatViewModel: ObservableObject {
     private var eventToken: UUID?
     private var seenEventKeys = Set<String>()
     private var activeRunId: String?
+    private var isCacheLoading = false
 
     var isConnected: Bool {
         if case .connected = gatewayClient.state { return true }
@@ -24,9 +25,12 @@ final class ChatViewModel: ObservableObject {
         gatewayClient.state
     }
 
+    // Current user ID — used to scope the cache file per user
+    private var userId: String = "anonymous"
+
     init(gatewayClient: GatewayWebSocketClient) {
         self.gatewayClient = gatewayClient
-        loadFromCache()
+        // We wait for reloadForUser() to be called with a real ID before loading
     }
 
     private nonisolated var cacheURL: URL {
@@ -34,8 +38,16 @@ final class ChatViewModel: ObservableObject {
         return paths[0].appendingPathComponent("chat_cache.json")
     }
 
+    /// Returns the user-scoped cache URL, safe to call from any thread
+    private nonisolated func cacheURL(for userId: String) -> URL {
+        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        // Sanitize userId so it's safe as a filename
+        let safe = userId.components(separatedBy: .alphanumerics.inverted).joined(separator: "_")
+        return paths[0].appendingPathComponent("chat_cache_\(safe).json")
+    }
+
     private func saveToCache() {
-        let url = cacheURL
+        let url = cacheURL(for: userId)
         let currentMessages = messages
         Task.detached(priority: .background) {
             do {
@@ -48,25 +60,51 @@ final class ChatViewModel: ObservableObject {
     }
 
     private func loadFromCache() {
-        // Always mark loaded so the empty state never flashes while data arrives
-        hasLoadedHistory = true
-        let url = cacheURL
+        guard !isCacheLoading else { return }
+        isCacheLoading = true
+        
+        let url = cacheURL(for: userId)
+        // Reset state for new load
+        hasLoadedHistory = false
+        
         Task.detached(priority: .userInitiated) { [weak self] in
             guard let self else { return }
-            guard FileManager.default.fileExists(atPath: url.path) else { return }
+            
+            defer {
+                Task { @MainActor in self.isCacheLoading = false }
+            }
+            
+            // Check if file exists before trying to read it
+            guard FileManager.default.fileExists(atPath: url.path) else {
+                await MainActor.run { self.hasLoadedHistory = true }
+                return
+            }
+            
             do {
                 let data = try Data(contentsOf: url)
                 let cached = try JSONDecoder().decode([ChatMessage].self, from: data)
                 await MainActor.run {
-                    // Only update if we haven't received live messages already
-                    if self.messages.isEmpty && !cached.isEmpty {
+                    // Only restore if we are still empty (no live messages arrived yet)
+                    if self.messages.isEmpty {
                         self.messages = cached
                     }
+                    self.hasLoadedHistory = true
                 }
             } catch {
                 print("[ChatViewModel] Failed to load cache: \(error)")
+                await MainActor.run { self.hasLoadedHistory = true }
             }
         }
+    }
+
+    func reloadForUser(_ newUserId: String) {
+        // Only reload if user changed OR we are currently empty but history isn't loaded
+        guard newUserId != userId || (messages.isEmpty && !hasLoadedHistory) else { return }
+        
+        userId = newUserId
+        messages.removeAll()
+        hasLoadedHistory = false
+        loadFromCache()
     }
 
     func activate() {
@@ -84,11 +122,13 @@ final class ChatViewModel: ObservableObject {
         }
     }
 
-    func clear() {
+    func clear(deletePersistedCache: Bool = false) {
         if let eventToken {
             gatewayClient.unsubscribe(eventToken)
             self.eventToken = nil
         }
+        
+        // Remove locally held messages
         messages.removeAll()
         streamingText = nil
         composerText = ""
@@ -96,7 +136,14 @@ final class ChatViewModel: ObservableObject {
         isSending = false
         activeRunId = nil
         seenEventKeys.removeAll()
-        try? FileManager.default.removeItem(at: cacheURL)
+        
+        // Only wipe the on-disk cache when explicitly requested (e.g. delete account).
+        if deletePersistedCache {
+            try? FileManager.default.removeItem(at: cacheURL(for: userId))
+        }
+        
+        // Reset to anonymous state after clearing
+        userId = "anonymous"
     }
 
     func send() async {

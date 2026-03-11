@@ -14,7 +14,16 @@ struct ChatTabView: View {
                     }
                 
                 VStack(spacing: 0) {
-                    if viewModel.hasLoadedHistory && viewModel.messages.isEmpty && (viewModel.streamingText ?? "").isEmpty && !viewModel.isSending {
+                    if !viewModel.hasLoadedHistory {
+                        VStack(spacing: 12) {
+                            ProgressView()
+                                .tint(CloseClawTheme.accentPrimary)
+                            Text("Restoring safe environment...")
+                                .font(CloseClawTheme.Typography.footnote())
+                                .foregroundStyle(CloseClawTheme.textSecondary)
+                        }
+                        .frame(maxHeight: .infinity)
+                    } else if viewModel.messages.isEmpty && (viewModel.streamingText ?? "").isEmpty && !viewModel.isSending {
                         VStack(spacing: 16) {
                             Image(systemName: "sparkles")
                                 .font(.system(size: 48))

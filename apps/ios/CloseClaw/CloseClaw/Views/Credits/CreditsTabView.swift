@@ -19,18 +19,26 @@ struct CreditsTabView: View {
                     // Header Stats
                     if let credits = viewModel.credits {
                         CreditStatCard(
-                            title: "Current Balance",
+                            title: "API Credit Balance",
                             value: String(format: "$%.2f", credits.api_credits),
-                            subtitle: "Plan: \(credits.plan.capitalized)"
+                            subtitle: credits.plan == "platform" ? "Private Environment: Active" : "Private Environment: Required"
                         )
                         .staggeredReveal(index: 0)
                     }
 
                     // Purchase Options
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("Add Funds")
-                            .font(CloseClawTheme.Typography.subtitle())
-                            .foregroundStyle(CloseClawTheme.textSecondary)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Add Funds")
+                                .font(CloseClawTheme.Typography.subtitle())
+                                .foregroundStyle(CloseClawTheme.textSecondary)
+                            
+                            if viewModel.credits?.plan != "platform" {
+                                Text("Note: Consumable top-ups require an active Platform Subscription to provision your environment.")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(CloseClawTheme.accentPrimary.opacity(0.8))
+                            }
+                        }
                         
                         if purchaseService.products.isEmpty {
                             Text("Fetching products from App Store...")
@@ -52,15 +60,53 @@ struct CreditsTabView: View {
                     }
                     .staggeredReveal(index: 1)
                     
-                    // Restore Button
-                    Button {
-                        restore()
-                    } label: {
-                        Text("Restore Purchases")
-                            .font(CloseClawTheme.Typography.footnote())
-                            .foregroundStyle(CloseClawTheme.accentPrimary)
+                    // ── Required by Apple Guideline 3.1.2(a) ──────────────────
+                    // Apps with auto-renewable subscriptions MUST provide a link
+                    // to Apple's subscription management page.
+                    VStack(spacing: 12) {
+                        Button {
+                            if let url = URL(string: "itms-apps://apps.apple.com/account/subscriptions") {
+                                UIApplication.shared.open(url)
+                            }
+                        } label: {
+                            VStack(spacing: 8) {
+                                Text("Subscription Details")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(CloseClawTheme.textSecondary)
+
+                                Text("Payment will be charged to your Apple ID account at the confirmation of purchase. Subscription automatically renews unless it is canceled at least 24 hours before the end of the current period. Your account will be charged for renewal within 24 hours prior to the end of the current period. You can manage and cancel your subscriptions by going to your account settings on the App Store after purchase.")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(CloseClawTheme.textSecondary.opacity(0.6))
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, 10)
+
+                                HStack(spacing: 24) {
+                                    Link("Terms of Service", destination: URL(string: "https://closeclaw.in/terms")!)
+                                    Link("Privacy Policy", destination: URL(string: "https://closeclaw.in/privacy")!)
+                                }
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundStyle(CloseClawTheme.textSecondary.opacity(0.7))
+                                .padding(.top, 4)
+                            }
+                            .padding(.top, 8)
+                            .padding(.vertical, 12)
+                            .background(CloseClawTheme.surfaceBase)
+                            .clipShape(RoundedRectangle(cornerRadius: CloseClawTheme.Radius.button, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: CloseClawTheme.Radius.button, style: .continuous)
+                                    .stroke(CloseClawTheme.cardBorder, lineWidth: 1)
+                            )
+                        }
+                        
+                        Button {
+                            restore()
+                        } label: {
+                            Text("Restore Purchases")
+                                .font(CloseClawTheme.Typography.footnote())
+                                .foregroundStyle(CloseClawTheme.accentPrimary)
+                        }
                     }
-                    .padding(.top, 10)
+                    .staggeredReveal(index: 2)
                 }
                 .padding(20)
             }

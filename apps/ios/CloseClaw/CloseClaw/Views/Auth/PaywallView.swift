@@ -72,12 +72,25 @@ struct PaywallView: View {
                                 action: { Task { await viewModel.signOut() } }
                             )
                             
-                            HStack(spacing: 24) {
-                                Link("Terms of Service", destination: URL(string: "https://closeclaw.in/terms")!)
-                                Link("Privacy Policy", destination: URL(string: "https://closeclaw.in/privacy")!)
+                            VStack(spacing: 8) {
+                                Text("Subscription Details")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(CloseClawTheme.textSecondary)
+
+                                Text("Payment will be charged to your Apple ID account at the confirmation of purchase. Subscription automatically renews unless it is canceled at least 24 hours before the end of the current period. Your account will be charged for renewal within 24 hours prior to the end of the current period. You can manage and cancel your subscriptions by going to your account settings on the App Store after purchase.")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(CloseClawTheme.textSecondary.opacity(0.6))
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, 10)
+
+                                HStack(spacing: 24) {
+                                    Link("Terms of Service", destination: URL(string: "https://closeclaw.in/terms")!)
+                                    Link("Privacy Policy", destination: URL(string: "https://closeclaw.in/privacy")!)
+                                }
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundStyle(CloseClawTheme.textSecondary.opacity(0.7))
+                                .padding(.top, 4)
                             }
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(CloseClawTheme.textSecondary.opacity(0.7))
                             .padding(.top, 8)
                         }
                         .staggeredReveal(index: 2)

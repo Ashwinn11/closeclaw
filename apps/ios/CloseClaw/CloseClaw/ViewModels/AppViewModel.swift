@@ -187,7 +187,9 @@ final class AppViewModel: ObservableObject {
     func signOut() async {
         let oldSession = session
         gatewayClient.disconnect()
-        chatViewModel.clear()
+        // Pass deletePersistedCache: false — preserve the user's chat history
+        // so it reloads when they sign back in with the same account.
+        chatViewModel.clear(deletePersistedCache: false)
         creditsViewModel.clear()
         await authService.signOut(session: oldSession)
 
@@ -206,7 +208,8 @@ final class AppViewModel: ObservableObject {
         do {
             try await authService.deleteAccount(session: session)
             gatewayClient.disconnect()
-            chatViewModel.clear()
+            // Wipe the cache permanently — this user is gone
+            chatViewModel.clear(deletePersistedCache: true)
             creditsViewModel.clear()
             self.session = nil
             self.user = nil
@@ -255,6 +258,10 @@ final class AppViewModel: ObservableObject {
 
     private func postAuthBootstrap() async {
         guard let session else { return }
+
+        // Start loading history IMMEDIATELY so it appears while other network calls are in flight
+        let uid = user?.id ?? session.user.id
+        chatViewModel.reloadForUser(uid)
 
         await loadCurrentUser(accessToken: session.accessToken)
         await creditsViewModel.load(accessToken: session.accessToken)

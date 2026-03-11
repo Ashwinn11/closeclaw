@@ -83,11 +83,7 @@ private struct OnboardingView: View {
                 ScrollView {
                     VStack(spacing: 32) {
                         VStack(spacing: 16) {
-                            Image("logo3")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 80, height: 80)
-                                .shadow(color: CloseClawTheme.accentGlow, radius: 24)
+                            AppLogo(size: 80)
 
                             VStack(spacing: 8) {
                                 Text("Step 2: Core Setup")
@@ -263,21 +259,9 @@ private struct ChatViewContainer: View {
 }
 
 private struct LoadingView: View {
-    @State private var isPulsing = false
-    
     var body: some View {
         VStack(spacing: 24) {
-            Image("logo3")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 100, height: 100)
-                .shadow(color: isPulsing ? CloseClawTheme.accentGlow : .clear, radius: 24)
-                .scaleEffect(isPulsing ? 1.05 : 0.95)
-                .opacity(isPulsing ? 1.0 : 0.6)
-                .animation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true), value: isPulsing)
-                .onAppear {
-                    isPulsing = true
-                }
+            AppLogo(size: 100, pulsing: true)
             
             Text("Authenticating Core...")
                 .font(CloseClawTheme.Typography.subtitle())

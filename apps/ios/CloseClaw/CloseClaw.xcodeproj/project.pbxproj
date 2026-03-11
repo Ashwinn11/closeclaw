@@ -226,11 +226,6 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 2620;
-				TargetAttributes = {
-					5E49B4F50AB683FEA8C0D772 = {
-						DevelopmentTeam = "";
-					};
-				};
 			};
 			buildConfigurationList = 96BC7B1BD1F566745287082E /* Build configuration list for PBXProject "CloseClaw" */;
 			developmentRegion = en;
@@ -296,6 +291,7 @@
 /* Begin XCBuildConfiguration section */
 		431DA995861007B2B1081D7A /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A3F0D3F6E3BBAEC07E808345 /* Config.template.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -357,11 +353,15 @@
 		};
 		4A622BE2FE0232890D49786F /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A3F0D3F6E3BBAEC07E808345 /* Config.template.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = CloseClaw/Resources/CloseClaw.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = PVQK77DQWL;
 				INFOPLIST_FILE = CloseClaw/Resources/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -375,6 +375,7 @@
 		};
 		73D9B5A3D2D9477F28679F66 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A3F0D3F6E3BBAEC07E808345 /* Config.template.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -443,11 +444,15 @@
 		};
 		ABD433DA4579E680E22B3BF4 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A3F0D3F6E3BBAEC07E808345 /* Config.template.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = CloseClaw/Resources/CloseClaw.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = PVQK77DQWL;
 				INFOPLIST_FILE = CloseClaw/Resources/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

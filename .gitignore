@@ -16,6 +16,7 @@ dist-ssr
 .env
 openclaw
 
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -28,3 +29,7 @@ AuthKey_Q7QGC7AH3S.p8
 *.sln
 *.sw?
 .vercel
+
+# iOS xcconfig with real secrets (use Config.template.xcconfig as the committed template)
+Config.xcconfig
+**/Config.xcconfig

@@ -1,6 +1,9 @@
-// Copy this file to Local.xcconfig and include secrets there.
-// Do not commit real secrets.
+// Config.template.xcconfig
+// This file is committed and contains production defaults.
+// Override locally by creating Config.xcconfig (gitignored) with the same keys.
+// NOTE: The Supabase anon key is safe to commit — it is a public client key
+// protected by Row Level Security, not a server-side secret.
 
-CLOSECLAW_API_BASE_URL = http://localhost:3001
-CLOSECLAW_SUPABASE_URL = https://YOUR-PROJECT.supabase.co
-CLOSECLAW_SUPABASE_ANON_KEY = REPLACE_ME
+CLOSECLAW_API_BASE_URL = https://api.closeclaw.in
+CLOSECLAW_SUPABASE_URL = https://dxmjkhfvdgorjlkvbquk.supabase.co
+CLOSECLAW_SUPABASE_ANON_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR4bWpraGZ2ZGdvcmpsa3ZicXVrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MzY2OTMsImV4cCI6MjA4NjAxMjY5M30.YGyR-bXx7DE7HBk3WGXmgZ3bQoqFw-LeTGmgQ8Qtr_4

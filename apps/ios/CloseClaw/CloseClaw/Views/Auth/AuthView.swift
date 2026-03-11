@@ -25,20 +25,12 @@ struct AuthView: View {
                             
                             // Brand Section
                             VStack(spacing: 20) {
-                                Image("logo3")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 100, height: 100)
-                                    .shadow(color: CloseClawTheme.accentGlow, radius: 24)
+                                AppLogo(size: 100)
                                 
                                 VStack(spacing: 8) {
                                     Text("Welcome to CloseClaw")
-                                        .font(CloseClawTheme.Typography.title(36))
+                                        .font(CloseClawTheme.Typography.title(32))
                                         .premiumTextGradient()
-                                    
-                                    Text("Step 1: Secure Identity")
-                                        .font(CloseClawTheme.Typography.headline())
-                                        .foregroundStyle(CloseClawTheme.textPrimary)
                                     
                                     Text("Create your hardware-isolated AI environment in seconds.")
                                         .font(CloseClawTheme.Typography.body())
