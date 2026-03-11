@@ -132,15 +132,22 @@ async function getApiCredits(userId: string): Promise<number> {
 }
 
 // ─── Sessions.usage sync ──────────────────────────────────────────────────────
-// Called fire-and-forget after each proxied call.
-// OpenClaw calculates cost natively via models.providers.<provider>.models[].cost
-// (set in gateway-config endpoint in channels.ts). sessions.usage returns accurate totalCost.
-//
-// Session reset detection via token snapshot:
-//   - currentTokens >= lastTokens → normal, delta = currentCost - lastCost
-//   - currentTokens < lastTokens  → reset (Gateway restarted), delta = currentCost
+// Debounced: coalesces usage syncs into one call per instance, fired 10s after
+// the last proxied request. This avoids opening a new WS connection to the Gateway
+// after every streamed response (which was the "Reason 2" environment noise).
 
+const syncTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const syncInFlight = new Set<string>();
+
+function debouncedSyncUsage(auth: InstanceAuth) {
+    const existing = syncTimers.get(auth.instanceId);
+    if (existing) clearTimeout(existing);
+    const timer = setTimeout(() => {
+        syncTimers.delete(auth.instanceId);
+        syncSessionsUsage(auth).catch(console.error);
+    }, 10_000); // 10s debounce
+    syncTimers.set(auth.instanceId, timer);
+}
 
 async function syncSessionsUsage(auth: InstanceAuth): Promise<void> {
     if (syncInFlight.has(auth.instanceId)) return;
@@ -290,7 +297,7 @@ proxyRoutes.all('/openai/*', async (c) => {
             } finally {
                 writer.close();
             }
-            syncSessionsUsage(auth).catch(console.error);
+            debouncedSyncUsage(auth);
         })();
         return new Response(readable, {
             status: upstream.status,
@@ -298,7 +305,7 @@ proxyRoutes.all('/openai/*', async (c) => {
         });
     } else {
         const body = await upstream.text();
-        syncSessionsUsage(auth).catch(console.error);
+        debouncedSyncUsage(auth);
         return new Response(body, {
             status: upstream.status,
             headers: { 'Content-Type': contentType || 'application/json' },
@@ -364,7 +371,7 @@ proxyRoutes.all('/anthropic/*', async (c) => {
             } finally {
                 writer.close();
             }
-            syncSessionsUsage(auth).catch(console.error);
+            debouncedSyncUsage(auth);
         })();
         return new Response(readable, {
             status: upstream.status,
@@ -372,7 +379,7 @@ proxyRoutes.all('/anthropic/*', async (c) => {
         });
     } else {
         const body = await upstream.text();
-        syncSessionsUsage(auth).catch(console.error);
+        debouncedSyncUsage(auth);
         return new Response(body, {
             status: upstream.status,
             headers: { 'Content-Type': contentType || 'application/json' },
@@ -435,7 +442,7 @@ proxyRoutes.all('/google/*', async (c) => {
             } finally {
                 writer.close();
             }
-            syncSessionsUsage(auth).catch(console.error);
+            debouncedSyncUsage(auth);
         })();
         return new Response(readable, {
             status: upstream.status,
@@ -443,7 +450,7 @@ proxyRoutes.all('/google/*', async (c) => {
         });
     } else {
         const body = await upstream.text();
-        syncSessionsUsage(auth).catch(console.error);
+        debouncedSyncUsage(auth);
         return new Response(body, {
             status: upstream.status,
             headers: { 'Content-Type': contentType || 'application/json' },

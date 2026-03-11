@@ -102,6 +102,17 @@ final class PurchaseService: ObservableObject {
         }
     }
     
+    func getLatestValidTransaction(for productID: String) async -> VerificationResult<StoreKit.Transaction>? {
+        for await result in StoreKit.Transaction.currentEntitlements {
+            if case let .verified(transaction) = result {
+                if transaction.productID == productID && transaction.revocationDate == nil {
+                    return result
+                }
+            }
+        }
+        return nil
+    }
+
     func getProduct(for id: String) -> Product? {
         products.first { $0.id == id }
     }

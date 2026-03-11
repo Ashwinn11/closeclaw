@@ -9,6 +9,7 @@ struct CloseClawButton: View {
         case primary
         case secondary
         case ghost
+        case destructive
     }
     
     let title: String
@@ -30,7 +31,7 @@ struct CloseClawButton: View {
                         Group {
                             if isLoading {
                                 Capsule()
-                                    .fill(variant == .primary ? CloseClawTheme.accentPrimary : CloseClawTheme.accentSecondary)
+                                    .fill(variant == .primary ? CloseClawTheme.accentPrimary : (variant == .destructive ? .red : CloseClawTheme.accentSecondary))
                                     .scaleEffect(1.05)
                                     .blur(radius: 12)
                                     .opacity(isAnimatingGlow ? 0.3 : 0.6)
@@ -115,6 +116,8 @@ struct CloseClawButton: View {
             CloseClawTheme.surfaceBase
         case .ghost:
             Color.clear
+        case .destructive:
+            Color.red.opacity(0.1)
         }
     }
     
@@ -126,6 +129,8 @@ struct CloseClawButton: View {
             return CloseClawTheme.textPrimary
         case .ghost:
             return CloseClawTheme.textSecondary
+        case .destructive:
+            return .red
         }
     }
     
@@ -133,6 +138,8 @@ struct CloseClawButton: View {
         switch variant {
         case .secondary:
             return CloseClawTheme.accentSecondary.opacity(0.3)
+        case .destructive:
+            return Color.red.opacity(0.3)
         default:
             return .clear
         }

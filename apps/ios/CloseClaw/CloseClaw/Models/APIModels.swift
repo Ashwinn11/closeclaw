@@ -45,13 +45,13 @@ struct CronJob: Decodable, Identifiable, Equatable {
     }
 }
 
-struct ChatMessage: Identifiable, Equatable {
+struct ChatMessage: Identifiable, Equatable, Codable {
     let id: UUID
     let role: Role
     let content: String
     let createdAt: Date
 
-    enum Role: String {
+    enum Role: String, Codable {
         case user
         case assistant
         case system

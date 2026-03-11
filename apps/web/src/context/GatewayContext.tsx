@@ -63,21 +63,9 @@ export const GatewayProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, [clearHeartbeat, clearReconnectTimeout]);
 
-  const setupHeartbeat = useCallback(() => {
-    clearHeartbeat();
-    heartbeatTimeoutRef.current = setTimeout(() => {
-      if (clientRef.current?.isConnected()) {
-        clientRef.current
-          .rpc('health')
-          .then(() => {
-            setupHeartbeat();
-          })
-          .catch((err) => {
-            console.warn('[gateway] Health check failed:', err.message);
-          });
-      }
-    }, 30_000);
-  }, [clearHeartbeat]);
+  // Heartbeat is now handled by the Backend Proxy at a low level (pings)
+  // to avoid touching Gateway state and triggering config restarts.
+  const setupHeartbeat = useCallback(() => {}, []);
 
   // Single connect function that guards against duplicate calls
   const connectToGateway = useCallback(async () => {

@@ -290,16 +290,14 @@ final class GatewayWebSocketClient: ObservableObject {
         stopHeartbeat()
         heartbeatTask = Task { [weak self] in
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 30_000_000_000) // 30s
-                guard let self, self.isReady else { break }
+                try? await Task.sleep(nanoseconds: 60_000_000_000) // 1 minute
+                guard let self, let task = self.socketTask, self.isReady else { break }
                 
-                do {
-                    _ = try await self.rpc(method: "health")
-                } catch {
-                    print("[Gateway] Heartbeat failed: \(error)")
-                    // RPC failure usually means connection is dead. 
-                    // handleDisconnect should ideally be triggered by URLSession, 
-                    // but we can force it here if needed.
+                task.sendPing { error in
+                    if let error = error {
+                        print("[Gateway] Ping failed: \(error)")
+                        // We don't force disconnect here, let URLSession handle it or wait for next ping
+                    }
                 }
             }
         }

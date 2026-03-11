@@ -18,103 +18,110 @@ struct AuthView: View {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                     }
                 
-                ScrollView {
-                    VStack(spacing: 40) {
-                        // Brand Section
-                        VStack(spacing: 20) {
-                            Image("logo3")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 100, height: 100)
-                                .shadow(color: CloseClawTheme.accentGlow, radius: 24)
+                GeometryReader { geometry in
+                    ScrollView {
+                        VStack(spacing: 40) {
+                            Spacer(minLength: 20)
                             
-                            VStack(spacing: 8) {
-                                Text("CloseClaw")
-                                    .font(CloseClawTheme.Typography.title(44))
-                                    .premiumTextGradient()
+                            // Brand Section
+                            VStack(spacing: 20) {
+                                Image("logo3")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 100, height: 100)
+                                    .shadow(color: CloseClawTheme.accentGlow, radius: 24)
                                 
-                                Text("Your Personal AI Core")
-                                    .font(CloseClawTheme.Typography.headline())
-                                    .foregroundStyle(CloseClawTheme.textPrimary)
-                                
-                                Text("Secure, private, and always available.")
-                                    .font(CloseClawTheme.Typography.body())
-                                    .foregroundStyle(CloseClawTheme.textSecondary)
-                            }
-                        }
-                        .padding(.top, 60)
-                        .staggeredReveal(index: 0)
-                        
-                        // Action Section
-                        VStack(spacing: 30) {
-                            VStack(spacing: 16) {
-                                ZStack {
-                                    // Hidden while loading to allow spinner to take center stage
-                                    SignInWithAppleButton(.continue) { request in
-                                        let nonce = Self.randomNonce()
-                                        currentNonce = nonce
-                                        request.requestedScopes = [.fullName, .email]
-                                        request.nonce = Self.sha256(nonce)
-                                    } onCompletion: { result in
-                                        handleAppleResult(result)
-                                    }
-                                    .signInWithAppleButtonStyle(.white)
-                                    .frame(height: 54)
-                                    .clipShape(Capsule())
-                                    .opacity(isLoading ? 0 : 1)
-                                    .disabled(isLoading)
+                                VStack(spacing: 8) {
+                                    Text("Welcome to CloseClaw")
+                                        .font(CloseClawTheme.Typography.title(36))
+                                        .premiumTextGradient()
                                     
-                                    if isLoading {
-                                        // A matching placeholder capsule with a spinner
-                                        Capsule()
-                                            .fill(.white)
-                                            .frame(height: 54)
-                                            .overlay(
-                                                ProgressView()
-                                                    .tint(.black)
-                                            )
+                                    Text("Step 1: Secure Identity")
+                                        .font(CloseClawTheme.Typography.headline())
+                                        .foregroundStyle(CloseClawTheme.textPrimary)
+                                    
+                                    Text("Create your hardware-isolated AI environment in seconds.")
+                                        .font(CloseClawTheme.Typography.body())
+                                        .foregroundStyle(CloseClawTheme.textSecondary)
+                                        .multilineTextAlignment(.center)
+                                }
+                            }
+                            .staggeredReveal(index: 0)
+                            
+                            // Action Section
+                            VStack(spacing: 30) {
+                                VStack(spacing: 16) {
+                                    ZStack {
+                                        // Hidden while loading to allow spinner to take center stage
+                                        SignInWithAppleButton(.continue) { request in
+                                            let nonce = Self.randomNonce()
+                                            currentNonce = nonce
+                                            request.requestedScopes = [.fullName, .email]
+                                            request.nonce = Self.sha256(nonce)
+                                        } onCompletion: { result in
+                                            handleAppleResult(result)
+                                        }
+                                        .signInWithAppleButtonStyle(.white)
+                                        .frame(height: 54)
+                                        .clipShape(Capsule())
+                                        .opacity(isLoading ? 0 : 1)
+                                        .disabled(isLoading)
+                                        
+                                        if isLoading {
+                                            // A matching placeholder capsule with a spinner
+                                            Capsule()
+                                                .fill(.white)
+                                                .frame(height: 54)
+                                                .overlay(
+                                                    ProgressView()
+                                                        .tint(.black)
+                                                )
+                                        }
                                     }
                                 }
-                            }
-                            
-                            VStack(alignment: .center, spacing: 12) {
-                                Label("Private & Secure", systemImage: "lock.shield.fill")
-                                    .font(CloseClawTheme.Typography.footnote())
-                                    .foregroundStyle(CloseClawTheme.textSecondary)
-                                    .imageScale(.small)
                                 
-                                Text("Your hardware-isolated environment is ready. Data remains strictly yours.")
-                                    .font(CloseClawTheme.Typography.footnote())
-                                    .foregroundStyle(CloseClawTheme.textSecondary.opacity(0.7))
-                                    .multilineTextAlignment(.center)
-                                    .padding(.horizontal)
+                                VStack(alignment: .center, spacing: 12) {
+                                    Label("Private & Secure", systemImage: "lock.shield.fill")
+                                        .font(CloseClawTheme.Typography.footnote())
+                                        .foregroundStyle(CloseClawTheme.textSecondary)
+                                        .imageScale(.small)
+                                    
+                                    Text("By signing in, you initiate the provisioning of your dedicated private gateway. No shared resources.")
+                                        .font(CloseClawTheme.Typography.footnote())
+                                        .foregroundStyle(CloseClawTheme.textSecondary.opacity(0.7))
+                                        .multilineTextAlignment(.center)
+                                        .padding(.horizontal)
 
-                                HStack(spacing: 4) {
-                                    Text("By signing in, you agree to our")
-                                    Link("Terms", destination: URL(string: "https://closeclaw.in/terms")!)
-                                        .underline()
-                                    Text("&")
-                                    Link("Privacy", destination: URL(string: "https://closeclaw.in/privacy")!)
-                                        .underline()
+                                    HStack(spacing: 4) {
+                                        Text("By signing in, you agree to our")
+                                        Link("Terms", destination: URL(string: "https://closeclaw.in/terms")!)
+                                            .underline()
+                                        Text("&")
+                                        Link("Privacy", destination: URL(string: "https://closeclaw.in/privacy")!)
+                                            .underline()
+                                    }
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(CloseClawTheme.textSecondary.opacity(0.6))
+                                    .padding(.top, 4)
                                 }
-                                .font(.system(size: 10))
-                                .foregroundStyle(CloseClawTheme.textSecondary.opacity(0.6))
-                                .padding(.top, 4)
                             }
+                            .padding(24)
+                            .background(
+                                CloseClawTheme.surfaceBase
+                                    .background(.ultraThinMaterial)
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 32, style: .continuous)
+                                    .stroke(CloseClawTheme.cardBorder, lineWidth: 1)
+                            )
+                            .staggeredReveal(index: 1)
+                            
+                            Spacer(minLength: 20)
                         }
-                        .padding(24)
-                        .background(
-                            CloseClawTheme.surfaceBase
-                                .background(.ultraThinMaterial)
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 32, style: .continuous)
-                                .stroke(CloseClawTheme.cardBorder, lineWidth: 1)
-                        )
-                        .staggeredReveal(index: 1)
+                        .padding(20)
+                        .frame(minHeight: geometry.size.height)
                     }
-                    .padding(20)
                 }
             }
             .alert("Authentication Error", isPresented: Binding(

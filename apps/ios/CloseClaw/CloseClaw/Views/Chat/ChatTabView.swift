@@ -2,7 +2,6 @@ import SwiftUI
 
 struct ChatTabView: View {
     @ObservedObject var viewModel: ChatViewModel
-    let onReload: () -> Void
     let onShowSettings: () -> Void
 
     var body: some View {
@@ -15,16 +14,7 @@ struct ChatTabView: View {
                     }
                 
                 VStack(spacing: 0) {
-                    if viewModel.isLoadingHistory {
-                        VStack(spacing: 12) {
-                            ProgressView()
-                                .tint(CloseClawTheme.accentPrimary)
-                            Text("Retrieving your encrypted history...")
-                                .font(CloseClawTheme.Typography.subtitle())
-                                .foregroundStyle(CloseClawTheme.textPrimary)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else if viewModel.messages.isEmpty && (viewModel.streamingText ?? "").isEmpty && !viewModel.isSending {
+                    if viewModel.hasLoadedHistory && viewModel.messages.isEmpty && (viewModel.streamingText ?? "").isEmpty && !viewModel.isSending {
                         VStack(spacing: 16) {
                             Image(systemName: "sparkles")
                                 .font(.system(size: 48))
@@ -46,30 +36,20 @@ struct ChatTabView: View {
                         ScrollViewReader { proxy in
                             ScrollView {
                                 LazyVStack(spacing: 20) {
-                                    ForEach(Array(viewModel.messages.enumerated()), id: \.element.id) { index, message in
+                                    ForEach(viewModel.messages, id: \.id) { message in
                                         MessageBubble(message: message, viewModel: viewModel)
                                             .id(message.id)
                                     }
                                     
-                                    if viewModel.isSending && (viewModel.streamingText ?? "").isEmpty {
-                                        ThinkingIndicator()
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                            .id("thinking")
+                                    // Single stable view for both "thinking" and "streaming" states.
+                                    // Using one view with a stable ID prevents the layout jump that
+                                    // was causing the flicker when transitioning from dots → content.
+                                    if viewModel.isSending {
+                                        LiveResponseBubble(streamingText: viewModel.streamingText)
+                                            .id("live-response")
                                     }
                                     
-                                    if let stream = viewModel.streamingText, !stream.isEmpty {
-                                        MessageBubble(
-                                            message: ChatMessage(
-                                                id: UUID(),
-                                                role: .assistant,
-                                                content: stream,
-                                                createdAt: Date()
-                                            ),
-                                            isStreaming: true,
-                                            viewModel: viewModel
-                                        )
-                                        .id("streaming")
-                                    }
+                                    Color.clear.frame(height: 1).id("bottom-anchor")
                                 }
                                 .padding(.vertical, 12)
                             }
@@ -80,13 +60,11 @@ struct ChatTabView: View {
                             .onChange(of: viewModel.streamingText) {
                                 scrollToBottom(with: proxy, animated: false)
                             }
-                            .onChange(of: viewModel.isLoadingHistory) { _, loading in
-                                if !loading {
-                                    scrollToBottom(with: proxy, animated: false)
-                                }
+                            .onChange(of: viewModel.isSending) { _, sending in
+                                if sending { scrollToBottom(with: proxy) }
                             }
                             .onAppear {
-                                scrollToBottom(with: proxy, animated: false)
+                                scrollToBottom(with: proxy, animated: false, delay: 300)
                             }
                         }
                     }
@@ -94,25 +72,17 @@ struct ChatTabView: View {
                     inputBar
                 }
             }
-            .navigationTitle("AI Core")
+            .navigationTitle("CloseClaw")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        onReload()
-                    } label: {
-                        Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(CloseClawTheme.textSecondary)
-                    }
-                }
+
                 
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         onShowSettings()
                     } label: {
-                        Image(systemName: "gearshape")
-                            .font(.system(size: 16, weight: .semibold))
+                        Image(systemName: "line.3.horizontal")
+                            .font(.system(size: 18, weight: .semibold))
                             .foregroundStyle(CloseClawTheme.textSecondary)
                     }
                 }
@@ -140,23 +110,24 @@ struct ChatTabView: View {
         }
     }
 
-    private func scrollToBottom(with proxy: ScrollViewProxy, animated: Bool = true) {
+    private func scrollToBottom(with proxy: ScrollViewProxy, animated: Bool = true, delay: UInt64 = 50) {
         Task { @MainActor in
-            // Tiny delay to allow SwiftUI layout to settle
-            try? await Task.sleep(nanoseconds: 50_000_000)
+            try? await Task.sleep(nanoseconds: delay * 1_000_000)
             
             let action = {
                 if viewModel.streamingText != nil {
                     proxy.scrollTo("streaming", anchor: .bottom)
                 } else if viewModel.isSending {
                     proxy.scrollTo("thinking", anchor: .bottom)
-                } else if let last = viewModel.messages.last {
-                    proxy.scrollTo(last.id, anchor: .bottom)
+                } else {
+                    // Always scroll to the stable bottom anchor — works even
+                    // right after send before the AI response arrives.
+                    proxy.scrollTo("bottom-anchor", anchor: .bottom)
                 }
             }
             
             if animated {
-                withAnimation(.easeOut(duration: 0.2), action)
+                withAnimation(.easeOut(duration: 0.25), action)
             } else {
                 action()
             }
@@ -302,11 +273,64 @@ struct ChatBubbleShape: Shape {
     }
 }
 
+/// A single view that covers BOTH the "thinking" dots state and the live stream state.
+/// Having a stable ID in the parent LazyVStack means it is never destroyed/recreated
+/// during the transition — only its content changes, eliminating the flicker.
+private struct LiveResponseBubble: View {
+    let streamingText: String?
+
+    var body: some View {
+        HStack(alignment: .bottom, spacing: 0) {
+            VStack(alignment: .leading, spacing: 2) {
+                Group {
+                    if let text = streamingText, !text.isEmpty {
+                        MarkdownMessageView(content: text, role: .assistant)
+                    } else {
+                        ThinkingIndicatorDots()
+                    }
+                }
+                .animation(.easeInOut(duration: 0.15), value: streamingText == nil)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(CloseClawTheme.surfaceBase)
+            .clipShape(ChatBubbleShape(isUser: false))
+            .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
+
+            Spacer(minLength: 60)
+        }
+        .padding(.horizontal, 12)
+    }
+}
+
+private struct ThinkingIndicatorDots: View {
+    @State private var dotScale: CGFloat = 0.5
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(0..<3) { index in
+                Circle()
+                    .fill(CloseClawTheme.textSecondary)
+                    .frame(width: 6, height: 6)
+                    .scaleEffect(dotScale)
+                    .animation(
+                        .easeInOut(duration: 0.6)
+                        .repeatForever()
+                        .delay(Double(index) * 0.2),
+                        value: dotScale
+                    )
+            }
+        }
+        .onAppear { dotScale = 1.0 }
+    }
+}
+
 private struct ThinkingIndicator: View {
     @State private var dotScale: CGFloat = 0.5
     
     var body: some View {
         HStack(spacing: 4) {
+
             ForEach(0..<3) { index in
                 Circle()
                     .fill(CloseClawTheme.textSecondary)
@@ -363,12 +387,12 @@ struct MarkdownMessageView: View {
                 if trimmed.isEmpty {
                     Color.clear.frame(height: 2)
                 } else if trimmed.hasPrefix("### ") {
-                    Text(trimmed.replacingOccurrences(of: "### ", with: ""))
+                    Text(LocalizedStringKey(trimmed.replacingOccurrences(of: "### ", with: "")))
                         .font(.system(size: 18, weight: .bold))
                         .padding(.top, 4)
                         .foregroundStyle(role == .user ? .white : CloseClawTheme.accentPrimary)
                 } else if trimmed.hasPrefix("## ") {
-                    Text(trimmed.replacingOccurrences(of: "## ", with: ""))
+                    Text(LocalizedStringKey(trimmed.replacingOccurrences(of: "## ", with: "")))
                         .font(.system(size: 20, weight: .bold))
                         .padding(.top, 6)
                         .foregroundStyle(role == .user ? .white : CloseClawTheme.accentPrimary)

@@ -6,12 +6,12 @@ import { Card } from '../components/ui/Card';
 import './LegalPage.css';
 
 interface LegalPageProps {
-  type: 'privacy' | 'terms';
+  type: 'privacy' | 'terms' | 'support';
 }
 
 export const LegalPage: React.FC<LegalPageProps> = ({ type }) => {
-  const content = type === 'privacy' ? PRIVACY_CONTENT : TOS_CONTENT;
-  const title = type === 'privacy' ? 'Privacy Policy' : 'Terms of Service';
+  const content = type === 'privacy' ? PRIVACY_CONTENT : type === 'terms' ? TOS_CONTENT : SUPPORT_CONTENT;
+  const title = type === 'privacy' ? 'Privacy Policy' : type === 'terms' ? 'Terms of Service' : 'Support';
 
   return (
     <div className="legal-page">
@@ -72,5 +72,22 @@ const PRIVACY_CONTENT = (
 
     <h3>Third-Party Disclosure</h3>
     <p>We share necessary data with payment processors (Apple/Stripe) and infrastructure providers (GCP) to provide the service. No data is shared for advertising purposes.</p>
+  </>
+);
+
+const SUPPORT_CONTENT = (
+  <>
+    <p className="info-modal-updated">Contact our support team</p>
+
+    <h3>Need Help?</h3>
+    <p>If you're experiencing issues with the CloseClaw app, have questions about your billing, or need help managing your subscription, our team is here to assist you.</p>
+
+    <h3>Contact Us</h3>
+    <p>Please reach out to us at: <a href="mailto:support@closeclaw.in">support@closeclaw.in</a></p>
+    
+    <p>We aim to respond to all inquiries within 24-48 hours. When emailing support, please include the email address associated with your CloseClaw account so we can help you faster.</p>
+
+    <h3>Account Deletion</h3>
+    <p>You can delete your account and all associated data directly from the iOS app by going to Settings &gt; Delete Account. Alternatively, you can email us to request account deletion.</p>
   </>
 );

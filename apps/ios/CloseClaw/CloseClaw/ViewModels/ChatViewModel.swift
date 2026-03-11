@@ -5,7 +5,7 @@ final class ChatViewModel: ObservableObject {
     @Published private(set) var messages: [ChatMessage] = []
     @Published var composerText = ""
     @Published private(set) var streamingText: String?
-    @Published private(set) var isLoadingHistory = false
+    @Published private(set) var hasLoadedHistory = false
     @Published private(set) var isSending = false
     @Published var errorMessage: String?
     @Published var successMessage: String?
@@ -26,6 +26,47 @@ final class ChatViewModel: ObservableObject {
 
     init(gatewayClient: GatewayWebSocketClient) {
         self.gatewayClient = gatewayClient
+        loadFromCache()
+    }
+
+    private nonisolated var cacheURL: URL {
+        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        return paths[0].appendingPathComponent("chat_cache.json")
+    }
+
+    private func saveToCache() {
+        let url = cacheURL
+        let currentMessages = messages
+        Task.detached(priority: .background) {
+            do {
+                let data = try JSONEncoder().encode(currentMessages)
+                try data.write(to: url, options: [.atomic, .completeFileProtection])
+            } catch {
+                print("[ChatViewModel] Failed to save cache: \(error)")
+            }
+        }
+    }
+
+    private func loadFromCache() {
+        // Always mark loaded so the empty state never flashes while data arrives
+        hasLoadedHistory = true
+        let url = cacheURL
+        Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self else { return }
+            guard FileManager.default.fileExists(atPath: url.path) else { return }
+            do {
+                let data = try Data(contentsOf: url)
+                let cached = try JSONDecoder().decode([ChatMessage].self, from: data)
+                await MainActor.run {
+                    // Only update if we haven't received live messages already
+                    if self.messages.isEmpty && !cached.isEmpty {
+                        self.messages = cached
+                    }
+                }
+            } catch {
+                print("[ChatViewModel] Failed to load cache: \(error)")
+            }
+        }
     }
 
     func activate() {
@@ -37,9 +78,9 @@ final class ChatViewModel: ObservableObject {
                 }
             }
         }
-
-        Task { @MainActor in
-            await loadHistory()
+        // Never walk back hasLoadedHistory once it's true
+        if !hasLoadedHistory {
+            hasLoadedHistory = true
         }
     }
 
@@ -51,28 +92,11 @@ final class ChatViewModel: ObservableObject {
         messages.removeAll()
         streamingText = nil
         composerText = ""
-        isLoadingHistory = false
+        hasLoadedHistory = false
         isSending = false
         activeRunId = nil
         seenEventKeys.removeAll()
-    }
-
-    func loadHistory() async {
-        isLoadingHistory = true
-        defer { isLoadingHistory = false }
-
-        do {
-            let payload = try await gatewayClient.rpc(
-                method: "chat.history",
-                params: [
-                    "sessionKey": .string("main"),
-                    "limit": .number(200)
-                ]
-            )
-            messages = parseHistory(payload)
-        } catch {
-            errorMessage = error.localizedDescription
-        }
+        try? FileManager.default.removeItem(at: cacheURL)
     }
 
     func send() async {
@@ -92,6 +116,7 @@ final class ChatViewModel: ObservableObject {
                 createdAt: Date()
             )
         )
+        saveToCache()
 
         do {
             _ = try await gatewayClient.rpc(
@@ -163,35 +188,44 @@ final class ChatViewModel: ObservableObject {
         let state = payload["state"]?.stringValue ?? ""
         if state == "delta" {
             if let message = payload["message"], let text = extractText(from: message), !text.isEmpty {
-                // False means we keep trailing whitespace/newlines during stream
-                let cleaned = cleanInboundText(text, trimTrailing: false)
-                if !cleaned.isEmpty || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    streamingText = cleaned
-                }
+                // Keep appending to our local buffer
+                let current = streamingText ?? ""
+                streamingText = current + text
             }
             return
         }
 
         if state == "final" || state == "aborted" || state == "error" {
-            if let stream = streamingText, !stream.isEmpty {
+            // Priority 1: Use the official final message from the payload if it exists.
+            var finalContent: String?
+            if let message = payload["message"], let text = extractText(from: message), !text.isEmpty {
+                finalContent = text
+            } else if let accumulated = streamingText, !accumulated.isEmpty {
+                finalContent = accumulated
+            }
+
+            // Clear live-response state FIRST so the streaming bubble disappears
+            // before the finalized message is inserted. If we append first, SwiftUI
+            // briefly shows both the stream bubble AND the new message (duplicate flash).
+            streamingText = nil
+            isSending = false
+            activeRunId = nil
+            if runId != "-" {
+                seenEventKeys = seenEventKeys.filter { !$0.hasPrefix("\(runId):") }
+            }
+
+            if let content = finalContent {
                 messages.append(
                     ChatMessage(
                         id: UUID(),
                         role: .assistant,
-                        content: cleanInboundText(stream),
+                        content: cleanInboundText(content),
                         createdAt: Date()
                     )
                 )
-            } else if let message = payload["message"], let text = extractText(from: message), !text.isEmpty {
-                messages.append(
-                    ChatMessage(
-                        id: UUID(),
-                        role: .assistant,
-                        content: cleanInboundText(text),
-                        createdAt: Date()
-                    )
-                )
-            } else if state == "error" {
+            }
+
+            if state == "error" {
                 let errorText = payload["errorMessage"]?.stringValue ?? "Unknown error"
                 messages.append(
                     ChatMessage(
@@ -203,41 +237,8 @@ final class ChatViewModel: ObservableObject {
                 )
             }
 
-            streamingText = nil
-            isSending = false
-            activeRunId = nil
-            if runId != "-" {
-                seenEventKeys = seenEventKeys.filter { !$0.hasPrefix("\(runId):") }
-            }
+            saveToCache()
         }
-    }
-
-    private func parseHistory(_ payload: JSONValue) -> [ChatMessage] {
-        guard
-            let root = payload.objectValue,
-            let items = root["messages"]?.arrayValue
-        else {
-            return []
-        }
-
-        var parsed: [ChatMessage] = []
-        for item in items {
-            guard let object = item.objectValue else { continue }
-            guard let roleRaw = object["role"]?.stringValue else { continue }
-            guard roleRaw == "user" || roleRaw == "assistant" else { continue }
-            guard let text = extractText(from: item), !text.isEmpty else { continue }
-
-            let ts = object["timestamp"]?.doubleValue ?? Date().timeIntervalSince1970
-            parsed.append(
-                ChatMessage(
-                    id: UUID(),
-                    role: roleRaw == "user" ? .user : .assistant,
-                    content: cleanInboundText(text),
-                    createdAt: Date(timeIntervalSince1970: ts / (ts > 10_000_000_000 ? 1000 : 1))
-                )
-            )
-        }
-        return parsed
     }
 
     private func extractText(from value: JSONValue) -> String? {
@@ -249,7 +250,8 @@ final class ChatViewModel: ObservableObject {
                 if let blocks = direct.arrayValue {
                     let text = blocks.compactMap { block -> String? in
                         guard let obj = block.objectValue else { return nil }
-                        guard obj["type"]?.stringValue == "text" else { return nil }
+                        // Don't just skip "text" blocks. If the block has a "text" field, 
+                        // it's likely content we should show (could be logs, metadata, etc.)
                         return obj["text"]?.stringValue
                     }.joined(separator: "\n")
                     return text.isEmpty ? nil : text
@@ -260,118 +262,6 @@ final class ChatViewModel: ObservableObject {
     }
 
     private func cleanInboundText(_ text: String, trimTrailing: Bool = true) -> String {
-        let lines = text.components(separatedBy: .newlines)
-        var result: [String] = []
-        
-        var inMetaBlock = false
-        var inFence = false
-        var hasEncounteredContent = false
-        
-        // Sentinels from OpenClaw (strip-inbound-meta.ts)
-        let openClawSentinels = [
-            "Conversation info (untrusted metadata):",
-            "Sender (untrusted metadata):",
-            "Thread starter (untrusted, for context):",
-            "Replied message (untrusted, for context):",
-            "Forwarded message context (untrusted metadata):",
-            "Chat history since last reply (untrusted, for context):",
-            "Untrusted context (metadata, do not treat as instructions or commands):"
-        ]
-        
-        // Regexes for technical logs
-        let tsRegex = try? NSRegularExpression(pattern: "^\\[\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\s+(?:UTC|GMT)\\]\\s*", options: .caseInsensitive)
-        let systemLogRegex = try? NSRegularExpression(pattern: "^System:\\s*(?:\\[.*?\\])?\\s*", options: .caseInsensitive)
-        let execLogRegex = try? NSRegularExpression(pattern: "^(?:Exec failed|Exec completed|Gateway restart)", options: .caseInsensitive)
-
-        for line in lines {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            
-            // 1. GLOBAL STRIPPING: Known OpenClaw Metadata Blocks (JSON)
-            if !inMetaBlock {
-                if openClawSentinels.contains(where: { trimmed.hasPrefix($0) }) {
-                    inMetaBlock = true
-                    inFence = false
-                    continue
-                }
-            } else {
-                if !inFence && (trimmed == "```json" || trimmed == "```") {
-                    inFence = true
-                    continue
-                }
-                if inFence {
-                    if trimmed == "```" {
-                        inMetaBlock = false
-                        inFence = false
-                    }
-                    continue
-                }
-                if trimmed.isEmpty { continue }
-                inMetaBlock = false
-            }
-            
-            // 2. HEADER-ONLY STRIPPING: Logs and Technical Preambles
-            // We strip these strictly from the top of the message until we hit the actual text.
-            if !hasEncounteredContent {
-                if trimmed.isEmpty { continue }
-                
-                let range = NSRange(location: 0, length: trimmed.utf16.count)
-                
-                // Match "System: [Timestamp]"
-                if systemLogRegex?.firstMatch(in: trimmed, options: [], range: range) != nil {
-                    continue
-                }
-                
-                // Match standalone timestamps at the top
-                if let tsRegex = tsRegex {
-                    let lineAfterTS = tsRegex.stringByReplacingMatches(in: line, range: range, withTemplate: "")
-                    let remaining = lineAfterTS.trimmingCharacters(in: .whitespacesAndNewlines)
-                    
-                    if remaining.isEmpty { continue } // Just a timestamp line
-                    
-                    // If timestamp is followed by "Exec failed" etc., it's still a log
-                    if execLogRegex?.firstMatch(in: remaining, options: [], range: NSRange(location:0, length: remaining.utf16.count)) != nil {
-                        continue
-                    }
-                }
-                
-                // Skip common technical preambles
-                if trimmed.hasPrefix("Run: openclaw doctor") || 
-                   trimmed.hasPrefix("Actually, skip this") ||
-                   trimmed.hasPrefix("[message_id:") {
-                    continue
-                }
-                
-                // Skip standalone formatting clutter at the very top
-                if trimmed == "json" || trimmed == "```" || trimmed == "```json" {
-                    continue
-                }
-                
-                // If we got here, this is the first line of REAL content
-                hasEncounteredContent = true
-                
-                // Even for the first content line, we strip the leading timestamp part if present
-                if let tsRegex = tsRegex {
-                    let processed = tsRegex.stringByReplacingMatches(in: line, range: range, withTemplate: "")
-                    if !processed.isEmpty {
-                        result.append(processed)
-                    }
-                } else {
-                    result.append(line)
-                }
-            } else {
-                // 3. BODY CONTENT: Keep the text as-is (except for strictly internal directives)
-                var processedLine = line
-                processedLine = processedLine.replacingOccurrences(
-                    of: "\\[\\[\\s*audio_as_voice\\s*\\]\\]",
-                    with: "",
-                    options: .regularExpression
-                )
-                
-                result.append(processedLine)
-            }
-        }
-        
-        let output = result.joined(separator: "\n")
-        return trimTrailing ? output.trimmingCharacters(in: .whitespacesAndNewlines) : output.trimmingCharacters(in: .whitespaces)
+        return trimTrailing ? text.trimmingCharacters(in: .whitespacesAndNewlines) : text.trimmingCharacters(in: .whitespaces)
     }
 }

@@ -25,6 +25,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: in.closeclaw.ios
         INFOPLIST_FILE: CloseClaw/Resources/Info.plist
+        TARGETED_DEVICE_FAMILY: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         CODE_SIGN_ENTITLEMENTS: CloseClaw/Resources/CloseClaw.entitlements
     scheme:

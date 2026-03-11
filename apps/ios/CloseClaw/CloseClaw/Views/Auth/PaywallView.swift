@@ -12,68 +12,82 @@ struct PaywallView: View {
         ZStack {
             NebulaBackground().ignoresSafeArea()
             
-            VStack(spacing: 32) {
-                // Header
-                VStack(spacing: 12) {
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: 48))
-                        .premiumTextGradient()
-                        .shadow(color: CloseClawTheme.accentGlow, radius: 15)
-                    
-                    VStack(spacing: 8) {
-                        Text("Unlock CloseClaw")
-                            .font(CloseClawTheme.Typography.title())
-                            .foregroundStyle(CloseClawTheme.textPrimary)
+            GeometryReader { geometry in
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 40) {
+                        Spacer(minLength: 20)
                         
-                        Text("Subscribe to get your private AI environment and start building.")
-                            .font(CloseClawTheme.Typography.body())
-                            .foregroundStyle(CloseClawTheme.textSecondary)
-                            .multilineTextAlignment(.center)
+                        // Header
+                        VStack(spacing: 12) {
+                            Image(systemName: "crown.fill")
+                                .font(.system(size: 48))
+                                .premiumTextGradient()
+                                .shadow(color: CloseClawTheme.accentGlow, radius: 15)
+                            
+                            VStack(spacing: 8) {
+                                Text("Unlock CloseClaw")
+                                    .font(CloseClawTheme.Typography.title())
+                                    .foregroundStyle(CloseClawTheme.textPrimary)
+                                
+                                Text("Subscribe to get your private AI environment and start building.")
+                                    .font(CloseClawTheme.Typography.body())
+                                    .foregroundStyle(CloseClawTheme.textSecondary)
+                                    .multilineTextAlignment(.center)
+                            }
+                        }
+                        .staggeredReveal(index: 0)
+        
+                        // Benefits
+                        VStack(alignment: .leading, spacing: 16) {
+                            BenefitRow(icon: "cpu", text: "Dedicated Private Gateway")
+                            BenefitRow(icon: "lock.shield", text: "End-to-End Encrypted Instances")
+                            BenefitRow(icon: "sparkles", text: "Unlimited Custom AI Agents")
+                        }
+                        .padding(24)
+                        .closeClawGlassCard()
+                        .staggeredReveal(index: 1)
+        
+                        // Actions
+                        VStack(spacing: 16) {
+                            if let subscription = purchaseService.products.first(where: { $0.id == "closeclaw.monthly" }) {
+                                CloseClawButton(
+                                    title: "Subscribe for \(subscription.displayPrice)/mo",
+                                    isLoading: isPurchasing,
+                                    action: { subscribe(subscription) }
+                                )
+                            } else {
+                                ProgressView().tint(CloseClawTheme.accentPrimary)
+                                    .frame(height: 54)
+                            }
+                            
+                            CloseClawButton(
+                                title: "Restore Purchases",
+                                variant: .secondary,
+                                action: { restore() }
+                            )
+                            
+                            CloseClawButton(
+                                title: "Sign Out",
+                                variant: .ghost,
+                                action: { Task { await viewModel.signOut() } }
+                            )
+                            
+                            HStack(spacing: 24) {
+                                Link("Terms of Service", destination: URL(string: "https://closeclaw.in/terms")!)
+                                Link("Privacy Policy", destination: URL(string: "https://closeclaw.in/privacy")!)
+                            }
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(CloseClawTheme.textSecondary.opacity(0.7))
+                            .padding(.top, 8)
+                        }
+                        .staggeredReveal(index: 2)
+                        
+                        Spacer(minLength: 20)
                     }
+                    .padding(24)
+                    .frame(minHeight: geometry.size.height)
                 }
-                .padding(.top, 40)
-                .staggeredReveal(index: 0)
-
-                // Benefits
-                VStack(alignment: .leading, spacing: 16) {
-                    BenefitRow(icon: "cpu", text: "Dedicated Private Gateway")
-                    BenefitRow(icon: "lock.shield", text: "End-to-End Encrypted Instances")
-                    BenefitRow(icon: "sparkles", text: "Unlimited Custom AI Agents")
-                }
-                .padding(24)
-                .closeClawGlassCard()
-                .staggeredReveal(index: 1)
-
-                Spacer()
-
-                // Actions
-                VStack(spacing: 12) {
-                    if let subscription = purchaseService.products.first(where: { $0.id == "closeclaw.monthly" }) {
-                        CloseClawButton(
-                            title: "Subscribe for \(subscription.displayPrice)/mo",
-                            isLoading: isPurchasing,
-                            action: { subscribe(subscription) }
-                        )
-                    } else {
-                        ProgressView().tint(CloseClawTheme.accentPrimary)
-                    }
-                    
-                    CloseClawButton(
-                        title: "Restore Purchases",
-                        variant: .ghost,
-                        action: { restore() }
-                    )
-                    
-                    CloseClawButton(
-                        title: "Sign Out",
-                        variant: .ghost,
-                        action: { Task { await viewModel.signOut() } }
-                    )
-                }
-                .padding(.bottom, 20)
-                .staggeredReveal(index: 2)
             }
-            .padding(24)
             
             if isPurchasing {
                 Color.black.opacity(0.4).ignoresSafeArea()
@@ -112,7 +126,12 @@ struct PaywallView: View {
             defer { isPurchasing = false }
             do {
                 try await purchaseService.restorePurchases()
-                await viewModel.handlePurchaseSuccess(result: nil)
+                
+                if let result = await purchaseService.getLatestValidTransaction(for: "closeclaw.monthly") {
+                    await viewModel.handlePurchaseSuccess(result: result)
+                } else {
+                    purchaseError = "No active subscription found to restore."
+                }
             } catch {
                 purchaseError = error.localizedDescription
             }

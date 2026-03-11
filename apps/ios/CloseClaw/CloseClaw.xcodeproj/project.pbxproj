@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		020DB29B50F667A777A21495 /* PurchaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0373D3A7121A4F131A87EEFC /* PurchaseService.swift */; };
 		0549243C7332954076ADD8B6 /* AppViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B24175B492820D677C7A5EB3 /* AppViewModel.swift */; };
 		1655CF32D5E28EF33C7BB0D8 /* ChatTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B70B272EC034C3AE07D3237 /* ChatTabView.swift */; };
 		2369E925BCB24840FBFAC165 /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B554523F2F30CB4D927A1F8E /* AuthView.swift */; };
@@ -22,16 +23,17 @@
 		7F9744E8DE958707431005AC /* SettingsTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB2EAB979C5835FCCA794B7 /* SettingsTabView.swift */; };
 		814E19E113D382767029C0EE /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34E0DD18A8CF25CB0D80791 /* AppConfig.swift */; };
 		A51EC13DACEA6DA4EEC356DF /* JSONValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BEA3EE2E9193B6E7CEBAA8 /* JSONValue.swift */; };
+		C8248993E1CA8C7D9E53EF15 /* CloseClaw.storekit in Resources */ = {isa = PBXBuildFile; fileRef = B4B9FAB6C02BE967504E095F /* CloseClaw.storekit */; };
 		CC224150E18EEE205D404749 /* CloseClawTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24ED98B961793964FDEC423D /* CloseClawTheme.swift */; };
 		E1FAAC24DC7B32344FD06EC7 /* CloseClawApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44443782CA742F87A86F5CEB /* CloseClawApp.swift */; };
 		EC73FD298EEE1317CDFCF46F /* TokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BC7010C3CAB47C0520AA6CA /* TokenStore.swift */; };
-		D3E1A2B3C4D5E6F7A8B9C0D1 /* PurchaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2B3C4D5E6F7A8B9C0D1E2B3 /* PurchaseService.swift */; };
-		D3E1A2B3C4D5E6F7A8B9C0D3 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2B3C4D5E6F7A8B9C0D1E2D3 /* PaywallView.swift */; };
+		F049B3AF33E10974EC7AD138 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5836E38DD3DFE04CCDFD44A /* PaywallView.swift */; };
 		FCA087319F667D3D5BFD68FC /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13AB0C272E3AB30AC2068A51 /* RootView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		025C78ECE5B7E7A8E85E4B8D /* CreditsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditsViewModel.swift; sourceTree = "<group>"; };
+		0373D3A7121A4F131A87EEFC /* PurchaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchaseService.swift; sourceTree = "<group>"; };
 		13AB0C272E3AB30AC2068A51 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		18502C4E5414D8EE320E1C11 /* CloseClaw.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CloseClaw.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1BC7010C3CAB47C0520AA6CA /* TokenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenStore.swift; sourceTree = "<group>"; };
@@ -42,7 +44,6 @@
 		66BEA3EE2E9193B6E7CEBAA8 /* JSONValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONValue.swift; sourceTree = "<group>"; };
 		806FB1ECE300AB50783BD1C0 /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
 		88579E69A6BABBF36913D8CF /* APIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIModels.swift; sourceTree = "<group>"; };
-		8C23E5522F6179AB006EF73B /* CloseClaw.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; name = CloseClaw.storekit; path = CloseClaw/Resources/CloseClaw.storekit; sourceTree = "<group>"; };
 		8D375210DC86468804436F66 /* CloseClawComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloseClawComponents.swift; sourceTree = "<group>"; };
 		990F13E3F62CAB7874D72298 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A36B9FB1A13FB7DFCD7391B7 /* CreditsTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditsTabView.swift; sourceTree = "<group>"; };
@@ -52,11 +53,11 @@
 		ADE2686B9D765304F4BA6477 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		ADEC2E773737ECDA550E6756 /* CloseClaw.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CloseClaw.entitlements; sourceTree = "<group>"; };
 		B24175B492820D677C7A5EB3 /* AppViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViewModel.swift; sourceTree = "<group>"; };
+		B4B9FAB6C02BE967504E095F /* CloseClaw.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = CloseClaw.storekit; sourceTree = "<group>"; };
 		B554523F2F30CB4D927A1F8E /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
-		E2B3C4D5E6F7A8B9C0D1E2D3 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
-		E2B3C4D5E6F7A8B9C0D1E2B3 /* PurchaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchaseService.swift; sourceTree = "<group>"; };
 		C34E0DD18A8CF25CB0D80791 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		C673571DC9BEFBEC576D1D4A /* GatewayWebSocketClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayWebSocketClient.swift; sourceTree = "<group>"; };
+		E5836E38DD3DFE04CCDFD44A /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -110,7 +111,7 @@
 			isa = PBXGroup;
 			children = (
 				B554523F2F30CB4D927A1F8E /* AuthView.swift */,
-				E2B3C4D5E6F7A8B9C0D1E2D3 /* PaywallView.swift */,
+				E5836E38DD3DFE04CCDFD44A /* PaywallView.swift */,
 			);
 			path = Auth;
 			sourceTree = "<group>";
@@ -118,7 +119,6 @@
 		80EA7FB3B579B9B6B806DDC5 = {
 			isa = PBXGroup;
 			children = (
-				8C23E5522F6179AB006EF73B /* CloseClaw.storekit */,
 				98C3FBEE9F73B2EA214916AC /* CloseClaw */,
 				2B2208A3E6125FCC129208B9 /* Products */,
 			);
@@ -129,8 +129,8 @@
 			children = (
 				ADE2686B9D765304F4BA6477 /* APIClient.swift */,
 				A82FC650EDE3CFD3A18A540C /* AuthService.swift */,
-				E2B3C4D5E6F7A8B9C0D1E2B3 /* PurchaseService.swift */,
 				C673571DC9BEFBEC576D1D4A /* GatewayWebSocketClient.swift */,
+				0373D3A7121A4F131A87EEFC /* PurchaseService.swift */,
 				1BC7010C3CAB47C0520AA6CA /* TokenStore.swift */,
 			);
 			path = Services;
@@ -178,6 +178,7 @@
 			children = (
 				990F13E3F62CAB7874D72298 /* Assets.xcassets */,
 				ADEC2E773737ECDA550E6756 /* CloseClaw.entitlements */,
+				B4B9FAB6C02BE967504E095F /* CloseClaw.storekit */,
 				A3F0D3F6E3BBAEC07E808345 /* Config.template.xcconfig */,
 				546EDEE9830BC1193FB580C8 /* Info.plist */,
 			);
@@ -192,16 +193,8 @@
 				8E978616CC401916DBFA97AC /* Components */,
 				382D4C1A45FADBB0D3C137F9 /* Credits */,
 				B286CA0E9BCF4DA19D93F9D0 /* Settings */,
-				F9508317BE79AB748B641D77 /* Tasks */,
 			);
 			path = Views;
-			sourceTree = "<group>";
-		};
-		F9508317BE79AB748B641D77 /* Tasks */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Tasks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -233,6 +226,11 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 2620;
+				TargetAttributes = {
+					5E49B4F50AB683FEA8C0D772 = {
+						DevelopmentTeam = "";
+					};
+				};
 			};
 			buildConfigurationList = 96BC7B1BD1F566745287082E /* Build configuration list for PBXProject "CloseClaw" */;
 			developmentRegion = en;
@@ -259,6 +257,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				3DBDB2BAF856E82D4D263C4F /* Assets.xcassets in Resources */,
+				C8248993E1CA8C7D9E53EF15 /* CloseClaw.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -284,10 +283,10 @@
 				7073402F756828EC9883F3A2 /* CreditsViewModel.swift in Sources */,
 				3FB4E9B42BCFBA781637BB9A /* GatewayWebSocketClient.swift in Sources */,
 				A51EC13DACEA6DA4EEC356DF /* JSONValue.swift in Sources */,
+				F049B3AF33E10974EC7AD138 /* PaywallView.swift in Sources */,
+				020DB29B50F667A777A21495 /* PurchaseService.swift in Sources */,
 				FCA087319F667D3D5BFD68FC /* RootView.swift in Sources */,
-				D3E1A2B3C4D5E6F7A8B9C0D3 /* PaywallView.swift in Sources */,
 				7F9744E8DE958707431005AC /* SettingsTabView.swift in Sources */,
-				D3E1A2B3C4D5E6F7A8B9C0D1 /* PurchaseService.swift in Sources */,
 				EC73FD298EEE1317CDFCF46F /* TokenStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -299,7 +298,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -332,7 +330,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = PVQK77DQWL;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -371,7 +369,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = in.closeclaw.ios;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -379,7 +377,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -412,7 +409,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = PVQK77DQWL;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -458,7 +455,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = in.closeclaw.ios;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};

@@ -15,12 +15,7 @@ struct RootView: View {
             Group {
                 switch viewModel.authPhase {
                 case .loading:
-                    VStack(spacing: 12) {
-                        ProgressView()
-                        Text("Restoring session...")
-                            .foregroundStyle(CloseClawTheme.textSecondary)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    LoadingView()
                 case .signedOut:
                     AuthView(
                         isLoading: viewModel.isAuthenticating,
@@ -95,11 +90,11 @@ private struct OnboardingView: View {
                                 .shadow(color: CloseClawTheme.accentGlow, radius: 24)
 
                             VStack(spacing: 8) {
-                                Text("Setting Up Your Core")
+                                Text("Step 2: Core Setup")
                                     .font(CloseClawTheme.Typography.title())
                                     .premiumTextGradient()
                                 
-                                Text("We're preparing your private, dedicated AI environment.")
+                                Text("We're bringing your private, dedicated processing unit online.")
                                     .font(CloseClawTheme.Typography.body())
                                     .foregroundStyle(CloseClawTheme.textPrimary)
                                     .multilineTextAlignment(.center)
@@ -166,6 +161,11 @@ private struct OnboardingView: View {
                 }
             }
             .tapToDismissKeyboard()
+            .onAppear {
+                if let windowScene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene {
+                    SKStoreReviewController.requestReview(in: windowScene)
+                }
+            }
         }
     }
 
@@ -230,9 +230,6 @@ private struct ChatViewContainer: View {
     var body: some View {
         ChatTabView(
             viewModel: viewModel.chatViewModel,
-            onReload: {
-                Task { await viewModel.chatViewModel.loadHistory() }
-            },
             onShowSettings: {
                 showingSettings = true
             }
@@ -265,3 +262,27 @@ private struct ChatViewContainer: View {
     }
 }
 
+private struct LoadingView: View {
+    @State private var isPulsing = false
+    
+    var body: some View {
+        VStack(spacing: 24) {
+            Image("logo3")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 100, height: 100)
+                .shadow(color: isPulsing ? CloseClawTheme.accentGlow : .clear, radius: 24)
+                .scaleEffect(isPulsing ? 1.05 : 0.95)
+                .opacity(isPulsing ? 1.0 : 0.6)
+                .animation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true), value: isPulsing)
+                .onAppear {
+                    isPulsing = true
+                }
+            
+            Text("Authenticating Core...")
+                .font(CloseClawTheme.Typography.subtitle())
+                .foregroundStyle(CloseClawTheme.textSecondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}

@@ -2,6 +2,7 @@ import SwiftUI
 import StoreKit
 
 struct SettingsTabView: View {
+    @Environment(\.dismiss) private var dismiss
     let user: UserProfile?
     let gatewayStatusText: String
     @ObservedObject var creditsViewModel: CreditsViewModel
@@ -206,32 +207,23 @@ struct SettingsTabView: View {
                         .staggeredReveal(index: 3)
 
                         // Action Section
-                        VStack(spacing: 20) {
+                        VStack(spacing: 16) {
                             CloseClawButton(
                                 title: "Sign Out",
-                                variant: .ghost,
+                                variant: .secondary,
                                 action: {
                                     Task { await onSignOut() }
                                 }
                             )
-                            .background(Color.white.opacity(0.04))
-                            .clipShape(Capsule())
                             
-                            Button(role: .destructive) {
-                                showDeleteConfirmation = true
-                            } label: {
-                                Group {
-                                    if isLoadingDelete {
-                                        ProgressView().tint(CloseClawTheme.accentPrimary)
-                                    } else {
-                                        Text("Delete Account")
-                                            .font(CloseClawTheme.Typography.footnote())
-                                    }
+                            CloseClawButton(
+                                title: isLoadingDelete ? "Deleting..." : "Delete Account",
+                                variant: .destructive,
+                                isLoading: isLoadingDelete,
+                                action: {
+                                    showDeleteConfirmation = true
                                 }
-                                .foregroundStyle(CloseClawTheme.accentPrimary.opacity(0.8))
-                                .frame(maxWidth: .infinity)
-                            }
-                            .disabled(isLoadingDelete)
+                            )
                         }
                         .staggeredReveal(index: 4)
                         .padding(.top, 10)
@@ -243,6 +235,15 @@ struct SettingsTabView: View {
             .tapToDismissKeyboard()
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .font(CloseClawTheme.Typography.body().weight(.bold))
+                    .foregroundStyle(CloseClawTheme.textSecondary)
+                }
+            }
             .alert("Delete Account", isPresented: $showDeleteConfirmation) {
                 Button("Delete", role: .destructive) {
                     Task { await onDeleteAccount() }

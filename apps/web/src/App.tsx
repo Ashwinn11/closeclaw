@@ -50,6 +50,7 @@ function App() {
         />
         <Route path="/privacy" element={<LegalPage type="privacy" />} />
         <Route path="/terms" element={<LegalPage type="terms" />} />
+        <Route path="/support" element={<LegalPage type="support" />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>

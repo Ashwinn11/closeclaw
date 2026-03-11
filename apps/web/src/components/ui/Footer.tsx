@@ -43,7 +43,7 @@ export const Footer: React.FC<FooterProps> = ({ setInfoModal, onGetStarted }) =>
                 <div className="footer-links-col">
                     <h4>Company</h4>
                     <button className="footer-link-btn" onClick={() => setInfoModal('about')}>About</button>
-                    <a href="mailto:support@closeclaw.in">Contact</a>
+                    <a href="/support">Support</a>
                     <button className="footer-link-btn" onClick={() => setInfoModal('tos')}>Terms of Service</button>
                     <button className="footer-link-btn" onClick={() => setInfoModal('privacy')}>Privacy Policy</button>
                     <button className="footer-link-btn" onClick={() => setInfoModal('refund')}>Refund Policy</button>
