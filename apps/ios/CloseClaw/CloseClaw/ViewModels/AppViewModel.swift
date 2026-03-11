@@ -24,7 +24,10 @@ final class AppViewModel: ObservableObject {
     private let authService: AuthServiceProtocol
     private let apiClient: APIClientProtocol
     private var didBootstrap = false
-    private var hasPatchedConfig = false
+    private var hasCompletedInitialSetup: Bool {
+        get { UserDefaults.standard.bool(forKey: "hasCompletedInitialSetup") }
+        set { UserDefaults.standard.set(newValue, forKey: "hasCompletedInitialSetup") }
+    }
     private var stateObservationTask: Task<Void, Never>?
 
     init(
@@ -54,11 +57,14 @@ final class AppViewModel: ObservableObject {
     }
 
     private func handleGatewayConnected() async {
-        guard let session, !hasPatchedConfig else { return }
+        guard let session, !hasCompletedInitialSetup else { 
+            chatViewModel.activate()
+            return 
+        }
         
         do {
             try await applyGatewayProxyConfiguration(accessToken: session.accessToken)
-            hasPatchedConfig = true
+            hasCompletedInitialSetup = true
             chatViewModel.activate()
         } catch {
             print("[AppViewModel] Failed to apply config after connection: \(error)")

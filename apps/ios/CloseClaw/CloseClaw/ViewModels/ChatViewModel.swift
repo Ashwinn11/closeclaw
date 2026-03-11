@@ -261,15 +261,17 @@ final class ChatViewModel: ObservableObject {
         var hasEncounteredContent = false
         
         // Robust sentinel detection (matches Conversation info or Sender with variations)
+        // Robust sentinel detection (matches Conversation info or Sender with variations)
         let sentinelRegex = try? NSRegularExpression(pattern: "(?:Conversation info|Sender) \\(untrusted metadata\\):", options: .caseInsensitive)
-        // Timestamp detection
-        let tsRegex = try? NSRegularExpression(pattern: "^\\[.*?(?:UTC|GMT)\\]\\s*", options: .caseInsensitive)
+        // Timestamp detection (matches [2024-01-01 10:00:00 UTC] or similar)
+        let tsRegex = try? NSRegularExpression(pattern: "^\\[\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\s+(?:UTC|GMT)\\]\\s*", options: .caseInsensitive)
+        // System log detection (matches System: [Timestamp] or System: Exec...)
+        let systemLogRegex = try? NSRegularExpression(pattern: "^System:\\s*(?:\\[.*?\\])?\\s*", options: .caseInsensitive)
         
         for line in lines {
             let trimmed = line.trimmingCharacters(in: .whitespaces)
             
             // 1. GLOBAL STRIPPING: Metadata Blocks
-            // These are always stripped regardless of position (though they usually appear at top)
             if !inMetaBlock {
                 let range = NSRange(location: 0, length: trimmed.utf16.count)
                 if sentinelRegex?.firstMatch(in: trimmed, options: [], range: range) != nil {
@@ -294,21 +296,28 @@ final class ChatViewModel: ObservableObject {
             }
             
             // 2. HEADER-ONLY STRIPPING (Logs, Doctor Hints, Timestamps)
-            // We only strip these if we haven't seen "real" content yet.
+            // We strip leading logs until we hit the first line of real content.
             if !hasEncounteredContent {
                 if trimmed.isEmpty { continue }
                 
-                // Skip System lines and doctor hints at the top
-                if trimmed.hasPrefix("System:") || trimmed.hasPrefix("Run: openclaw doctor") {
+                let range = NSRange(location: 0, length: trimmed.utf16.count)
+                
+                // Skip System lines (regex handles variation in spacing/timestamp)
+                if systemLogRegex?.firstMatch(in: trimmed, options: [], range: range) != nil {
                     continue
                 }
                 
-                // Skip standalone markers at the top
+                // Skip common internal Gateway instructions/hints
+                if trimmed.hasPrefix("Run: openclaw doctor") || trimmed.hasPrefix("Actually, skip this") {
+                    continue
+                }
+                
+                // Skip standalone code fence clutter at the very top
                 if trimmed == "json" || trimmed == "```" || trimmed == "```json" {
                     continue
                 }
                 
-                // Skip message ID hints at the top
+                // Skip message ID hints [message_id:...]
                 if trimmed.hasPrefix("[message_id:") && trimmed.hasSuffix("]") {
                     continue
                 }
@@ -323,15 +332,22 @@ final class ChatViewModel: ObservableObject {
                     )
                 }
                 
-                if lineAfterTS.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    // It was just a timestamp line at the top
+                let contentRemaining = lineAfterTS.trimmingCharacters(in: .whitespacesAndNewlines)
+                if contentRemaining.isEmpty {
+                    // It was just a standalone timestamp line at the top
+                    continue
+                }
+                
+                // Special case: if the line starts with a timestamp but is followed by "Exec failed" or "Exec completed"
+                // those are also system logs we want to strip from the header.
+                if contentRemaining.hasPrefix("Exec failed") || contentRemaining.hasPrefix("Exec completed") || contentRemaining.hasPrefix("Gateway restart") {
                     continue
                 }
                 
                 // If we got here, this is the first line of REAL content
                 hasEncounteredContent = true
                 
-                // Even for the first content line, we still strip the leading timestamp part
+                // Even for the first content line, we strip the leading timestamp part if present
                 if let tsRegex = tsRegex {
                     let processed = tsRegex.stringByReplacingMatches(
                         in: line,
@@ -345,8 +361,8 @@ final class ChatViewModel: ObservableObject {
                     result.append(line)
                 }
             } else {
-                // 3. BODY CONTENT: Keep markdown markers (```, json) for the renderer.
-                // Strip only internal directives [[ ... ]] which are never user-visible.
+                // 3. BODY CONTENT: Keep the text (including markdown for the renderer)
+                // Only strip strictly internal directives.
                 var processedLine = line
                 processedLine = processedLine.replacingOccurrences(
                     of: "\\[\\[\\s*audio_as_voice\\s*\\]\\]",
