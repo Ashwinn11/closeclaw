@@ -13,6 +13,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: () => Promise<void>;
+  loginWithApple: () => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
@@ -74,13 +75,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  const loginWithApple = useCallback(async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    if (error) {
+      console.error('Apple login failed:', error.message);
+      throw error;
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     await supabase.auth.signOut();
     setUser(null);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithApple, logout, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );

@@ -2,6 +2,7 @@ import { type FC, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from './Button';
+import { BrandIcons } from './BrandIcons';
 import { InfoModal, type InfoModalType } from './InfoModal';
 import { Loader2 } from 'lucide-react';
 import './LoginModal.css';
@@ -11,19 +12,20 @@ interface LoginModalProps {
 }
 
 export const LoginModal: FC<LoginModalProps> = ({ onClose }) => {
-  const { login } = useAuth();
+  const { login, loginWithApple } = useAuth();
   const [error, setError] = useState<string | null>(null);
-  const [loggingIn, setLoggingIn] = useState(false);
+  const [loggingIn, setLoggingIn] = useState<string | null>(null);
   const [infoModal, setInfoModal] = useState<InfoModalType | null>(null);
 
-  const handleLogin = async () => {
-    setLoggingIn(true);
+  const handleLogin = async (provider: 'google' | 'apple') => {
+    setLoggingIn(provider);
     setError(null);
     try {
-      await login(); // Will redirect to Google
+      if (provider === 'google') await login();
+      else await loginWithApple();
     } catch (_err) {
       setError('Failed to sign in. Please try again.');
-      setLoggingIn(false);
+      setLoggingIn(null);
     }
   };
 
@@ -42,11 +44,26 @@ export const LoginModal: FC<LoginModalProps> = ({ onClose }) => {
         )}
 
         <Button 
-          className="google-btn"
-          onClick={handleLogin}
-          disabled={loggingIn}
+          className="apple-btn"
+          onClick={() => handleLogin('apple')}
+          disabled={!!loggingIn}
         >
-          {loggingIn ? (
+          {loggingIn === 'apple' ? (
+            <><Loader2 size={18} className="spin" /> Redirecting...</>
+          ) : (
+            <>
+              <div className="btn-brand-icon"><BrandIcons.Apple /></div>
+              Continue with Apple
+            </>
+          )}
+        </Button>
+
+        <Button 
+          className="google-btn"
+          onClick={() => handleLogin('google')}
+          disabled={!!loggingIn}
+        >
+          {loggingIn === 'google' ? (
             <><Loader2 size={18} className="spin" /> Redirecting...</>
           ) : (
             <>

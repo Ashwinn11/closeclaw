@@ -4,34 +4,19 @@ import { NebulaBackground } from '../components/ui/NebulaBackground';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { getCredits } from '../lib/api';
-import { ArrowLeft, Check, Loader2, AlertCircle, Zap } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle, Zap, Smartphone } from 'lucide-react';
+import { BrandIcons } from '../components/ui/BrandIcons';
 import './BillingPage.css';
 
 const PLAN_DISPLAY: Record<string, string> = {
   platform: 'Platform Plan',
 };
 
-const planData = [
-  {
-    name: 'Platform',
-    tagline: 'Full Access & Private Environment',
-    price: '$50',
-    features: [
-      'Dedicated AI on Telegram, Discord & Slack',
-      '$20 in AI credits/mo included',
-      'Your own private environment, never shared',
-      'Zero technical maintenance',
-      'Priority platform support',
-    ],
-  },
-];
 
 export const BillingPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [credits, setCredits] = useState<{ api_credits: number; plan: string; subscription_renews_at: string | null } | null>(null);
-  const [toppingUp, setToppingUp] = useState<string | null>(null);
-  const [subscribing, setSubscribing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -50,33 +35,6 @@ export const BillingPage: React.FC = () => {
     ? new Date(credits.subscription_renews_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : null;
 
-  const handleTopup = async (pack: string) => {
-    setToppingUp(pack);
-    setError(null);
-    try {
-      // Mock topup
-      await new Promise(r => setTimeout(r, 1500));
-      window.history.replaceState({}, '', '/billing?cc_topup=success');
-      window.location.reload();
-    } catch (err: any) {
-      setError(err.message || 'Failed to create checkout');
-      setToppingUp(null);
-    }
-  };
-
-  const handleSubscribe = async (planName: string) => {
-    setSubscribing(planName);
-    setError(null);
-    try {
-      // Mock checkout
-      await new Promise(r => setTimeout(r, 1500));
-      window.history.replaceState({}, '', '/billing?cc_setup=resume');
-      window.location.reload();
-    } catch (err: any) {
-      setError(err.message || 'Failed to create checkout');
-      setSubscribing(null);
-    }
-  };
 
   return (
     <div className="billing-page">
@@ -131,34 +89,18 @@ export const BillingPage: React.FC = () => {
             <div className="billing-topup-section">
               <div className="billing-section-label">
                 <Zap size={14} />
-                Top Up Credits
+                Billing Management
               </div>
-              <div className="billing-topup-grid">
-                {[
-                  { pack: '50', label: '$50', amount: 50 },
-                ].map(({ pack, label, amount }) => (
-                  <Card
-                    key={pack}
-                    className="billing-topup-card"
-                    hoverable
-                    onClick={() => !toppingUp && handleTopup(pack)}
-                  >
-                    <div className="topup-amount">{label}</div>
-                    <div className="topup-credits">+${amount} credits</div>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      fullWidth
-                      disabled={!!toppingUp}
-                      onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleTopup(pack); }}
-                    >
-                      {toppingUp === pack
-                        ? <><Loader2 size={13} className="billing-spin" /> Redirecting...</>
-                        : 'Top Up'}
-                    </Button>
-                  </Card>
-                ))}
-              </div>
+              <Card className="billing-notice-card">
+                <Smartphone size={24} className="notice-icon" />
+                <div className="notice-content">
+                  <h4>Managed on iOS</h4>
+                  <p>To ensure the highest level of security and privacy, credit top-ups and subscription management are handled exclusively through the CloseClaw iOS app.</p>
+                  <Button variant="secondary" size="sm" onClick={() => window.open('https://apps.apple.com', '_blank')}>
+                    Open App Store
+                  </Button>
+                </div>
+              </Card>
             </div>
           </>
         ) : (
@@ -169,39 +111,15 @@ export const BillingPage: React.FC = () => {
             </div>
 
             <div className="billing-plan-list single-plan">
-              {planData.map((p) => (
-                <Card
-                  key={p.name}
-                  className="billing-plan-row popular"
-                  onClick={() => !subscribing && handleSubscribe(p.name)}
-                >
-                  <div className="plan-row-left">
-                    <div className="plan-row-name">
-                      {p.name} Plan
-                      <span className="bpr-popular-tag">RECOMMENDED</span>
-                    </div>
-                    <ul className="plan-row-features">
-                      {p.features.map((f, i) => (
-                        <li key={i}><Check size={13} className="check-icon" />{f}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="plan-row-right">
-                    <div className="plan-row-price">
-                      {p.price}<span className="period">/mo</span>
-                    </div>
-                    <Button
-                      variant="primary"
-                      disabled={!!subscribing}
-                      onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleSubscribe(p.name); }}
-                    >
-                      {subscribing === p.name
-                        ? <><Loader2 size={14} className="billing-spin" /> Redirecting...</>
-                        : 'Get Started Now'}
-                    </Button>
-                  </div>
-                </Card>
-              ))}
+              <Card className="activation-redirect-card">
+                <div className="arc-icon"><Smartphone size={40} strokeWidth={1} /></div>
+                <h3>Activation Required</h3>
+                <p>New environments must be activated and subscribed through our iOS mobile application. Please download CloseClaw on your iPhone to get started.</p>
+                <Button variant="primary" onClick={() => window.open('https://apps.apple.com', '_blank')}>
+                  <BrandIcons.Apple />
+                  <span>Get CloseClaw for iOS</span>
+                </Button>
+              </Card>
             </div>
           </>
         )}

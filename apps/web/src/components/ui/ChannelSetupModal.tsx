@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { Card } from './Card';
 import { Button } from './Button';
 import { BrandIcons } from './BrandIcons';
-import { setupChannel, verifyChannel, getMyInstance, getCredits, createCheckout, patchGatewayConfig, getGatewayProviderConfig } from '../../lib/api';
+import { setupChannel, verifyChannel, getMyInstance, getCredits, patchGatewayConfig, getGatewayProviderConfig } from '../../lib/api';
 import { buildChannelPatch } from '../../lib/channelConfig';
 import { useGateway } from '../../context/GatewayContext';
 import { useError } from '../../context/ErrorContext';
-import { Check, Loader2, AlertCircle, Bot, ArrowRight } from 'lucide-react';
+import { Check, Loader2, AlertCircle, Bot, ArrowRight, Smartphone } from 'lucide-react';
 import './ChannelSetupModal.css';
 
 type ChannelType = 'Telegram' | 'Discord' | 'Slack';
@@ -94,21 +94,6 @@ const channelConfig: Record<ChannelType, {
   },
 };
 
-const planData = [
-  {
-    name: 'Platform',
-    tagline: 'Full Access & Private Environment',
-    price: '$50',
-    features: [
-      'Dedicated AI on Telegram, Discord & Slack',
-      '$20 in AI credits/mo included',
-      'Your own private environment, never shared',
-      'Zero technical maintenance',
-      'Priority platform support',
-    ],
-    isPopular: true,
-  },
-];
 
 export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, onClose, resumeData }) => {
   const { status: gatewayStatus, connect } = useGateway();
@@ -277,29 +262,6 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
     }
   };
 
-  const handlePlanSelect = async (planName: string) => {
-    const resolvedOwnerId = ownerUserId || manualOwnerId;
-    if (!resolvedOwnerId.trim()) {
-      setError('Owner user ID is required.');
-      return;
-    }
-    setDeploying(true);
-    setError(null);
-    try {
-      const { checkoutUrl } = await createCheckout(planName);
-      // Save setup state so dashboard can complete it after checkout
-      localStorage.setItem('cc_pending_setup', JSON.stringify({
-        channel: channel.toLowerCase(),
-        token: token.trim(),
-        appToken: needsSecondToken ? secondToken.trim() : undefined,
-        ownerUserId: resolvedOwnerId.trim(),
-      }));
-      window.location.href = checkoutUrl;
-    } catch (err) {
-      showError((err as Error).message || 'Failed to create checkout. Please try again.', 'Billing Error');
-      setDeploying(false);
-    }
-  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !verifying) {
@@ -592,32 +554,17 @@ export const ChannelSetupModal: React.FC<ChannelSetupModalProps> = ({ channel, o
                     </div>
                   )}
                   <div className="billing-step-header">
-                    <h3>Pick a plan that fits your life</h3>
-                    <p className="billing-step-subtitle">Billed monthly · Cancel anytime</p>
+                    <h3>Activation Required</h3>
+                    <p className="billing-step-subtitle">To ensure security and privacy, new instances must be activated via the CloseClaw iOS app.</p>
                   </div>
-                  <div className="plan-grid">
-                    {planData.map((plan) => (
-                      <div
-                        key={plan.name}
-                        className={`plan-card ${plan.isPopular ? 'popular' : ''} ${deploying ? 'disabled' : ''}`}
-                        onClick={() => !deploying && handlePlanSelect(plan.name)}
-                      >
-                        {plan.isPopular && <div className="popular-badge">Most Popular</div>}
-                        <div className="plan-top">
-                          <h4>{plan.name}</h4>
-                          <p className="plan-tagline">{plan.tagline}</p>
-                        </div>
-                        <div className="price">{plan.price}<span className="period">/mo</span></div>
-                        <ul className="features">
-                          {plan.features.map((f, i) => (
-                            <li key={i}><Check size={13} className="check-icon" />{f}</li>
-                          ))}
-                        </ul>
-                        <Button variant={plan.isPopular ? 'primary' : 'secondary'} fullWidth disabled={deploying}>
-                          {deploying ? <><Loader2 size={14} className="spin" /> Redirecting...</> : 'Get Started →'}
-                        </Button>
-                      </div>
-                    ))}
+                  <div className="ios-redirect-card">
+                    <Smartphone size={48} strokeWidth={1} />
+                    <h4>Use the iOS App</h4>
+                    <p>Open CloseClaw on your iPhone to activate your core instance. Once activated, you can return here to link your bots.</p>
+                    <Button variant="primary" onClick={() => window.open('https://apps.apple.com', '_blank')}>
+                      <BrandIcons.Apple />
+                      <span>Get the iOS App</span>
+                    </Button>
                   </div>
 
                   <div className="step-actions">

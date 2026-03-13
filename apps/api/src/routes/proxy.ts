@@ -6,7 +6,7 @@ export const proxyRoutes = new Hono();
 
 // ─── Synthetic "credits exhausted" responses ─────────────────────────────────
 
-const EXHAUSTED_MSG = '⚠️ Your API Credits have been exhausted. Top up at closeclaw.in/billing.';
+const EXHAUSTED_MSG = '⚠️ Your API Credits have been exhausted. Top up via the CloseClaw iOS app.';
 
 function creditsExhaustedOpenAI() {
     return {
@@ -75,7 +75,8 @@ type InstanceAuth = {
     gatewayToken: string;
 };
 
-const authCache = new Map<string, InstanceAuth>();
+const authCache = new Map<string, { auth: InstanceAuth; expiresAt: number }>();
+const AUTH_CACHE_TTL = 300_000; // 5 minutes
 const creditsCache = new Map<string, { credits: number; expiresAt: number }>();
 const CREDITS_CACHE_TTL = 3000; // 3 seconds
 
@@ -95,24 +96,29 @@ async function resolveGatewayToken(
     if (!token) return null;
 
     const cached = authCache.get(token);
-    if (cached) return cached;
+    if (cached && cached.expiresAt > Date.now()) return cached.auth;
 
+    console.log(`[proxy] Cache miss or expired for token starting: ${token.slice(0, 8)}`);
     const { data: instance, error } = await supabase
         .from('instances')
         .select('id, user_id, internal_ip, gateway_port, gateway_token')
         .eq('gateway_token', token)
         .single();
 
-    if (error || !instance) return null;
+    if (error || !instance) {
+        if (error) console.error('[proxy] Error resolving gateway token:', error.message);
+        return null;
+    }
 
-    const auth: InstanceAuth = {
+    const auth = {
         userId: instance.user_id,
         instanceId: instance.id,
         internalIp: instance.internal_ip,
         gatewayPort: instance.gateway_port || 18789,
-        gatewayToken: token,
+        gatewayToken: instance.gateway_token
     };
-    authCache.set(token, auth);
+
+    authCache.set(token, { auth, expiresAt: Date.now() + AUTH_CACHE_TTL });
     return auth;
 }
 
@@ -120,13 +126,17 @@ async function getApiCredits(userId: string): Promise<number> {
     const cached = creditsCache.get(userId);
     if (cached && cached.expiresAt > Date.now()) return cached.credits;
 
+    console.log(`[proxy] Fetching credits from DB for user: ${userId}`);
     const { data, error } = await supabase
         .from('users')
         .select('api_credits')
         .eq('id', userId)
         .single();
 
+    if (error) console.error(`[proxy] Error fetching credits for ${userId}:`, error.message);
     const credits = (!error && data) ? Number(data.api_credits) || 0 : 0;
+    console.log(`[proxy] User ${userId} has credits: ${credits}`);
+    
     creditsCache.set(userId, { credits, expiresAt: Date.now() + CREDITS_CACHE_TTL });
     return credits;
 }
@@ -154,15 +164,15 @@ async function syncSessionsUsage(auth: InstanceAuth): Promise<void> {
     syncInFlight.add(auth.instanceId);
 
     try {
-        const since = new Date();
-        since.setDate(since.getDate() - 30);
-        const startDate = since.toISOString().split('T')[0];
-
         const rpc = createGatewayRpcClient(auth.internalIp, auth.gatewayPort, auth.gatewayToken);
         let currentCost = 0;
         let currentTokens = 0;
 
         try {
+            const since = new Date();
+            since.setDate(since.getDate() - 30);
+            const startDate = since.toISOString().split('T')[0];
+
             const usage = await rpc.call('sessions.usage', { startDate }) as any;
             currentCost = Number(usage?.totals?.totalCost ?? 0);
             currentTokens = Number(usage?.totals?.totalTokens ?? 0);

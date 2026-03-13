@@ -164,25 +164,9 @@ export async function patchGatewayConfig(patch: Record<string, unknown>): Promis
 export async function getCredits(): Promise<{
     api_credits: number;
     plan: string;
-    api_credits_cap: number;
     subscription_renews_at: string | null;
 }> {
-    // Mock credits for demo/bypass
-    return {
-        api_credits: 20,
-        plan: 'platform',
-        api_credits_cap: 20,
-        subscription_renews_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-    };
-}
-
-export async function createCheckout(_planName: string): Promise<{ checkoutUrl: string }> {
-    // Mock checkout by redirecting to a success state
-    return { checkoutUrl: `${window.location.origin}/dashboard?checkout=success` };
-}
-
-export async function createTopup(_pack: string): Promise<{ checkoutUrl: string }> {
-    return { checkoutUrl: `${window.location.origin}/dashboard?topup=success` };
+    return request('/api/billing/credits');
 }
 
 // ─── Auth ──────────────────────────────────────────────────────────────────

@@ -162,10 +162,6 @@ channelRoutes.post('/setup', async (c) => {
 
         if (connErr) return c.json({ ok: false, error: connErr.message }, 500);
 
-        const knownPlans = ['basic', 'guardian', 'fortress'];
-        if (knownPlans.includes(plan.toLowerCase())) {
-            await supabase.from('users').update({ plan: plan.toLowerCase() }).eq('id', userId);
-        }
 
         return c.json({
             ok: true,
@@ -193,36 +189,9 @@ channelRoutes.post('/setup', async (c) => {
     if (existingInst) {
         instance = existingInst;
     } else {
-        // Claim from pool
-        const { data: available } = await supabase
-            .from('instances')
-            .select('*')
-            .eq('status', 'available')
-            .is('user_id', null)
-            .limit(1)
-            .maybeSingle();
-
-        if (!available) {
-            return c.json({ ok: false, error: 'No instances available. Please try again later.' }, 503);
-        }
-
-        const { data: claimed, error: claimErr } = await supabase
-            .from('instances')
-            .update({
-                user_id: userId,
-                status: 'claimed',
-                claimed_at: new Date().toISOString(),
-            })
-            .eq('id', available.id)
-            .eq('status', 'available')
-            .select()
-            .single();
-
-        if (claimErr || !claimed) {
-            return c.json({ ok: false, error: 'Failed to claim instance' }, 500);
-        }
-
-        instance = claimed;
+        // Claiming from pool via web setup is now disabled. 
+        // Activation must happen on iOS.
+        return c.json({ ok: false, error: 'Core activation required. Please use the CloseClaw iOS app to start your instance.' }, 403);
     }
 
     const inst = instance!;
@@ -256,10 +225,6 @@ channelRoutes.post('/setup', async (c) => {
         return c.json({ ok: false, error: 'Failed to save channel record' }, 500);
     }
 
-    const knownPlans = ['basic', 'guardian', 'fortress'];
-    if (knownPlans.includes(plan.toLowerCase())) {
-        await supabase.from('users').update({ plan: plan.toLowerCase() }).eq('id', userId);
-    }
 
     return c.json({
         ok: true,

@@ -619,117 +619,61 @@
     color: var(--text-secondary);
 }
 
-.billing-step .plan-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-    padding-top: 12px;
-    /* prevent popular badge from clipping */
-}
+/* ─── iOS Redirect (Activation) ─────────────────────────────────────────── */
 
-.billing-step .plan-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    padding: 1.5rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
+.ios-redirect-card {
     display: flex;
     flex-direction: column;
+    align-items: center;
+    padding: 3rem 2rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 32px;
+    text-align: center;
+    gap: 1.25rem;
+    animation: modalSlideUp 0.5s ease;
 }
 
-.billing-step .plan-card:hover {
-    border-color: rgba(0, 229, 204, 0.3);
-    background: rgba(0, 229, 204, 0.05);
-    transform: translateY(-3px);
-    box-shadow: 0 12px 40px var(--accent-secondary-glow);
+.ios-redirect-card svg:first-child {
+    color: var(--accent-primary);
+    margin-bottom: 0.5rem;
 }
 
-.billing-step .plan-card.popular {
-    border-color: var(--accent-primary);
-    background: linear-gradient(180deg, rgba(255, 77, 77, 0.1) 0%, rgba(255, 77, 77, 0.02) 100%);
-}
-
-.billing-step .plan-card.popular:hover {
-    border-color: var(--accent-primary);
-    box-shadow: 0 12px 40px var(--accent-glow);
-}
-
-.billing-step .plan-card.disabled {
-    pointer-events: none;
-    opacity: 0.6;
-}
-
-.billing-step .popular-badge {
-    position: absolute;
-    top: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 3px 12px;
-    background: var(--accent-primary);
-    color: #fff;
-    font-size: 0.6rem;
-    font-weight: 700;
-    border-radius: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    white-space: nowrap;
-}
-
-.billing-step .plan-top {
-    margin-bottom: 1.25rem;
-}
-
-.billing-step .plan-top h4 {
-    font-size: var(--text-base);
-    font-weight: 700;
-    margin-bottom: 0.2rem;
-}
-
-.billing-step .plan-tagline {
-    font-size: var(--text-sm);
-    color: var(--text-secondary);
-}
-
-.billing-step .price {
-    font-size: var(--text-2xl);
+.ios-redirect-card h4 {
+    font-size: 1.5rem;
     font-weight: 800;
-    margin-bottom: 1.25rem;
     letter-spacing: -0.02em;
 }
 
-.billing-step .period {
-    font-size: var(--text-sm);
-    font-weight: 400;
+.ios-redirect-card p {
     color: var(--text-secondary);
+    font-size: var(--text-base);
+    line-height: 1.6;
+    max-width: 400px;
 }
 
-.billing-step .features {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 1.25rem 0;
+.ios-redirect-card button {
+    height: 52px !important;
+    padding: 0 32px !important;
+    font-size: 1.1rem !important;
+    border-radius: 14px !important;
+    background: #fff !important;
+    color: #000 !important;
+    font-weight: 700 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px;
+    margin-top: 1rem;
+}
+
+.billing-step .plan-grid {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    flex: 1;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
 }
 
-.billing-step .features li {
-    display: flex;
-    align-items: flex-start;
-    gap: 7px;
-    font-size: var(--text-sm);
-    color: var(--text-secondary);
-    line-height: 1.4;
-}
-
-.billing-step .check-icon {
-    color: #27C93F;
-    flex-shrink: 0;
-    margin-top: 1px;
-}
 
 /* ─── Linking State ───────────────────────────────────────────────────────── */
 

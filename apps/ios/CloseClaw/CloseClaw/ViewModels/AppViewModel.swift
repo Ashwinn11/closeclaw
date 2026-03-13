@@ -75,7 +75,6 @@ final class AppViewModel: ObservableObject {
     }
 
     private func refreshSessionIfNeeded() async {
-        // AppSession.isExpired now has a 10-minute buffer
         guard let current = session, current.isExpired else { return }
         
         do {
@@ -85,9 +84,7 @@ final class AppViewModel: ObservableObject {
             self.user = refreshed.user
         } catch {
             print("[AppViewModel] Background session refresh failed: \(error)")
-            // If the error caused the session to be cleared in TokenStore (HTTP 400),
-            // we should reflect that in the UI.
-            if (try? await authService.restoreSession()) == nil {
+            if isHardAuthError(error) {
                 self.session = nil
                 self.user = nil
                 self.authPhase = .signedOut
@@ -110,6 +107,17 @@ final class AppViewModel: ObservableObject {
         }
     }
 
+    private func isHardAuthError(_ error: Error) -> Bool {
+        // If it's a 400 error from Supabase, the refresh token is dead.
+        // If it's a network error (URLError), we should keep the session.
+        if let authError = error as? AuthError {
+            if case let .supabase(status, _) = authError, status == 400 {
+                return true
+            }
+        }
+        return false
+    }
+
 
     func bootstrapIfNeeded() async {
         guard !didBootstrap else { return }
@@ -128,16 +136,14 @@ final class AppViewModel: ObservableObject {
                 authPhase = .signedOut
             }
         } catch {
-            // Check if we still have a session. If we do (e.g. network error), stay in loading or retry.
-            // If session is gone (Auth error), then signedOut.
-            if (try? await authService.restoreSession()) == nil {
+            print("[AppViewModel] Bootstrap failed: \(error)")
+            if isHardAuthError(error) {
                 authPhase = .signedOut
-                errorMessage = error.localizedDescription
             } else {
-                // Network error occurred. We have a session but couldn't refresh it.
-                // We'll let the background refresh task or user-initiated actions retry later.
-                authPhase = .signedOut
-                errorMessage = "Network error. Please check your connection."
+                // Network error. Keep current session if we have one.
+                errorMessage = "Network error: \(error.localizedDescription). Please check your connection."
+                // Stay in .loading but allow them to retry or just see the error.
+                // We don't sign out because the token might still be valid once signal returns.
             }
         }
     }
@@ -259,26 +265,32 @@ final class AppViewModel: ObservableObject {
     private func postAuthBootstrap() async {
         guard let session else { return }
 
-        // Start loading history IMMEDIATELY so it appears while other network calls are in flight
+        // Start loading history IMMEDIATELY
         let uid = user?.id ?? session.user.id
         chatViewModel.reloadForUser(uid)
 
-        await loadCurrentUser(accessToken: session.accessToken)
-        await creditsViewModel.load(accessToken: session.accessToken)
-        
-        // Step 1 of Funnel: Check if user has an instance yet
-        let hasActiveInstance = await connectGatewayIfInstanceAvailable(accessToken: session.accessToken)
-        
-        if hasActiveInstance {
-            // Returning user. Enforce paywall if their subscription expired.
-            if creditsViewModel.credits?.plan != "platform" {
-                authPhase = .paywall
+        do {
+            async let me: Void = loadCurrentUser(accessToken: session.accessToken)
+            async let credits: Void = creditsViewModel.load(accessToken: session.accessToken)
+            _ = await (me, credits)
+            
+            // Step 1 of Funnel: Check if user has an instance yet
+            let hasActiveInstance = try await connectGatewayIfInstanceAvailable(accessToken: session.accessToken)
+            
+            if hasActiveInstance {
+                if creditsViewModel.credits?.plan != "platform" {
+                    authPhase = .paywall
+                } else {
+                    authPhase = .signedIn
+                }
             } else {
-                authPhase = .signedIn
+                authPhase = .onboarding
             }
-        } else {
-            // New user without an instance. Always send them to the Onboarding 'Funnel' first.
-            authPhase = .onboarding
+        } catch {
+            print("[AppViewModel] postAuthBootstrap network failure: \(error)")
+            errorMessage = "Unable to reach server. Please check your connection."
+            // CRITICAL: We stay in .loading (or keep current phase). 
+            // We do NOT set .onboarding, because that would ghost the user's existing instance.
         }
     }
 
@@ -334,23 +346,17 @@ final class AppViewModel: ObservableObject {
         }
     }
 
-    private func connectGatewayIfInstanceAvailable(accessToken: String) async -> Bool {
+    private func connectGatewayIfInstanceAvailable(accessToken: String) async throws -> Bool {
+        let instance = try await apiClient.getMyInstance(accessToken: accessToken)
+        guard instance != nil else { return false }
+        
         do {
-            let instance = try await apiClient.getMyInstance(accessToken: accessToken)
-            guard instance != nil else { return false }
-            do {
-                try await gatewayClient.connect(accessToken: accessToken)
-            } catch {
-                // Instance exists; keep app unlocked while auto-reconnect retries.
-                // We don't throw here so the caller knows the instance record is valid.
-                print("[AppViewModel] Initial Gateway connection failed: \(error)")
-            }
-            return true
-
+            try await gatewayClient.connect(accessToken: accessToken)
         } catch {
-            errorMessage = error.localizedDescription
-            return false
+            // Instance exists; keep app unlocked while auto-reconnect retries.
+            print("[AppViewModel] Initial Gateway connection failed: \(error)")
         }
+        return true
     }
 
 

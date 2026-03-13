@@ -9,7 +9,7 @@ import { BrandIcons } from '../components/ui/BrandIcons';
 import { ChannelSetupModal } from '../components/ui/ChannelSetupModal';
 import { CronSetupModal } from '../components/ui/CronSetupModal';
 
-import { listChannels, disconnectChannel, type ChannelConnection, getCronJobs, getUsageStats, getCredits, removeCronJob, patchGatewayConfig } from '../lib/api';
+import { listChannels, disconnectChannel, type ChannelConnection, getCronJobs, getUsageStats, getCredits, removeCronJob, patchGatewayConfig, getMyInstance } from '../lib/api';
 import { NebulaBackground } from '../components/ui/NebulaBackground';
 import { ChatTab } from '../components/chat/ChatTab';
 import {
@@ -113,20 +113,29 @@ export const DashboardPage: React.FC = () => {
   const [channelResumeData, setChannelResumeData] = useState<{ token: string; appToken?: string; ownerUserId: string } | null>(null);
 
   // Billing tab state
-  const [billingCredits, setBillingCredits] = useState<{ api_credits: number; plan: string; api_credits_cap: number; subscription_renews_at: string | null } | null>(null);
+  const [billingCredits, setBillingCredits] = useState<{ api_credits: number; plan: string; subscription_renews_at: string | null } | null>(null);
   const [billingLoading, setBillingLoading] = useState(false);
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const PLAN_DISPLAY: Record<string, string> = { platform: 'Platform Plan' };
 
+  const [instance, setInstance] = useState<any>(null);
+  const [loadingInstance, setLoadingInstance] = useState(true);
+
   const fetchChannels = useCallback(async () => {
     try {
-      const data = await listChannels();
-      setConnections(data);
+      const [channels, myInstance] = await Promise.all([
+        listChannels(),
+        getMyInstance()
+      ]);
+      setConnections(channels);
+      setInstance(myInstance);
     } catch (err: any) {
       setConnections([]);
-      showError(err.message || 'Failed to fetch channels', 'Fetch Error');
+      setInstance(null);
+      showError(err.message || 'Failed to fetch dashboard data', 'Fetch Error');
     } finally {
       setLoadingChannels(false);
+      setLoadingInstance(false);
     }
   }, [showError]);
 
@@ -427,7 +436,49 @@ export const DashboardPage: React.FC = () => {
       </aside>
 
       {/* Main content */}
-      <main className="dashboard-main">
+      {loadingInstance ? (
+        <main className="dashboard-main auth-required-main">
+          <div className="activation-prompt-card">
+            <Loader2 size={48} className="spin" />
+            <h1>Loading your instance...</h1>
+            <p>Please wait while we check the status of your CloseClaw Core.</p>
+          </div>
+        </main>
+      ) : !instance ? (
+        <main className="dashboard-main auth-required-main">
+          <div className="activation-prompt-card">
+            <div className="activation-icon">
+              <Smartphone size={64} strokeWidth={1} />
+            </div>
+            <h1>Activate your Core</h1>
+            <p>
+              To protect your privacy and ensure secure payments, CloseClaw environments must be activated from our official iOS application.
+            </p>
+            <div className="activation-steps">
+              <div className="step">
+                <div className="step-num">1</div>
+                <div className="step-text">Download CloseClaw on your iPhone</div>
+              </div>
+              <div className="step">
+                <div className="step-num">2</div>
+                <div className="step-text">Sign in with the same account</div>
+              </div>
+              <div className="step">
+                <div className="step-num">3</div>
+                <div className="step-text">Start your dedicated AI instance</div>
+              </div>
+            </div>
+            <Button className="ios-download-btn" onClick={() => window.open('https://apps.apple.com', '_blank')}>
+              <BrandIcons.Apple />
+              <span>Get the iOS App</span>
+            </Button>
+            <p className="activation-footer">
+              Once activated, you can return here to manage your channels and cron jobs.
+            </p>
+          </div>
+        </main>
+      ) : (
+        <main className="dashboard-main">
         <div className="dashboard-header">
           <div>
             <h1>{tabs.find(t => t.key === activeTab)?.label}</h1>
@@ -802,8 +853,6 @@ export const DashboardPage: React.FC = () => {
                 const isActive = (plan === 'platform' || plan === 'Platform');
                 const planDisplayName = PLAN_DISPLAY[plan] || 'Platform Plan';
                 const creditsLeft = Number(billingCredits.api_credits ?? 0);
-                const creditsCap = Number(billingCredits.api_credits_cap ?? 0);
-                const creditsPct = creditsCap > 0 ? Math.min(100, Math.max(0, (creditsLeft / creditsCap) * 100)) : 0;
                 const renewsAt = billingCredits.subscription_renews_at
                   ? new Date(billingCredits.subscription_renews_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                   : null;
@@ -821,13 +870,10 @@ export const DashboardPage: React.FC = () => {
                         </div>
                         <div className="bt-status-badge active">Active</div>
                       </div>
-                      <div className="bt-credits-bar-wrap">
-                        <div className="bt-credits-bar-top">
+                      <div className="bt-credits-display">
+                        <div className="bt-credits-row">
                           <span className="bt-credits-label">API Credits</span>
-                          <span className="bt-credits-value">${creditsLeft.toFixed(2)} remaining</span>
-                        </div>
-                        <div className="bt-bar-track">
-                          <div className="bt-bar-fill" style={{ width: `${creditsPct}%` }} />
+                          <span className="bt-credits-value accent">${creditsLeft.toFixed(2)}</span>
                         </div>
                       </div>
                       <div className="bt-renews">
