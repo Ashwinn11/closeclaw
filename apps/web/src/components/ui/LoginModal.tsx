@@ -80,9 +80,9 @@ export const LoginModal: FC<LoginModalProps> = ({ onClose }) => {
 
         <p className="login-terms">
           By continuing, you agree to our{' '}
-          <button className="login-terms-link" onClick={() => setInfoModal('tos')}>Terms of Service</button>
+          <a href="/terms" className="login-terms-link" target="_blank" rel="noopener noreferrer">Terms of Service</a>
           {' '}and{' '}
-          <button className="login-terms-link" onClick={() => setInfoModal('privacy')}>Privacy Policy</button>
+          <a href="/privacy" className="login-terms-link" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
         </p>
       </div>
     </div>

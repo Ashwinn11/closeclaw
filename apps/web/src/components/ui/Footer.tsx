@@ -4,7 +4,7 @@ import { Button } from './Button';
 import './Header.css'; // Reusing some header glass styles if needed, or we'll define footer styles in LandingPage.css
 
 interface FooterProps {
-    setInfoModal: (type: 'about' | 'tos' | 'privacy' | 'refund' | null) => void;
+    setInfoModal: (type: 'about' | null) => void;
     onGetStarted?: () => void;
 }
 
@@ -31,22 +31,20 @@ export const Footer: React.FC<FooterProps> = ({ setInfoModal, onGetStarted }) =>
                 <div className="footer-links-col">
                     <h4>Product</h4>
                     <a href="/#features">Features</a>
-                    <a href="/#pricing">Pricing</a>
+                    <a href="https://status.closeclaw.in">System Status</a>
                 </div>
 
                 <div className="footer-links-col">
                     <h4>Resources</h4>
                     <a href="https://docs.openclaw.ai" target="_blank" rel="noopener noreferrer">OpenClaw Docs</a>
-                    <a href="https://status.closeclaw.in">Status</a>
+                    <a href="/support">Help & Support</a>
                 </div>
 
                 <div className="footer-links-col">
-                    <h4>Company</h4>
+                    <h4>Legal</h4>
                     <button className="footer-link-btn" onClick={() => setInfoModal('about')}>About</button>
-                    <a href="/support">Support</a>
-                    <button className="footer-link-btn" onClick={() => setInfoModal('tos')}>Terms of Service</button>
-                    <button className="footer-link-btn" onClick={() => setInfoModal('privacy')}>Privacy Policy</button>
-                    <button className="footer-link-btn" onClick={() => setInfoModal('refund')}>Refund Policy</button>
+                    <a href="/terms">Terms</a>
+                    <a href="/privacy">Privacy Policy</a>
                 </div>
             </div>
         </footer>

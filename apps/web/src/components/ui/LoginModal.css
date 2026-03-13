@@ -103,30 +103,31 @@
 }
 
 .google-btn {
-    width: 100%;
+    width: 75%;
+    margin: 0 auto 12px auto !important;
     display: flex !important;
     align-items: center;
     justify-content: center;
     gap: 10px;
     padding: 14px 24px !important;
-    background: var(--accent-primary) !important;
-    color: #fff !important;
-    border: none !important;
+    background: #fff !important;
+    color: #000 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 14px !important;
     font-size: var(--text-base) !important;
     font-weight: 600;
     transition: all 0.3s ease;
-    box-shadow: 0 0 20px var(--accent-glow) !important;
 }
 
 .google-btn:hover:not(:disabled) {
-    background: #e04e52 !important;
+    background: #f8f8f8 !important;
     transform: translateY(-1px);
-    box-shadow: 0 0 25px var(--accent-glow) !important;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2) !important;
 }
 
 .apple-btn {
-    width: 100%;
+    width: 75%;
+    margin: 0 auto 12px auto !important;
     display: flex !important;
     align-items: center;
     justify-content: center;
@@ -139,7 +140,6 @@
     font-size: var(--text-base) !important;
     font-weight: 600;
     transition: all 0.3s ease;
-    margin-bottom: 12px;
 }
 
 .apple-btn:hover:not(:disabled) {

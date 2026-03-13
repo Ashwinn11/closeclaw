@@ -14,11 +14,11 @@ import { NebulaBackground } from '../components/ui/NebulaBackground';
 import { ChatTab } from '../components/chat/ChatTab';
 import {
   LogOut, Wifi, WifiOff, Clock, BarChart3,
-  Plus, Activity, Zap, Loader2, AlertCircle, Calendar, Trash2, Smartphone, ArrowRight, Sun, Receipt, TrendingDown, Server, MessageCircle, CreditCard, Check
+  Plus, Activity, Zap, Loader2, AlertCircle, Calendar, Trash2, Smartphone, ArrowRight, MessageCircle, Sun, Receipt, TrendingDown, Server
 } from 'lucide-react';
 import './DashboardPage.css';
 
-type Tab = 'connections' | 'chat' | 'cron' | 'usage' | 'billing';
+type Tab = 'connections' | 'chat' | 'cron' | 'usage';
 type ChannelType = 'Telegram' | 'Discord' | 'Slack';
 
 interface ChannelDef {
@@ -107,16 +107,10 @@ export const DashboardPage: React.FC = () => {
   const [updatedFields, setUpdatedFields] = useState<Set<string>>(new Set());
 
   // Billing return state
-  const [topupSuccess, setTopupSuccess] = useState(false);
-  const [subscriptionSuccess, setSubscriptionSuccess] = useState(false);
-  const [toppingUp, setToppingUp] = useState<string | null>(null);
   const [channelResumeData, setChannelResumeData] = useState<{ token: string; appToken?: string; ownerUserId: string } | null>(null);
 
   // Billing tab state
   const [billingCredits, setBillingCredits] = useState<{ api_credits: number; plan: string; subscription_renews_at: string | null } | null>(null);
-  const [billingLoading, setBillingLoading] = useState(false);
-  const [subscribing, setSubscribing] = useState<string | null>(null);
-  const PLAN_DISPLAY: Record<string, string> = { platform: 'Platform Plan' };
 
   const [instance, setInstance] = useState<any>(null);
   const [loadingInstance, setLoadingInstance] = useState(true);
@@ -191,21 +185,11 @@ export const DashboardPage: React.FC = () => {
     fetchChannels();
   }, [fetchChannels]);
 
-  // Handle return from checkout
+  // Handle legacy resume (if any)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-
-    if (params.get('cc_topup') === 'success') {
-      window.history.replaceState({}, '', '/dashboard');
-      setTopupSuccess(true);
-      setActiveTab('usage');
-      setTimeout(() => setTopupSuccess(false), 5000);
-      return;
-    }
-
     if (params.get('cc_setup') === 'resume') {
       window.history.replaceState({}, '', '/dashboard');
-      setSubscriptionSuccess(true);
       const raw = localStorage.getItem('cc_pending_setup');
       if (!raw) return;
       localStorage.removeItem('cc_pending_setup');
@@ -218,27 +202,12 @@ export const DashboardPage: React.FC = () => {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleTopup = async (pack: string) => {
-    setToppingUp(pack);
-    try {
-      // Mock topup
-      await new Promise(r => setTimeout(r, 1500));
-      window.history.replaceState({}, '', '/dashboard?cc_topup=success');
-      window.location.reload();
-    } catch (err: any) {
-      showError(err.message || 'Failed to mock topup', 'Top-up Error');
-      setToppingUp(null);
-    }
-  };
 
   const fetchBilling = useCallback(async () => {
-    setBillingLoading(true);
     try {
       const data = await getCredits();
       setBillingCredits(data);
-    } catch { /* silently ignore */ } finally {
-      setBillingLoading(false);
-    }
+    } catch { /* silently ignore */ }
   }, []);
 
   // Load billing info on mount so sidebar credits bar is populated
@@ -257,18 +226,6 @@ export const DashboardPage: React.FC = () => {
   }, [gatewayStatus, subscribe]);
 
 
-  const handleSubscribe = async (planName: string) => {
-    setSubscribing(planName);
-    try {
-      // Mock checkout
-      await new Promise(r => setTimeout(r, 1500));
-      window.history.replaceState({}, '', '/dashboard?cc_setup=resume');
-      window.location.reload();
-    } catch (err: any) {
-      showError(err.message || 'Failed to mock checkout', 'Billing Error');
-      setSubscribing(null);
-    }
-  };
 
 
 
@@ -371,7 +328,6 @@ export const DashboardPage: React.FC = () => {
     { key: 'chat', label: 'Chat', icon: <MessageCircle size={16} /> },
     { key: 'cron', label: 'Cron', icon: <Clock size={16} /> },
     { key: 'usage', label: 'Usage', icon: <BarChart3 size={16} /> },
-    { key: 'billing', label: 'Subscription', icon: <CreditCard size={16} /> },
   ];
 
   return (
@@ -468,10 +424,12 @@ export const DashboardPage: React.FC = () => {
                 <div className="step-text">Start your dedicated AI instance</div>
               </div>
             </div>
-            <Button className="ios-download-btn" onClick={() => window.open('https://apps.apple.com', '_blank')}>
-              <BrandIcons.Apple />
-              <span>Get the iOS App</span>
-            </Button>
+            <img 
+              src="/appstore.png" 
+              alt="Download on the App Store" 
+              className="app-store-badge-img huge"
+              onClick={() => window.open('https://apps.apple.com', '_blank')}
+            />
             <p className="activation-footer">
               Once activated, you can return here to manage your channels and cron jobs.
             </p>
@@ -487,7 +445,6 @@ export const DashboardPage: React.FC = () => {
               {activeTab === 'chat' && 'Talk to your AI assistant directly'}
               {activeTab === 'cron' && 'Let your AI run tasks for you, automatically'}
               {activeTab === 'usage' && 'See how much you\'ve used and what\'s left'}
-              {activeTab === 'billing' && 'Manage your plan and top up credits'}
             </p>
           </div>
           <div className={`server-status ${gatewayStatus}`}>
@@ -502,22 +459,6 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Billing / setup banners */}
-        {topupSuccess && (
-          <div className="billing-banner success">
-            <Zap size={15} />
-            <span>Credits topped up! Your balance has been updated.</span>
-            <button className="banner-close" onClick={() => setTopupSuccess(false)}>×</button>
-          </div>
-        )}
-
-        {subscriptionSuccess && (
-          <div className="billing-banner success">
-            <Check size={15} />
-            <span>Success! Your subscription is active. You can now connect your AI to any channel below.</span>
-            <button className="banner-close" onClick={() => setSubscriptionSuccess(false)}>×</button>
-          </div>
-        )}
-
         <div className="dashboard-content">
           {/* Connections Tab */}
           {activeTab === 'connections' && (
@@ -756,6 +697,7 @@ export const DashboardPage: React.FC = () => {
               ) : (
                 <>
                   <div className="section-label"><Calendar size={14} style={{ marginRight: '6px' }} /> Last 30 Days</div>
+                  
                   <div className="usage-grid">
                     {usageData.messagesThisMonth > 0 && (
                       <Card className={`usage-card ${updatedFields.has('messagesThisMonth') ? 'updated' : ''}`}>
@@ -779,166 +721,53 @@ export const DashboardPage: React.FC = () => {
                       <div className="usage-value">${Number(usageData.apiCreditsLeft ?? 0).toFixed(2)}</div>
                       <div className="usage-label">Credits Left</div>
                     </Card>
-
-                    {usageData.byModel && usageData.byModel.length > 0 && (
-                      <div className="model-usage-section">
-                        <div className="section-label" style={{ marginTop: '2rem' }}>Breakdown by Model</div>
-                        <div className="model-usage-list">
-                          {usageData.byModel.map((item: any, idx: number) => (
-                            <Card key={idx} className="model-usage-item">
-                              <div className="model-info">
-                                <span className="model-name">{item.model}</span>
-                                <span className="model-provider">{item.provider}</span>
-                              </div>
-                              <div className="model-stats">
-                                <div className="model-stat">
-                                  <span className="stat-value">{formatTokens(item.totals.totalTokens)}</span>
-                                  <span className="stat-label">Tokens</span>
-                                </div>
-                                <div className="model-stat">
-                                  <span className="stat-value">${Number(item.totals.totalCost).toFixed(4)}</span>
-                                  <span className="stat-label">Cost</span>
-                                </div>
-                              </div>
-                            </Card>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {billingCredits && (billingCredits.plan === 'platform' || billingCredits.plan === 'Platform') && (
-                      <div className="topup-section">
-                        <div className="section-label" style={{ marginTop: '2rem' }}>Top Up Credits</div>
-                        <div className="topup-grid">
-                          {[
-                            { pack: '5', label: '$5', credits: 5 },
-                            { pack: '10', label: '$10', credits: 10 },
-                            { pack: '25', label: '$25', credits: 25 },
-                            { pack: '50', label: '$50', credits: 50 },
-                            { pack: '100', label: '$100', credits: 100 },
-                          ].map(({ pack, label, credits }) => (
-                            <Card key={pack} className="topup-card" hoverable onClick={() => !toppingUp && handleTopup(pack)}>
-                              <div className="topup-amount">{label}</div>
-                              <div className="topup-credits">+${credits} credits</div>
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                fullWidth
-                                disabled={!!toppingUp}
-                                onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleTopup(pack); }}
-                              >
-                                {toppingUp === pack ? <><Loader2 size={13} className="spin" /> Redirecting...</> : 'Top Up'}
-                              </Button>
-                            </Card>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
+
+                  {usageData.byModel && usageData.byModel.length > 0 && (
+                    <div className="model-usage-section">
+                      <div className="section-label" style={{ marginTop: '2rem' }}>Breakdown by Model</div>
+                      <div className="model-usage-list">
+                        {usageData.byModel.map((item: any, idx: number) => (
+                          <Card key={idx} className="model-usage-item">
+                            <div className="model-info">
+                              <span className="model-name">{item.model}</span>
+                              <span className="model-provider">{item.provider}</span>
+                            </div>
+                            <div className="model-stats">
+                              <div className="model-stat">
+                                <span className="stat-value">{formatTokens(item.totals.totalTokens)}</span>
+                                <span className="stat-label">Tokens</span>
+                              </div>
+                              <div className="model-stat">
+                                <span className="stat-value">${Number(item.totals.totalCost).toFixed(4)}</span>
+                                <span className="stat-label">Cost</span>
+                              </div>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="section-label" style={{ marginTop: '2rem' }}>Billing Management</div>
+                  <Card className="billing-notice-card apple-branded">
+                    <div className="notice-icon-circle">
+                      <BrandIcons.Apple />
+                    </div>
+                    <div className="notice-content">
+                      <h4>Manage on iPhone</h4>
+                      <p>To ensure maximum privacy and secure processing, billing and credit top-ups are handled exclusively via the CloseClaw iOS app. All credits added on your iPhone are instantly available here.</p>
+                      <img 
+                        src="/appstore.png" 
+                        alt="Download on the App Store" 
+                        className="app-store-badge-img"
+                        onClick={() => window.open('https://apps.apple.com', '_blank')}
+                        style={{ cursor: 'pointer', height: '44px', marginTop: '0.5rem' }}
+                      />
+                    </div>
+                  </Card>
                 </>
               )}
-            </div>
-          )}
-
-          {/* Billing Tab */}
-          {activeTab === 'billing' && (
-            <div className="billing-tab">
-              {billingLoading ? (
-                <div className="loading-state">
-                  <Loader2 size={24} className="spin" />
-                  <span>Loading billing info...</span>
-                </div>
-              ) : billingCredits ? (() => {
-                const plan = billingCredits.plan;
-                const isActive = (plan === 'platform' || plan === 'Platform');
-                const planDisplayName = PLAN_DISPLAY[plan] || 'Platform Plan';
-                const creditsLeft = Number(billingCredits.api_credits ?? 0);
-                const renewsAt = billingCredits.subscription_renews_at
-                  ? new Date(billingCredits.subscription_renews_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                  : null;
-                const planData = [
-                  { name: 'Platform', tagline: 'Full Access & Private Environment', price: '$50', features: ['Dedicated AI on Telegram, Discord & Slack', '$20 in AI credits/mo included', 'Your own private environment, never shared', 'Zero technical maintenance', 'Priority platform support'] }
-                ];
-
-                if (isActive) return (
-                  <>
-                    <Card className="bt-plan-card">
-                      <div className="bt-plan-header">
-                        <div>
-                          <div className="bt-plan-label">Current Plan</div>
-                          <div className="bt-plan-name">{planDisplayName}</div>
-                        </div>
-                        <div className="bt-status-badge active">Active</div>
-                      </div>
-                      <div className="bt-credits-display">
-                        <div className="bt-credits-row">
-                          <span className="bt-credits-label">API Credits</span>
-                          <span className="bt-credits-value accent">${creditsLeft.toFixed(2)}</span>
-                        </div>
-                      </div>
-                      <div className="bt-renews">
-                        {renewsAt ? `Renews ${renewsAt}` : 'Renews monthly'}
-                      </div>
-                    </Card>
-
-                    <div className="section-label" style={{ marginTop: '2rem' }}>Top Up Credits</div>
-                    <div className="topup-grid">
-                      {[
-                        { pack: '5', label: '$5', credits: 5 },
-                        { pack: '10', label: '$10', credits: 10 },
-                        { pack: '25', label: '$25', credits: 25 },
-                        { pack: '50', label: '$50', credits: 50 },
-                        { pack: '100', label: '$100', credits: 100 },
-                      ].map(({ pack, label, credits }) => (
-                        <Card key={pack} className="topup-card" hoverable onClick={() => !toppingUp && handleTopup(pack)}>
-                          <div className="topup-amount">{label}</div>
-                          <div className="topup-credits">+${credits} credits</div>
-                          <Button variant="secondary" size="sm" fullWidth disabled={!!toppingUp}
-                            onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleTopup(pack); }}>
-                            {toppingUp === pack ? <><Loader2 size={13} className="spin" /> Redirecting...</> : 'Top Up'}
-                          </Button>
-                        </Card>
-                      ))}
-                    </div>
-                  </>
-                );
-
-                // No subscription at all
-                return (
-                  <>
-                    <div className="bt-plans-header">
-                      <h2>Private AI Workspace</h2>
-                      <p>Full access to OpenClaw with zero technical overhead</p>
-                    </div>
-                    <div className="bt-plan-grid single-plan">
-                      {planData.map((p) => (
-                        <Card key={p.name}
-                          className="bt-plan-item popular"
-                          onClick={() => !subscribing && handleSubscribe(p.name)}
-                        >
-                          <div className="bt-popular-badge">Recommended</div>
-                          <div className="bt-item-top">
-                            <div className="bt-item-name">{p.name} Plan</div>
-                            <div className="bt-item-tagline">{p.tagline}</div>
-                          </div>
-                          <div className="bt-item-price">{p.price}<span className="bt-period">/mo</span></div>
-                          <ul className="bt-item-features">
-                            {p.features.map((f, i) => (
-                              <li key={i}><Check size={13} style={{ color: '#27C93F', flexShrink: 0, marginTop: '1px' }} />{f}</li>
-                            ))}
-                          </ul>
-                          <Button variant="primary" fullWidth disabled={!!subscribing}
-                            onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleSubscribe(p.name); }}>
-                            {subscribing
-                              ? <><Loader2 size={14} className="spin" /> Redirecting...</>
-                              : 'Get Started Now'}
-                          </Button>
-                        </Card>
-                      ))}
-                    </div>
-                  </>
-                );
-              })() : null}
             </div>
           )}
         </div>
@@ -965,8 +794,6 @@ export const DashboardPage: React.FC = () => {
           initialValues={initialCronValues}
         />
       )}
-
-
     </div>
   );
 };

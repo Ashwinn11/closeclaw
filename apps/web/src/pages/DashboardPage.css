@@ -1316,8 +1316,207 @@
     line-height: 1.4;
 }
 
-@media (max-width: 768px) {
-    .bt-plan-grid {
-        grid-template-columns: 1fr;
+/* ─── Apple Branded Billing Notices ───────────────────────────────────────── */
+
+.billing-notice-card.apple-branded {
+    background: #000;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    gap: 1.5rem;
+    padding: 1.75rem;
+    align-items: center;
+    border-radius: 24px;
+    margin-top: 1rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.notice-icon-circle {
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.notice-icon-circle svg {
+    width: 24px;
+    height: 24px;
+    fill: #fff;
+}
+
+.apple-branded h4 {
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.01em;
+}
+
+.apple-branded p {
+    color: rgba(255, 255, 255, 0.6) !important;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 1.25rem;
+}
+
+.apple-pill-btn {
+    background: #fff !important;
+    color: #000 !important;
+    border-radius: 100px !important;
+    font-weight: 700 !important;
+    font-size: 0.9rem !important;
+    padding: 0 1.5rem !important;
+    height: 40px !important;
+}
+
+.apple-pill-btn:hover {
+    background: #f0f0f0 !important;
+    transform: translateY(-1px);
+}
+
+.billing-redirect-card.apple-branded {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: #000;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.billing-redirect-card.apple-branded .activation-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+}
+
+.billing-redirect-card.apple-branded .activation-icon svg {
+    width: 48px;
+    height: 48px;
+    fill: #fff;
+}
+
+@media (max-width: 640px) {
+    .billing-notice-card.apple-branded {
+        flex-direction: column;
+        text-align: center;
+        padding: 2rem 1.5rem;
     }
+}
+
+.app-store-badge-img {
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s;
+}
+
+.app-store-badge-img:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+}
+
+.app-store-badge-img.huge {
+    height: 60px;
+    margin-top: 1rem;
+}
+
+/* ─── Activation Prompt (iOS Only) ────────────────────────────────────────── */
+
+.auth-required-main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 50% 50%, rgba(255, 77, 77, 0.05) 0%, transparent 70%);
+}
+
+.activation-prompt-card {
+    background: rgba(12, 14, 20, 0.4);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 40px;
+    padding: 4rem 3rem;
+    max-width: 540px;
+    width: 90%;
+    text-align: center;
+    animation: modalScaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.4);
+}
+
+.activation-icon {
+    margin-bottom: 2rem;
+    color: var(--accent-primary);
+    filter: drop-shadow(0 0 15px var(--accent-glow));
+    opacity: 0.9;
+}
+
+.activation-prompt-card h1 {
+    font-size: 2.25rem;
+    font-weight: 800;
+    margin-bottom: 1.25rem;
+    letter-spacing: -0.03em;
+    background: linear-gradient(to bottom, #fff, rgba(255, 255, 255, 0.7));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.activation-prompt-card p {
+    color: var(--text-secondary);
+    font-size: 1.05rem;
+    line-height: 1.6;
+    margin-bottom: 2.5rem;
+}
+
+.activation-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 3rem;
+    text-align: left;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.activation-steps .step {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 1rem 1.25rem;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.step-num {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #fff;
+    box-shadow: 0 0 15px var(--accent-glow);
+}
+
+.step-text {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.ios-download-btn:hover {
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 0 10px 30px rgba(255, 255, 255, 0.2) !important;
+}
+
+.activation-footer {
+    display: block !important;
+    font-size: 0.85rem !important;
+    color: rgba(255, 255, 255, 0.4) !important;
+    line-height: 1.5 !important;
+    margin: 0 !important;
 }
