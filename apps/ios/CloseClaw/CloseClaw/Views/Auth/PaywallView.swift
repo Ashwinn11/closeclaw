@@ -49,7 +49,7 @@ struct PaywallView: View {
         
                         // Actions
                         VStack(spacing: 16) {
-                            if let subscription = purchaseService.products.first(where: { $0.id == "closeclaw.monthly" }) {
+                            if let subscription = purchaseService.products.first(where: { $0.id == "monthly.closeclaw" }) {
                                 CloseClawButton(
                                     title: "Subscribe for \(subscription.displayPrice)/mo",
                                     isLoading: isPurchasing,
@@ -140,7 +140,7 @@ struct PaywallView: View {
             do {
                 try await purchaseService.restorePurchases()
                 
-                if let result = await purchaseService.getLatestValidTransaction(for: "closeclaw.monthly") {
+                if let result = await purchaseService.getLatestValidTransaction(for: "monthly.closeclaw") {
                     await viewModel.handlePurchaseSuccess(result: result)
                 } else {
                     purchaseError = "No active subscription found to restore."

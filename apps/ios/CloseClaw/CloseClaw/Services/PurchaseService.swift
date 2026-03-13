@@ -27,8 +27,8 @@ final class PurchaseService: ObservableObject {
     private var transactionListener: Task<Void, Never>?
     
     // MARK: - Update these with your real App Store IDs
-    private let platformPlanID = "closeclaw.monthly"
-    private let topUpPackID = "closeclaw.five"
+    private let platformPlanID = "monthly.closeclaw"
+    private let topUpPackID = "fifty.closeclaw"
     
     init() {
         transactionListener = listenForTransactions()

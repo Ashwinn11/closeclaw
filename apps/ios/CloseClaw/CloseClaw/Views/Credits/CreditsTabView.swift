@@ -198,7 +198,7 @@ private struct PurchaseRow: View {
                     .stroke(CloseClawTheme.cardBorder, lineWidth: 1)
             )
         }
-        .disabled(isLoading || (isPurchased && product.type == .autoRenewable) || (product.id == "closeclaw.five" && viewModel.credits?.plan != "platform"))
+        .disabled(isLoading || (isPurchased && product.type == .autoRenewable) || (product.id == "fifty.closeclaw" && viewModel.credits?.plan != "platform"))
     }
 }
 

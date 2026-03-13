@@ -125,22 +125,22 @@ billingRoutes.post('/verify-ios', authMiddleware, async (c) => {
 
         console.log(`[Billing] Verifying iOS purchase: User=${userId}, Product=${productId}, Tx=${transactionId}`);
 
-        if (productId === 'closeclaw.monthly') {
+        if (productId === 'monthly.closeclaw') {
             // Fetch current to append the $20 monthly allocation
             const { data: user } = await supabase
                 .from('users')
                 .select('api_credits')
                 .eq('id', userId)
                 .single();
-            
+
             const currentCredits = Number(user?.api_credits || 0);
 
             // Update to Platform Plan, grant $20 credits, and set the cap to 20 for the usage bar 
             const expiresDate = payload.expiresDate ? new Date(payload.expiresDate).toISOString() : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-            
+
             const { error } = await supabase
                 .from('users')
-                .update({ 
+                .update({
                     plan: 'platform',
                     api_credits: currentCredits + 20,
                     subscription_renews_at: expiresDate
@@ -148,8 +148,8 @@ billingRoutes.post('/verify-ios', authMiddleware, async (c) => {
                 .eq('id', userId);
 
             if (error) throw error;
-        } 
-        else if (productId === 'closeclaw.five') {
+        }
+        else if (productId === 'fifty.closeclaw') {
             // Add 50 Credits
             // Using RPC to ensure atomic increment if possible, or simple update
             const { data: user } = await supabase
@@ -157,7 +157,7 @@ billingRoutes.post('/verify-ios', authMiddleware, async (c) => {
                 .select('api_credits')
                 .eq('id', userId)
                 .single();
-            
+
             const currentCredits = Number(user?.api_credits || 0);
             const { error } = await supabase
                 .from('users')

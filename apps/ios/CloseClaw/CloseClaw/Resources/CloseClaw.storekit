@@ -15,7 +15,7 @@
           "locale" : "en_US"
         }
       ],
-      "productID" : "closeclaw.five",
+      "productID" : "fifty.closeclaw",
       "referenceName" : "Credits 50",
       "type" : "Consumable"
     }
@@ -53,7 +53,7 @@
               "locale" : "en_US"
             }
           ],
-          "productID" : "closeclaw.monthly",
+          "productID" : "monthly.closeclaw",
           "recurringSubscriptionPeriod" : "P1M",
           "referenceName" : "Platform Monthly",
           "subscriptionGroupID" : "D8C3E4F5",
