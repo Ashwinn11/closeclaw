@@ -19,6 +19,9 @@ final class AppViewModel: ObservableObject {
     @Published private(set) var isReconnectingGateway = false
     @Published var errorMessage: String?
 
+    @Published var showSignOutConfirmation = false
+    @Published var showRestartGatewayConfirmation = false
+    
     let gatewayClient: GatewayWebSocketClient
     let chatViewModel: ChatViewModel
     let creditsViewModel: CreditsViewModel
@@ -48,7 +51,6 @@ final class AppViewModel: ObservableObject {
         self.creditsViewModel = CreditsViewModel(apiClient: apiClient)
 
         setupStateObservation()
-        setupSessionRefresh()
     }
 
     private func setupStateObservation() {
@@ -56,6 +58,7 @@ final class AppViewModel: ObservableObject {
             guard let self else { return }
             // Observe state changes via the Published property
             for await state in gatewayClient.$state.values {
+                self.objectWillChange.send() // Ensure UI updates for status computed properties
                 if case .connected = state {
                     await self.handleGatewayConnected()
                 }
@@ -74,8 +77,14 @@ final class AppViewModel: ObservableObject {
         }
     }
 
+    private var isRefreshing = false
+
     private func refreshSessionIfNeeded() async {
+        guard !isRefreshing else { return }
         guard let current = session, current.isExpired else { return }
+        
+        isRefreshing = true
+        defer { isRefreshing = false }
         
         do {
             print("[AppViewModel] Proactively refreshing session...")
@@ -93,18 +102,7 @@ final class AppViewModel: ObservableObject {
     }
 
     private func handleGatewayConnected() async {
-        guard let session, !hasCompletedInitialSetup else { 
-            chatViewModel.activate()
-            return 
-        }
-        
-        do {
-            try await applyGatewayProxyConfiguration(accessToken: session.accessToken)
-            hasCompletedInitialSetup = true
-            chatViewModel.activate()
-        } catch {
-            print("[AppViewModel] Failed to apply config after connection: \(error)")
-        }
+        chatViewModel.activate()
     }
 
     private func isHardAuthError(_ error: Error) -> Bool {
@@ -148,22 +146,6 @@ final class AppViewModel: ObservableObject {
         }
     }
 
-    func signIn(email: String, password: String) async {
-        isAuthenticating = true
-        defer { isAuthenticating = false }
-
-        do {
-            let newSession = try await authService.signIn(email: email, password: password)
-            session = newSession
-            user = newSession.user
-            authPhase = .loading
-            errorMessage = nil
-            await postAuthBootstrap()
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-    }
-
     func signInWithApple(
         idToken: String,
         nonce: String,
@@ -202,7 +184,8 @@ final class AppViewModel: ObservableObject {
         session = nil
         user = nil
         isProvisioningInstance = false
-        hasCompletedInitialSetup = false
+        // Note: we do NOT reset hasCompletedInitialSetup here because the Gateway 
+        // remains provisioned even if the user signs out of the iOS app.
         authPhase = .signedOut
     }
 
@@ -220,7 +203,8 @@ final class AppViewModel: ObservableObject {
             self.session = nil
             self.user = nil
             isProvisioningInstance = false
-            hasCompletedInitialSetup = false
+            // Optional: for complete account deletion, you might want to reset this,
+            // but for simple logout/re-login flows it's better to trust the Gateway check.
             authPhase = .signedOut
         } catch {
             errorMessage = error.localizedDescription
@@ -233,16 +217,36 @@ final class AppViewModel: ObservableObject {
     }
 
 
-    func reconnectGateway() async {
+
+    func restartGateway() async {
         guard let accessToken = session?.accessToken else { return }
+        errorMessage = nil
         isReconnectingGateway = true
         defer { isReconnectingGateway = false }
         
+        print("[AppViewModel] Manual Gateway restart requested. Applying config.patch...")
         gatewayClient.disconnect()
-        _ = await connectGatewayIfInstanceAvailable(accessToken: accessToken)
         
-        // Brief delay to show connecting state if it connects instantly
-        try? await Task.sleep(nanoseconds: 500_000_000)
+        // Connect first
+        _ = try? await connectGatewayIfInstanceAvailable(accessToken: accessToken)
+        
+        do {
+            // Poll for connection success (up to 5 seconds) before patching
+            var attempts = 0
+            while gatewayClient.state != .connected && attempts < 10 {
+                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5s
+                attempts += 1
+            }
+            
+            // Apply a fresh patch to ensure everything restarts perfectly
+            try await applyGatewayProxyConfiguration(accessToken: accessToken)
+            
+            // Give the gateway a moment to potentially reboot and reconnect
+            try? await Task.sleep(nanoseconds: 3_000_000_000) // 3s
+            errorMessage = nil
+        } catch {
+            errorMessage = "Failed to restart gateway: \(error.localizedDescription)"
+        }
     }
 
     func clearError() {
@@ -263,6 +267,7 @@ final class AppViewModel: ObservableObject {
     }
 
     private func postAuthBootstrap() async {
+        setupSessionRefresh()
         guard let session else { return }
 
         // Start loading history IMMEDIATELY
@@ -324,8 +329,12 @@ final class AppViewModel: ObservableObject {
         do {
             _ = try await apiClient.claimInstance(accessToken: accessToken)
             
+            // Per user request: Perform the one-time config.patch during onboarding claim.
+            try? await applyGatewayProxyConfiguration(accessToken: accessToken)
+            hasCompletedInitialSetup = true
+            
             // Attempt to connect immediately.
-            _ = await connectGatewayIfInstanceAvailable(accessToken: accessToken)
+            _ = try await connectGatewayIfInstanceAvailable(accessToken: accessToken)
             
             // Poll for connection success
             var attempts = 0
@@ -361,40 +370,23 @@ final class AppViewModel: ObservableObject {
 
 
     private func applyGatewayProxyConfiguration(accessToken: String) async throws {
-        // 1. Fetch current Gateway config to check if we actually need to patch
-        let current = try await gatewayClient.rpc(method: "config.get")
-        guard let currentObject = current.objectValue else {
-            throw AppViewModelError.invalidGatewayConfig("Gateway config.get failed")
-        }
+        print("[AppViewModel] Applying Gateway configuration patch...")
         
-        // 2. If the config already has providers and agents, it is ALREADY SETUP.
-        // Per user request, we must avoid config.patch unless it's the first-time setup,
-        // because patching triggers a Gateway restart which kills the agent's work.
-        if let currentProviders = currentObject["providers"]?.objectValue, 
-           !currentProviders.isEmpty,
-           currentObject["agents"] != nil {
-            print("[AppViewModel] Gateway already setup with providers. Skipping config.patch to avoid redundant restart.")
-            return
-        }
-
-        print("[AppViewModel] Gateway configuration missing or empty. Performing first-time setup...")
-        
-        // 3. Fetch desired provider configuration from backend
+        // 1. Fetch desired provider configuration from backend
         let providerPatchValue = try await apiClient.getGatewayProviderConfig(accessToken: accessToken)
         guard let providerPatch = providerPatchValue.objectValue else {
             throw AppViewModelError.invalidGatewayConfig("Provider patch payload was not an object.")
         }
 
-        // 4. Build our full desired patch
+        // 2. Build our full desired patch
         var desiredPatch = buildGatewayDefaultsPatch()
         for (key, value) in providerPatch {
             desiredPatch[key] = value
         }
 
-        // 5. Apply the patch
+        // 3. Apply the patch
         try await patchGatewayConfigWithRetry(desiredPatch)
     }
-
     private func patchGatewayConfigWithRetry(_ patch: [String: JSONValue]) async throws {
         let rawObject = patch.mapValues(\.asAny)
         let rawData = try JSONSerialization.data(withJSONObject: rawObject)
@@ -478,7 +470,7 @@ final class AppViewModel: ObservableObject {
         
         await creditsViewModel.load(accessToken: accessToken)
         
-        let hasActiveInstance = await connectGatewayIfInstanceAvailable(accessToken: accessToken)
+        let hasActiveInstance = (try? await connectGatewayIfInstanceAvailable(accessToken: accessToken)) ?? false
         if hasActiveInstance {
             authPhase = .signedIn
         } else {

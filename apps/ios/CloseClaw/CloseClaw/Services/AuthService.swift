@@ -2,7 +2,6 @@ import Foundation
 
 protocol AuthServiceProtocol {
     func restoreSession() async throws -> AppSession?
-    func signIn(email: String, password: String) async throws -> AppSession
     func signInWithApple(
         idToken: String,
         nonce: String,
@@ -14,11 +13,14 @@ protocol AuthServiceProtocol {
     func deleteAccount(session: AppSession) async throws
 }
 
+@MainActor
 final class AuthService: AuthServiceProtocol {
     private let config: AppConfig
     private let tokenStore: TokenStore
     private let session: URLSession
     private let decoder = JSONDecoder()
+
+    private var activeRefreshTask: Task<AppSession, Error>?
 
     init(config: AppConfig, tokenStore: TokenStore, session: URLSession = .shared) {
         self.config = config
@@ -31,50 +33,12 @@ final class AuthService: AuthServiceProtocol {
             return nil
         }
         if stored.isExpired {
-            let refreshed = try await refreshSession(stored)
-            return refreshed
+            return try await refreshSession(stored)
         }
         return stored
     }
 
-    func signIn(email: String, password: String) async throws -> AppSession {
-        guard let url = URL(string: "/auth/v1/token?grant_type=password", relativeTo: config.supabaseURL) else {
-            throw AuthError.invalidSupabaseURL
-        }
 
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(config.supabaseAnonKey, forHTTPHeaderField: "apikey")
-        request.setValue("Bearer \(config.supabaseAnonKey)", forHTTPHeaderField: "Authorization")
-        request.httpBody = try JSONEncoder().encode([
-            "email": email,
-            "password": password
-        ])
-
-        let (data, response) = try await session.data(for: request)
-        guard let http = response as? HTTPURLResponse else {
-            throw AuthError.invalidResponse
-        }
-
-        guard http.statusCode >= 200, http.statusCode < 300 else {
-            throw parseSupabaseError(from: data, statusCode: http.statusCode)
-        }
-
-        let payload = try decoder.decode(SupabaseSessionResponse.self, from: data)
-        let session = AppSession(
-            accessToken: payload.access_token,
-            refreshToken: payload.refresh_token,
-            tokenType: payload.token_type,
-            expiresAt: Date().addingTimeInterval(payload.expires_in),
-            user: UserProfile(
-                id: payload.user.id,
-                email: payload.user.email ?? ""
-            )
-        )
-        try tokenStore.save(session: session)
-        return session
-    }
 
     func signInWithApple(
         idToken: String,
@@ -129,44 +93,55 @@ final class AuthService: AuthServiceProtocol {
     }
 
     func refreshSession(_ current: AppSession) async throws -> AppSession {
-        guard let url = URL(string: "/auth/v1/token?grant_type=refresh_token", relativeTo: config.supabaseURL) else {
-            throw AuthError.invalidSupabaseURL
+        if let existingTask = activeRefreshTask {
+            return try await existingTask.value
         }
 
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(config.supabaseAnonKey, forHTTPHeaderField: "apikey")
-        request.setValue("Bearer \(config.supabaseAnonKey)", forHTTPHeaderField: "Authorization")
-        request.httpBody = try JSONEncoder().encode([
-            "refresh_token": current.refreshToken
-        ])
-
-        let (data, response) = try await session.data(for: request)
-        guard let http = response as? HTTPURLResponse else {
-            throw AuthError.invalidResponse
-        }
-        guard http.statusCode >= 200, http.statusCode < 300 else {
-            if http.statusCode == 400 {
-                // Only clear if the refresh token itself is invalid (Supabase returns 400 for invalid_grant)
-                try? tokenStore.clearSession()
+        let refreshTask = Task<AppSession, Error> {
+            defer { activeRefreshTask = nil }
+            
+            guard let url = URL(string: "/auth/v1/token?grant_type=refresh_token", relativeTo: config.supabaseURL) else {
+                throw AuthError.invalidSupabaseURL
             }
-            throw parseSupabaseError(from: data, statusCode: http.statusCode)
+
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.setValue(config.supabaseAnonKey, forHTTPHeaderField: "apikey")
+            request.setValue("Bearer \(config.supabaseAnonKey)", forHTTPHeaderField: "Authorization")
+            request.httpBody = try JSONEncoder().encode([
+                "refresh_token": current.refreshToken
+            ])
+
+            let (data, response) = try await session.data(for: request)
+            guard let http = response as? HTTPURLResponse else {
+                throw AuthError.invalidResponse
+            }
+            
+            guard http.statusCode >= 200, http.statusCode < 300 else {
+                if http.statusCode == 400 {
+                    try? tokenStore.clearSession()
+                }
+                throw parseSupabaseError(from: data, statusCode: http.statusCode)
+            }
+
+            let payload = try decoder.decode(SupabaseSessionResponse.self, from: data)
+            let refreshed = AppSession(
+                accessToken: payload.access_token,
+                refreshToken: payload.refresh_token,
+                tokenType: payload.token_type,
+                expiresAt: Date().addingTimeInterval(payload.expires_in),
+                user: UserProfile(
+                    id: payload.user.id,
+                    email: payload.user.email ?? current.user.email
+                )
+            )
+            try tokenStore.save(session: refreshed)
+            return refreshed
         }
 
-        let payload = try decoder.decode(SupabaseSessionResponse.self, from: data)
-        let refreshed = AppSession(
-            accessToken: payload.access_token,
-            refreshToken: payload.refresh_token,
-            tokenType: payload.token_type,
-            expiresAt: Date().addingTimeInterval(payload.expires_in),
-            user: UserProfile(
-                id: payload.user.id,
-                email: payload.user.email ?? current.user.email
-            )
-        )
-        try tokenStore.save(session: refreshed)
-        return refreshed
+        self.activeRefreshTask = refreshTask
+        return try await refreshTask.value
     }
 
     func signOut(session: AppSession?) async {

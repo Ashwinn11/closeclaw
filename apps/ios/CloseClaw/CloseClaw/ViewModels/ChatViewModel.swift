@@ -115,6 +115,16 @@ final class ChatViewModel: ObservableObject {
                     self.handleGatewayEvent(event)
                 }
             }
+            
+            // Observe state changes to trigger UI updates
+            Task { [weak self] in
+                guard let self else { return }
+                for await _ in gatewayClient.$state.values {
+                    await MainActor.run {
+                        self.objectWillChange.send()
+                    }
+                }
+            }
         }
         // Never walk back hasLoadedHistory once it's true
         if !hasLoadedHistory {

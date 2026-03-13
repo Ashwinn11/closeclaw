@@ -236,10 +236,9 @@ private struct ChatViewContainer: View {
                     gatewayStatusText: viewModel.gatewayStatusText,
                     creditsViewModel: viewModel.creditsViewModel,
                     purchaseService: viewModel.purchaseService,
-                    isLoadingReconnect: viewModel.isReconnectingGateway,
                     isLoadingDelete: viewModel.isAuthenticating,
-                    onReconnect: {
-                        await viewModel.reconnectGateway()
+                    onRestartGateway: {
+                        await viewModel.restartGateway()
                     },
                     onRefreshCredits: {
                         await viewModel.refreshCredits()

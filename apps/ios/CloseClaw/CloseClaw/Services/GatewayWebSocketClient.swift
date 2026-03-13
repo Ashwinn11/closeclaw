@@ -177,8 +177,12 @@ final class GatewayWebSocketClient: ObservableObject {
             return
         }
 
-        if type == "proxy-ready" {
+        // Optimistic connection: If we receive a valid frame type, we're active.
+        if state == .connecting && (type == "proxy-ready" || type == "event" || type == "res") {
             await finishConnect(with: .success(()))
+        }
+
+        if type == "proxy-ready" {
             return
         }
 
@@ -251,9 +255,8 @@ final class GatewayWebSocketClient: ObservableObject {
             do {
                 try await self.connectInternal()
             } catch {
-                // Reconnect failed, handleDisconnect will be called again by connectInternal failure
-                // or startReceiveLoop failure, triggering another scheduleReconnect.
-                print("[Gateway] Reconnect attempt \(attempts) failed: \(error)")
+                print("[Gateway] Reconnect attempt \(attempts) failed: \(error). Retrying...")
+                await self.handleDisconnect(error: error)
             }
         }
     }
