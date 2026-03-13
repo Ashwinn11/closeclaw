@@ -943,6 +943,7 @@ export const DashboardPage: React.FC = () => {
           )}
         </div>
       </main>
+    )}
 
       {/* Channel Setup Modal */}
       {setupChannel && (
